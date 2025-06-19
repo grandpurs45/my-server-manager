@@ -1,0 +1,20 @@
+# .gitignore
+
+# Cache et fichiers temporaires
+*.log
+*.cache
+*.tmp
+
+# Environnement local
+.env
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Dossiers à ne pas versionner
+vendor/
+node_modules/
+
+# Éditeur/IDE
+.vscode/
