@@ -1,6 +1,5 @@
-<?php include('includes/header.php'); ?>
+<?php include 'header.php'; ?>
 
-<h2>Bienvenue sur My Server Manager</h2>
-<p>Cette page affichera bientôt des statistiques de vos serveurs !</p>
+<p class="text-lg">Bienvenue sur le tableau de bord de gestion de serveurs.</p>
 
-<?php include('includes/footer.php'); ?>
+<?php include 'footer.php'; ?>
