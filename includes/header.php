@@ -3,17 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>My Server Manager</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <header>
-        <h1>My Server Manager</h1>
-        <nav>
-            <a href="/index.php">Accueil</a>
-            <a href="/pages/supervision.php">Supervision</a>
-            <a href="/pages/serveurs.php">Serveurs</a>
-            <a href="/pages/alertes.php">Alertes</a>
-            <a href="/pages/securite.php">Sécurité</a>
-        </nav>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
+    <header class="bg-blue-600 text-white p-4 shadow">
+        <h1 class="text-xl font-bold">My Server Manager</h1>
     </header>
-    <main>
+    <main class="flex-1 p-6">
