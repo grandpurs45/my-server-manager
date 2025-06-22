@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS servers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    hostname VARCHAR(100) DEFAULT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    os VARCHAR(50),
+    status ENUM('up', 'down') DEFAULT 'down',
+    last_check DATETIME DEFAULT CURRENT_TIMESTAMP
+);
