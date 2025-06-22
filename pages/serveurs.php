@@ -81,39 +81,55 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <i data-lucide="x" class="w-5 h-5"></i>
         </button>
         
-        <h2 class="text-xl font-bold mb-4">➕ Ajouter un serveur</h2>
+        <h2 class="text-xl font-bold mb-4">
+            <?= $editMode ? '✏️ Modifier un serveur' : '➕ Ajouter un serveur' ?>
+        </h2>
 
-        <form action="/pages/add-server.php" method="post" class="space-y-4">
+        <form action="<?= $editMode ? 'serveurs.php' : '/pages/add-server.php' ?>" method="post" class="space-y-4">
+            <?php if ($editMode): ?>
+                <input type="hidden" name="form_mode" value="edit">
+                <input type="hidden" name="id" value="<?= $editData['id'] ?>">
+            <?php endif; ?>
         <div>
             <label class="block font-medium mb-1" for="name">Nom du serveur</label>
-            <input type="text" id="name" name="name" required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300" />
+            <input type="text" id="name" name="name"
+                    value="<?= htmlspecialchars($editData['name'] ?? '') ?>"
+                    required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"/>
         </div>
 
         <div>
             <label class="block font-medium mb-1" for="hostname">Adresse IP / Nom d’hôte</label>
-            <input type="text" id="hostname" name="hostname" required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300" />
+            <input type="text" id="hostname" name="hostname"
+                value="<?= htmlspecialchars($editData['hostname'] ?? '') ?>"
+                required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"/>
         </div>
 
         <div>
             <label class="block font-medium mb-1" for="port">Port SSH</label>
-            <input type="number" id="port" name="port" value="22" required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300" />
+            <input type="number" id="port" name="port"
+                value="<?= htmlspecialchars($editData['port'] ?? 22) ?>"
+                required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"/>
         </div>
 
         <div>
             <label class="block font-medium mb-1" for="ssh_user">Utilisateur SSH</label>
-            <input type="text" id="ssh_user" name="ssh_user" required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300" />
+            <input type="text" id="ssh_user" name="ssh_user"
+                value="<?= htmlspecialchars($editData['ssh_user'] ?? '') ?>"
+                required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"/>
         </div>
 
         <div>
             <label class="block font-medium mb-1" for="ssh_password">Mot de passe SSH</label>
-            <input type="password" id="ssh_password" name="ssh_password" required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300" />
+            <input type="password" id="ssh_password" name="ssh_password"
+                value="<?= htmlspecialchars($editData['ssh_password'] ?? '') ?>"
+                required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"/>
         </div>
         <div class="text-right pt-2 flex justify-end gap-2">
             <button type="button" onclick="toggleModal(false)" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-4 rounded">
                 Annuler
             </button>
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
-                💾 Ajouter le serveur
+                <?= $editMode ? '💾 Enregistrer les modifications' : '💾 Ajouter le serveur' ?>
             </button>
         </div>
         </form>
@@ -182,6 +198,13 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <script>
 function toggleModal(show) {
     document.getElementById('modal').classList.toggle('hidden', !show);
+
+    if (!show && window.location.search.includes('edit=')) {
+        // Nettoie l’URL pour virer ?edit=xxx
+        const url = new URL(window.location.href);
+        url.searchParams.delete('edit');
+        window.history.replaceState({}, '', url.pathname);
+    }
 }
 
 <?php if ($editMode): ?>
