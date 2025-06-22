@@ -121,6 +121,7 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <!-- Modale -->
 <div id="modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
   <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+
     <h2 class="text-xl font-semibold mb-4">
         <?= $editMode ? 'Modifier un serveur' : 'Ajouter un serveur' ?>
     </h2>
@@ -155,8 +156,8 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     class="bg-<?= $editMode ? 'blue' : 'green' ?>-600 text-white px-4 py-2 rounded hover:bg-<?= $editMode ? 'blue' : 'green' ?>-700">
                 <?= $editMode ? 'Modifier le serveur' : 'Ajouter le serveur' ?>
             </button>
-            <button type="button" onclick="toggleModal(false)"
-                class="ml-2 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">
+            <button type="button" onclick="window.location.href='serveurs.php'"
+                    class="ml-2 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">
                 Annuler
             </button>
         </form>
