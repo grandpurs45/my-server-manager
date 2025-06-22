@@ -9,4 +9,10 @@ $version = getVersionFromPackageJson();
 
 <script>
   lucide.createIcons();
+    window.addEventListener('load', () => {
+    const spinner = document.getElementById('loading');
+    if (spinner) {
+        spinner.style.display = 'none';
+    }
+    });
 </script>

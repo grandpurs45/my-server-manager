@@ -2,6 +2,7 @@
 session_start(); // pour stocker le message
 
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 $editMode = false;
 $editData = null;
@@ -120,8 +121,12 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 <!-- Modale -->
 <div id="modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
-
+  <div class="relative bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+    <button onclick="window.location.href='serveurs.php'"
+            class="absolute top-4 right-6 text-gray-400 hover:text-gray-600 text-2xl font-bold focus:outline-none"
+            aria-label="Fermer">
+        &times;
+    </button>
     <h2 class="text-xl font-semibold mb-4">
         <?= $editMode ? 'Modifier un serveur' : 'Ajouter un serveur' ?>
     </h2>
@@ -175,13 +180,15 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($servers as $server): ?>
+            <?php foreach ($servers as $server):
+            $status = isHostUp($server['ip_address']) ? 'up' : 'down';
+            ?>
             <tr class="border-t">
                 <td class="p-3"><?= htmlspecialchars($server['name']) ?></td>
                 <td class="p-3"><?= htmlspecialchars($server['ip_address']) ?></td>
                 <td class="p-3"><?= htmlspecialchars($server['os']) ?></td>
                 <td class="p-3">
-                    <?php if ($server['status'] === 'up'): ?>
+                    <?php if ($status === 'up'): ?>
                         <span class="text-green-600 font-semibold"><i class="fa-solid fa-circle-check"></i> UP</span>
                     <?php else: ?>
                         <span class="text-red-600 font-semibold"><i class="fa-solid fa-circle-xmark"></i> DOWN</span>
