@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/grandpurs45/my-server-manager/compare/v0.4.1...v0.5.0) (2025-06-22)
+
+
+### Features
+
+* amelioration du ping qui ne se fait plus au chargement de la page mais après ([b02347d](https://github.com/grandpurs45/my-server-manager/commit/b02347de153a09d4eba33d1ee9d6a02686186862))
+* amelioration du spinner ([d85939d](https://github.com/grandpurs45/my-server-manager/commit/d85939d2c37a3c90bbe6c432e33d97861d2cd15a))
+
 ### [0.4.1](https://github.com/grandpurs45/my-server-manager/compare/v0.4.0...v0.4.1) (2025-06-22)
 
 
