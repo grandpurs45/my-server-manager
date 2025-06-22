@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.2](https://github.com/grandpurs45/my-server-manager/compare/v0.2.1...v0.2.2) (2025-06-22)
+
+
+### Features
+
+* boutton annulation sur le modal d'ajout et de modification du serveur ([c1a4839](https://github.com/grandpurs45/my-server-manager/commit/c1a4839ec47beac55070bb64c0a5c685f66ec5b2))
+* modification d'un serveur ([edd6f26](https://github.com/grandpurs45/my-server-manager/commit/edd6f26c018618845f56826a72f6d08693cea138))
+
+
+### Bug Fixes
+
+* correction lors de l'annulation d'une modification de serveur qui laissait sur l'url de modification du serveur ([bdb218a](https://github.com/grandpurs45/my-server-manager/commit/bdb218a910362df7b629dd4b7477ee82be6cd58b))
+
 ### [0.2.1](https://github.com/grandpurs45/my-server-manager/compare/v0.1.0...v0.2.1) (2025-06-22)
 
 
@@ -26,4 +39,3 @@ All notable changes to this project will be documented in this file. See [standa
 ## [0.1.0] - 2025-06-19
 ### Added
 - Initialisation du projet, configuration Apache et Git
-
