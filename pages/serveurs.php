@@ -155,6 +155,10 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     class="bg-<?= $editMode ? 'blue' : 'green' ?>-600 text-white px-4 py-2 rounded hover:bg-<?= $editMode ? 'blue' : 'green' ?>-700">
                 <?= $editMode ? 'Modifier le serveur' : 'Ajouter le serveur' ?>
             </button>
+            <button type="button" onclick="toggleModal(false)"
+                class="ml-2 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">
+                Annuler
+            </button>
         </form>
   </div>
 </div>
