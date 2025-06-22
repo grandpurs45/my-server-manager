@@ -186,8 +186,9 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <tbody>
             <?php if (!empty($servers)): ?>
                 <?php foreach ($servers as $server):
-                error_log("Vérification IP : " . $server['ip_address']);
-                $status = isHostUp($server['ip_address']) ? 'up' : 'down';
+                    error_log("Vérification IP : " . $server['ip_address']);
+                    $ip = $server['ip_address'] ?? null;
+                    $status = ($ip && filter_var($ip, FILTER_VALIDATE_IP) && isHostUp($ip)) ? 'up' : 'down';
                 ?>
                 <tr class="border-t">
                     <td class="p-3"><?= htmlspecialchars($server['name']) ?></td>
