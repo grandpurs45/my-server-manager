@@ -1,0 +1,1 @@
+ALTER TABLE servers ADD COLUMN hostname VARCHAR(100) NULL AFTER name;
