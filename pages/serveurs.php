@@ -3,6 +3,27 @@ session_start(); // pour stocker le message
 
 require_once __DIR__ . '/../includes/db.php';
 
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete_id'])) {
+    $id = (int) $_POST['delete_id'];
+
+    try {
+        $stmt = $pdo->prepare("DELETE FROM servers WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+
+        if ($stmt->rowCount() > 0) {
+            $_SESSION['success'] = "Serveur supprimé avec succès.";
+        } else {
+            $_SESSION['error'] = "Le serveur n'a pas été trouvé.";
+        }
+
+        header("Location: serveurs.php");
+        exit;
+    } catch (PDOException $e) {
+        $_SESSION['error'] = "Erreur lors de la suppression : " . $e->getMessage();
+    }
+}
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $name = trim($_POST['name'] ?? '');
     $ip = trim($_POST['ip'] ?? '');
@@ -99,6 +120,7 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <th class="p-3">OS</th>
                 <th class="p-3">Statut</th>
                 <th class="p-3">Dernier check</th>
+                <th class="px-4 py-2 text-left">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -115,6 +137,14 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endif; ?>
                 </td>
                 <td class="p-3"><?= htmlspecialchars($server['last_check']) ?></td>
+                <td class="px-4 py-2">
+                    <form method="POST" action="serveurs.php" onsubmit="return confirm('Confirmer la suppression ?');">
+                        <input type="hidden" name="delete_id" value="<?= $server['id'] ?>">
+                        <button type="submit" class="text-red-600 hover:underline flex items-center gap-1">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> Supprimer
+                        </button>
+                    </form>
+                </td>
             </tr>
             <?php endforeach; ?>
         </tbody>
