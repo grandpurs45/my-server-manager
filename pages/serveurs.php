@@ -93,6 +93,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 require_once __DIR__ . '/../includes/header.php';
+flush();
 require_once __DIR__ . '/../includes/db.php';
 
 if (!empty($_SESSION['error'])): ?>

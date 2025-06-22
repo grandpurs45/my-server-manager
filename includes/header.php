@@ -11,6 +11,10 @@ $baseUrl = '/'; // Toujours à la racine du projet, que tu sois en /index.php ou
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body class="bg-gray-100">
+<?php
+ob_implicit_flush(true);
+ob_end_flush();
+?>
 <div class="flex h-screen">
     <!-- Sidebar -->
     <aside class="w-60 bg-blue-700 text-white p-6">
