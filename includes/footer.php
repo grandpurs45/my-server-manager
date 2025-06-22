@@ -8,11 +8,11 @@ $version = getVersionFromPackageJson();
 </footer>
 
 <script>
-  lucide.createIcons();
-    window.addEventListener('load', () => {
+    lucide.createIcons();
+    document.addEventListener('DOMContentLoaded', () => {
     const spinner = document.getElementById('loading');
     if (spinner) {
-        spinner.style.display = 'none';
+      spinner.remove(); // ou spinner.style.display = 'none';
     }
-    });
+  });
 </script>
