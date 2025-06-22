@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/grandpurs45/my-server-manager/compare/v0.3.0...v0.4.0) (2025-06-22)
+
+
+### Features
+
+* ajout lien serveur dans le menu de gauche ([c3f7365](https://github.com/grandpurs45/my-server-manager/commit/c3f736568b7d014f74dbb9ed4b7834a659eb21d7))
+* processus de migration des modifs de bases de données ([7669d25](https://github.com/grandpurs45/my-server-manager/commit/7669d25979dcd4aaa8235bc8a436ec6bd44f5250))
+
 ## [0.3.0](https://github.com/grandpurs45/my-server-manager/compare/v0.2.3...v0.3.0) (2025-06-22)
 
 ### [0.2.3](https://github.com/grandpurs45/my-server-manager/compare/v0.2.2...v0.2.3) (2025-06-22)
