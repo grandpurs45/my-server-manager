@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.3](https://github.com/grandpurs45/my-server-manager/compare/v0.2.2...v0.2.3) (2025-06-22)
+
+
+### Features
+
+* supervision réseau (UP/DOWN) + spinner visuel ([fea514b](https://github.com/grandpurs45/my-server-manager/commit/fea514bfe2a3bce7c10f5e02fd81f487e1ce35e5))
+
 ### [0.2.2](https://github.com/grandpurs45/my-server-manager/compare/v0.2.1...v0.2.2) (2025-06-22)
 
 
