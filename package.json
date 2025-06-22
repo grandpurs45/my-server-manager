@@ -1,0 +1,24 @@
+{
+  "name": "msm",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "release": "standard-version"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grandpurs45/my-server-manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/grandpurs45/my-server-manager/issues"
+  },
+  "homepage": "https://github.com/grandpurs45/my-server-manager#readme",
+  "description": "",
+  "devDependencies": {
+    "standard-version": "^9.5.0"
+  }
+}

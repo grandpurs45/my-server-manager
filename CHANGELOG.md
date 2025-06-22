@@ -13,3 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-06-19
 ### Added
 - Initialisation du projet, configuration Apache et Git
+
+## [0.2.0] - 2025-06-21
+### Ajouté
+- Page de gestion dynamique des serveurs (affichage + ajout)
+- Connexion à la base de données via PDO
+- Détection et affichage de l’état `UP`
+- Design et intégration avec Tailwind

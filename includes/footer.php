@@ -1,9 +1,4 @@
-            </main>
-            <!-- Footer -->
-            <footer class="bg-gray-200 text-center p-4 text-sm text-gray-600">
-                &copy; <?= date("Y") ?> My Server Manager. Tous droits réservés.
-            </footer>
-        </div>
-    </div>
-</body>
-</html>
+<?php include_once __DIR__ . '/version.php'; ?>
+<footer class="mt-10 text-center text-gray-500 text-sm">
+    © <?= date('Y'); ?> My Server Manager — <span class="font-mono"><?= $msm_version; ?></span>. Tous droits réservés.
+</footer>
