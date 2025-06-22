@@ -57,12 +57,6 @@ All notable changes to this project will be documented in this file. See [standa
 
 * affichage des serveurs depuis la base de données ([3c27126](https://github.com/grandpurs45/my-server-manager/commit/3c27126d4532a8c603aa89721f0dd7a96c1cc4a9))
 
-## [1.1.0](https://github.com/grandpurs45/my-server-manager/compare/v0.1.0...v1.1.0) (2025-06-22)
-
-
-### Features
-
-* affichage des serveurs depuis la base de données ([3c27126](https://github.com/grandpurs45/my-server-manager/commit/3c27126d4532a8c603aa89721f0dd7a96c1cc4a9))
 
 ## [0.2.0] - 2025-06-21
 ### Ajouté
