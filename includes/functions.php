@@ -1,12 +1,17 @@
 <?php
 //fonction de PING
 function isHostUp(string $ip): bool {
-    // Pour Linux (ping -c 1), pour Windows utiliser -n 1
-    $pingCmd = (strncasecmp(PHP_OS, 'WIN', 3) === 0)
-        ? "ping -n 1 -w 500 $ip"
-        : "ping -c 1 -W 1 $ip";
+    if (!function_exists('exec')) {
+        return false; // Sécurité minimale
+    }
+
+    $timeout = 1;
+    $pingCmd = (stripos(PHP_OS, 'WIN') === 0)
+        ? "ping -n 1 -w " . ($timeout * 1000) . " $ip"
+        : "ping -c 1 -W $timeout $ip";
 
     exec($pingCmd, $output, $resultCode);
+
     return $resultCode === 0;
 }
 
