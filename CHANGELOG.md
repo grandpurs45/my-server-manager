@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.1](https://github.com/grandpurs45/my-server-manager/compare/v0.4.0...v0.4.1) (2025-06-22)
+
+
+### Features
+
+* **migrations:** création de la table servers ([948c612](https://github.com/grandpurs45/my-server-manager/commit/948c6120b12fb02ae45409b0fbbc5e9fe5f1e3d5))
+
+
+### Bug Fixes
+
+* bug chargement serveur en production ([a2de778](https://github.com/grandpurs45/my-server-manager/commit/a2de778ea75389731eeb0c7f6adc158c3eeacc7d))
+* correction du bug lorsqu'aucun serveur n'existe ([aae6a7f](https://github.com/grandpurs45/my-server-manager/commit/aae6a7fa710e8e8076d1ef104b93e4e263a1e6ab))
+* correction du bug lorsqu'aucun serveur n'existe ([8d9c030](https://github.com/grandpurs45/my-server-manager/commit/8d9c0307225ef99adfa8c7ebc742207e336c2710))
+* correction du bug lorsqu'aucun serveur n'existe ([b1e2d99](https://github.com/grandpurs45/my-server-manager/commit/b1e2d992f130ec7b04e1fc58565565c21bfaa2a6))
+* correction du bug lorsqu'aucun serveur n'existe ([c9a9d1b](https://github.com/grandpurs45/my-server-manager/commit/c9a9d1b16a9b7b9c7ba468a6f90af273d46f4a15))
+* rename tmp_migrations to migrations (lowercase) ([e4da177](https://github.com/grandpurs45/my-server-manager/commit/e4da177ade53aa89aea021e8051ee0d89d520573))
+* renommage repertoire Migrations vers migrations pour la cohérence ([24f9bd1](https://github.com/grandpurs45/my-server-manager/commit/24f9bd17f6a5a7a934acc9f2cad4499aecae7c12))
+
 ## [0.4.0](https://github.com/grandpurs45/my-server-manager/compare/v0.3.0...v0.4.0) (2025-06-22)
 
 
