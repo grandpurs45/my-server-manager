@@ -45,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete_id'])) {
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $name = trim($_POST['name'] ?? '');
     $ip = trim($_POST['ip'] ?? '');
-    $os = trim($_POST['os'] ?? '');
+    $os = getRemoteOS($ip) ?: 'unknown';
     $mode = $_POST['form_mode'] ?? 'add';
 
     if (empty($name) || empty($ip) || empty($os)) {
@@ -152,9 +152,10 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             <div>
                 <label for="os" class="block mb-1 font-semibold">Système d’exploitation</label>
-                <input type="text" id="os" name="os" required
-                    value="<?= $editMode ? htmlspecialchars($editData['os']) : '' ?>"
-                    class="w-full border border-gray-300 p-2 rounded">
+                <input type="text" id="os" name="os"
+                        value="<?= $editMode ? htmlspecialchars($editData['os']) : 'Auto détecté à l’ajout' ?>"
+                        class="w-full border border-gray-300 p-2 rounded bg-gray-100 text-gray-600"
+                        readonly>
             </div>
 
             <button type="submit"
