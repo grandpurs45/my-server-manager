@@ -184,35 +184,43 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($servers as $server):
-            error_log("Vérification IP : " . $server['ip_address']);
-            $status = isHostUp($server['ip_address']) ? 'up' : 'down';
-            ?>
-            <tr class="border-t">
-                <td class="p-3"><?= htmlspecialchars($server['name']) ?></td>
-                <td class="p-3"><?= htmlspecialchars($server['ip_address']) ?></td>
-                <td class="p-3"><?= htmlspecialchars($server['os']) ?></td>
-                <td class="p-3">
-                    <?php if ($status === 'up'): ?>
-                        <span class="text-green-600 font-semibold"><i class="fa-solid fa-circle-check"></i> UP</span>
-                    <?php else: ?>
-                        <span class="text-red-600 font-semibold"><i class="fa-solid fa-circle-xmark"></i> DOWN</span>
-                    <?php endif; ?>
-                </td>
-                <td class="p-3"><?= htmlspecialchars($server['last_check']) ?></td>
-                <td class="px-4 py-2">
-                    <a href="serveurs.php?edit=<?= $server['id'] ?>" class="text-blue-600 hover:underline flex items-center gap-1 mb-2">
-                        <i data-lucide="pencil" class="w-4 h-4"></i> Modifier
-                    </a>
-                    <form method="POST" action="serveurs.php" onsubmit="return confirm('Confirmer la suppression ?');">
-                        <input type="hidden" name="delete_id" value="<?= $server['id'] ?>">
-                        <button type="submit" class="text-red-600 hover:underline flex items-center gap-1">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i> Supprimer
-                        </button>
-                    </form>
-                </td>
-            </tr>
-            <?php endforeach; ?>
+            <?php if (!empty($servers)): ?>
+                <?php foreach ($servers as $server):
+                error_log("Vérification IP : " . $server['ip_address']);
+                $status = isHostUp($server['ip_address']) ? 'up' : 'down';
+                ?>
+                <tr class="border-t">
+                    <td class="p-3"><?= htmlspecialchars($server['name']) ?></td>
+                    <td class="p-3"><?= htmlspecialchars($server['ip_address']) ?></td>
+                    <td class="p-3"><?= htmlspecialchars($server['os']) ?></td>
+                    <td class="p-3">
+                        <?php if ($status === 'up'): ?>
+                            <span class="text-green-600 font-semibold"><i class="fa-solid fa-circle-check"></i> UP</span>
+                        <?php else: ?>
+                            <span class="text-red-600 font-semibold"><i class="fa-solid fa-circle-xmark"></i> DOWN</span>
+                        <?php endif; ?>
+                    </td>
+                    <td class="p-3"><?= htmlspecialchars($server['last_check']) ?></td>
+                    <td class="px-4 py-2">
+                        <a href="serveurs.php?edit=<?= $server['id'] ?>" class="text-blue-600 hover:underline flex items-center gap-1 mb-2">
+                            <i data-lucide="pencil" class="w-4 h-4"></i> Modifier
+                        </a>
+                        <form method="POST" action="serveurs.php" onsubmit="return confirm('Confirmer la suppression ?');">
+                            <input type="hidden" name="delete_id" value="<?= $server['id'] ?>">
+                            <button type="submit" class="text-red-600 hover:underline flex items-center gap-1">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i> Supprimer
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="6" class="text-center text-gray-500 py-4">
+                        Aucun serveur enregistré.
+                    </td>
+                </tr>
+            <?php endif; ?>
         </tbody>
     </table>
 </main>
