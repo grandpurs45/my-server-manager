@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 session_start(); // pour stocker le message
 
 require_once __DIR__ . '/../includes/db.php';
@@ -182,6 +185,7 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </thead>
         <tbody>
             <?php foreach ($servers as $server):
+            error_log("Vérification IP : " . $server['ip_address']);
             $status = isHostUp($server['ip_address']) ? 'up' : 'down';
             ?>
             <tr class="border-t">
