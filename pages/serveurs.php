@@ -3,6 +3,23 @@ session_start(); // pour stocker le message
 
 require_once __DIR__ . '/../includes/db.php';
 
+$editMode = false;
+$editData = null;
+
+if (isset($_GET['edit'])) {
+    $editId = (int) $_GET['edit'];
+    $stmt = $pdo->prepare("SELECT * FROM servers WHERE id = :id");
+    $stmt->execute([':id' => $editId]);
+    $editData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($editData) {
+        $editMode = true;
+    } else {
+        $_SESSION['error'] = "Serveur introuvable.";
+        header("Location: serveurs.php");
+        exit;
+    }
+}
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete_id'])) {
     $id = (int) $_POST['delete_id'];
@@ -28,36 +45,49 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $name = trim($_POST['name'] ?? '');
     $ip = trim($_POST['ip'] ?? '');
     $os = trim($_POST['os'] ?? '');
+    $mode = $_POST['form_mode'] ?? 'add';
 
     if (empty($name) || empty($ip) || empty($os)) {
         $_SESSION['error'] = "Tous les champs sont obligatoires.";
     } elseif (!filter_var($ip, FILTER_VALIDATE_IP)) {
         $_SESSION['error'] = "Adresse IP invalide.";
     } else {
-        // Vérifier si l'IP existe déjà
-        $check = $pdo->prepare("SELECT COUNT(*) FROM servers WHERE ip_address = :ip");
-        $check->execute([':ip' => $ip]);
-        if ($check->fetchColumn() > 0) {
-            $_SESSION['error'] = "Cette adresse IP est déjà enregistrée.";
+        if ($mode === 'edit') {
+            $id = (int) $_POST['id'];
+            $stmt = $pdo->prepare("UPDATE servers SET name = :name, ip_address = :ip, os = :os WHERE id = :id");
+            $stmt->execute([
+                ':name' => $name,
+                ':ip' => $ip,
+                ':os' => $os,
+                ':id' => $id
+            ]);
+            $_SESSION['success'] = "Serveur modifié avec succès.";
+            header("Location: serveurs.php");
+            exit;
         } else {
-            // Ajout en base si tout est OK
-            try {
-                $stmt = $pdo->prepare("INSERT INTO servers (name, ip_address, os) VALUES (:name, :ip, :os)");
-                $stmt->execute([
-                    ':name' => $name,
-                    ':ip' => $ip,
-                    ':os' => $os
-                ]);
-                $_SESSION['success'] = "Serveur ajouté avec succès.";
-                header("Location: serveurs.php");
-                exit;
-            } catch (PDOException $e) {
-                $_SESSION['error'] = "Erreur lors de l'ajout du serveur : " . $e->getMessage();
+            // Vérifier doublon IP
+            $check = $pdo->prepare("SELECT COUNT(*) FROM servers WHERE ip_address = :ip");
+            $check->execute([':ip' => $ip]);
+            if ($check->fetchColumn() > 0) {
+                $_SESSION['error'] = "Cette adresse IP est déjà enregistrée.";
+            } else {
+                try {
+                    $stmt = $pdo->prepare("INSERT INTO servers (name, ip_address, os) VALUES (:name, :ip, :os)");
+                    $stmt->execute([
+                        ':name' => $name,
+                        ':ip' => $ip,
+                        ':os' => $os
+                    ]);
+                    $_SESSION['success'] = "Serveur ajouté avec succès.";
+                    header("Location: serveurs.php");
+                    exit;
+                } catch (PDOException $e) {
+                    $_SESSION['error'] = "Erreur lors de l'ajout du serveur : " . $e->getMessage();
+                }
             }
         }
     }
 }
-
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/db.php';
 
@@ -91,25 +121,41 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <!-- Modale -->
 <div id="modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
   <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
-    <h2 class="text-xl font-semibold mb-4">Ajouter un serveur</h2>
-    <form action="serveurs.php" method="post">
-      <div class="mb-4">
-        <label class="block font-medium mb-1" for="name">Nom du serveur</label>
-        <input type="text" id="name" name="name" required class="w-full border-gray-300 rounded px-3 py-2 border focus:outline-none focus:ring focus:border-blue-300" />
-      </div>
-      <div class="mb-4">
-        <label class="block font-medium mb-1" for="ip">Adresse IP</label>
-        <input type="text" id="ip" name="ip" required class="w-full border-gray-300 rounded px-3 py-2 border focus:outline-none focus:ring focus:border-blue-300" />
-      </div>
-      <div class="mb-4">
-        <label class="block font-medium mb-1" for="os">Système d'exploitation</label>
-        <input type="text" id="os" name="os" required class="w-full border-gray-300 rounded px-3 py-2 border focus:outline-none focus:ring focus:border-blue-300" />
-      </div>
-      <div class="flex justify-end">
-        <button type="button" onclick="toggleModal(false)" class="mr-2 px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Annuler</button>
-        <button type="submit" name="add_server" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Ajouter</button>
-      </div>
-    </form>
+    <h2 class="text-xl font-semibold mb-4">
+        <?= $editMode ? 'Modifier un serveur' : 'Ajouter un serveur' ?>
+    </h2>
+        <form method="POST" action="serveurs.php" class="space-y-4 mb-8">
+            <input type="hidden" name="form_mode" value="<?= $editMode ? 'edit' : 'add' ?>">
+            <?php if ($editMode): ?>
+                <input type="hidden" name="id" value="<?= $editData['id'] ?>">
+            <?php endif; ?>
+
+            <div>
+                <label for="name" class="block mb-1 font-semibold">Nom du serveur</label>
+                <input type="text" id="name" name="name" required
+                    value="<?= $editMode ? htmlspecialchars($editData['name']) : '' ?>"
+                    class="w-full border border-gray-300 p-2 rounded">
+            </div>
+
+            <div>
+                <label for="ip" class="block mb-1 font-semibold">Adresse IP</label>
+                <input type="text" id="ip" name="ip" required
+                    value="<?= $editMode ? htmlspecialchars($editData['ip_address']) : '' ?>"
+                    class="w-full border border-gray-300 p-2 rounded">
+            </div>
+
+            <div>
+                <label for="os" class="block mb-1 font-semibold">Système d’exploitation</label>
+                <input type="text" id="os" name="os" required
+                    value="<?= $editMode ? htmlspecialchars($editData['os']) : '' ?>"
+                    class="w-full border border-gray-300 p-2 rounded">
+            </div>
+
+            <button type="submit"
+                    class="bg-<?= $editMode ? 'blue' : 'green' ?>-600 text-white px-4 py-2 rounded hover:bg-<?= $editMode ? 'blue' : 'green' ?>-700">
+                <?= $editMode ? 'Modifier le serveur' : 'Ajouter le serveur' ?>
+            </button>
+        </form>
   </div>
 </div>
     <table class="w-full table-auto border border-gray-200 rounded-lg overflow-hidden shadow">
@@ -138,6 +184,9 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </td>
                 <td class="p-3"><?= htmlspecialchars($server['last_check']) ?></td>
                 <td class="px-4 py-2">
+                    <a href="serveurs.php?edit=<?= $server['id'] ?>" class="text-blue-600 hover:underline flex items-center gap-1 mb-2">
+                        <i data-lucide="pencil" class="w-4 h-4"></i> Modifier
+                    </a>
                     <form method="POST" action="serveurs.php" onsubmit="return confirm('Confirmer la suppression ?');">
                         <input type="hidden" name="delete_id" value="<?= $server['id'] ?>">
                         <button type="submit" class="text-red-600 hover:underline flex items-center gap-1">
@@ -157,4 +206,9 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
   function toggleModal(show) {
     document.getElementById('modal').classList.toggle('hidden', !show);
   }
+
+  // 👉 Ouvre la modale automatiquement si on est en mode édition
+  <?php if ($editMode): ?>
+    window.addEventListener('DOMContentLoaded', () => toggleModal(true));
+  <?php endif; ?>
 </script>
