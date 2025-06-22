@@ -1,22 +1,58 @@
 <?php
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_server'])) {
-    $name = $_POST['name'];
-    $ip = $_POST['ip'];
-    $os = $_POST['os'];
+session_start(); // pour stocker le message
 
-    require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
-    $stmt = $pdo->prepare("INSERT INTO servers (name, ip_address, os, status, last_check) VALUES (?, ?, ?, 'UNKNOWN', NOW())");
-    $stmt->execute([$name, $ip, $os]);
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $name = trim($_POST['name'] ?? '');
+    $ip = trim($_POST['ip'] ?? '');
+    $os = trim($_POST['os'] ?? '');
 
-    header("Location: serveurs.php");
-    exit;
+    if (empty($name) || empty($ip) || empty($os)) {
+        $_SESSION['error'] = "Tous les champs sont obligatoires.";
+    } elseif (!filter_var($ip, FILTER_VALIDATE_IP)) {
+        $_SESSION['error'] = "Adresse IP invalide.";
+    } else {
+        // Vérifier si l'IP existe déjà
+        $check = $pdo->prepare("SELECT COUNT(*) FROM servers WHERE ip_address = :ip");
+        $check->execute([':ip' => $ip]);
+        if ($check->fetchColumn() > 0) {
+            $_SESSION['error'] = "Cette adresse IP est déjà enregistrée.";
+        } else {
+            // Ajout en base si tout est OK
+            try {
+                $stmt = $pdo->prepare("INSERT INTO servers (name, ip_address, os) VALUES (:name, :ip, :os)");
+                $stmt->execute([
+                    ':name' => $name,
+                    ':ip' => $ip,
+                    ':os' => $os
+                ]);
+                $_SESSION['success'] = "Serveur ajouté avec succès.";
+                header("Location: serveurs.php");
+                exit;
+            } catch (PDOException $e) {
+                $_SESSION['error'] = "Erreur lors de l'ajout du serveur : " . $e->getMessage();
+            }
+        }
+    }
 }
-?>
 
-<?php
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/db.php';
+
+if (!empty($_SESSION['error'])): ?>
+    <div class="flex items-center bg-red-100 text-red-700 p-3 rounded mb-4">
+        <i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i>
+        <?= htmlspecialchars($_SESSION['error']) ?>
+    </div>
+<?php unset($_SESSION['error']); endif; ?>
+
+<?php if (!empty($_SESSION['success'])): ?>
+    <div class="flex items-center bg-green-100 text-green-700 p-3 rounded mb-4">
+        <i data-lucide="check-circle" class="w-5 h-5 mr-2"></i>
+        <?= htmlspecialchars($_SESSION['success']) ?>
+    </div>
+<?php unset($_SESSION['success']); endif;
 
 // Requête pour récupérer les serveurs
 $stmt = $pdo->query("SELECT * FROM servers ORDER BY id DESC");

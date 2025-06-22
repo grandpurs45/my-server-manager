@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>My Server Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body class="bg-gray-100">
 <div class="flex h-screen">
