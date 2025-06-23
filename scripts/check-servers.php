@@ -1,18 +1,22 @@
 <?php
 require_once __DIR__ . '/../includes/db.php';
 
-function isHostUp($hostname) {
-    $output = null;
-    $status = null;
+function isHostUp(string $ip): bool {
+    if (!function_exists('exec')) return false;
 
-    // Adapté à Windows & Linux (utilise ping avec 1 paquet)
-    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-        exec("ping -n 1 $hostname", $output, $status);
-    } else {
-        exec("ping -c 1 $hostname", $output, $status);
-    }
+    $timeout = 1;
+    $pingCmd = (stripos(PHP_OS, 'WIN') === 0)
+        ? "ping -n 1 -w " . ($timeout * 1000) . " $ip"
+        : "ping -c 1 -W $timeout $ip";
 
-    return $status === 0;
+    exec($pingCmd, $output, $resultCode);
+    /* si besoin de logs
+    if ($resultCode !== 0) {
+        error_log("Ping failed for $ip");
+        return false;
+    }*/
+    // Ne pas parser le texte, juste le code de retour
+    return $resultCode === 0;
 }
 
 $stmt = $pdo->query("SELECT id, hostname FROM servers");
