@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.2](https://github.com/grandpurs45/my-server-manager/compare/v0.5.1...v0.5.2) (2025-06-23)
+
+
+### Bug Fixes
+
+* sauvegarde des données en cas de modifications BUG-003 ([844a9f7](https://github.com/grandpurs45/my-server-manager/commit/844a9f76ef4fd84de7787254c37c748fab524690))
+
 ### [0.5.1](https://github.com/grandpurs45/my-server-manager/compare/v0.5.0...v0.5.1) (2025-06-23)
 
 
