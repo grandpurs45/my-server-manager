@@ -132,18 +132,37 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <td class="p-3"><?= htmlspecialchars($server['name'] ?? '') ?></td>
                         <td class="p-3"><?= htmlspecialchars($server['hostname'] ?? '') ?></td>
                         <td class="p-3"><?= htmlspecialchars($server['os'] ?? '—') ?></td>
-                        <td class="p-3" id="status-<?= $server['id'] ?>">
-                            <div class="text-gray-400 italic flex items-center gap-1">
-                                <i data-lucide="loader-2" class="animate-spin w-4 h-4"></i> En attente...
-                            </div>
-                        </td>
+                        <!-- Colonne Statut (ping) -->
                         <td class="p-3">
                             <?php
-                                $sshStatus = $server['ssh_status'] ?? 'fail';
-                                if ($sshStatus === 'success') {
-                                    echo '<span class="text-green-600 font-semibold bg-green-100 px-2 py-1 rounded text-sm">SSH OK</span>';
+                                 $status = $server['status'] ?? 'unknown';
+                                    if ($status === 'up') {
+                                        echo '<span class="inline-flex items-center gap-1 text-green-700 bg-green-100 px-2 py-1 rounded text-sm" title="Ping réussi">
+                                                <i data-lucide="check-circle" class="w-4 h-4"></i> UP
+                                            </span>';
+                                    } elseif ($status === 'down') {
+                                        echo '<span class="inline-flex items-center gap-1 text-red-700 bg-red-100 px-2 py-1 rounded text-sm" title="Hôte injoignable">
+                                                <i data-lucide="x-circle" class="w-4 h-4"></i> DOWN
+                                            </span>';
+                                    } else {
+                                        echo '<span class="inline-flex items-center gap-1 text-gray-600 bg-gray-100 px-2 py-1 rounded text-sm" title="Statut inconnu">
+                                                <i data-lucide="help-circle" class="w-4 h-4"></i> —
+                                            </span>';
+                                    }
+                            ?>
+                        </td>
+                        <!-- Colonne SSH -->
+                        <td class="p-3">
+                            <?php
+                                 $ssh = $server['ssh_status'] ?? 'fail';
+                                if ($ssh === 'success') {
+                                    echo '<span class="inline-flex items-center gap-1 text-green-700 bg-green-100 px-2 py-1 rounded text-sm" title="Connexion SSH réussie">
+                                            <i data-lucide="terminal" class="w-4 h-4"></i> SSH OK
+                                        </span>';
                                 } else {
-                                    echo '<span class="text-red-600 font-semibold bg-red-100 px-2 py-1 rounded text-sm">Échec SSH</span>';
+                                    echo '<span class="inline-flex items-center gap-1 text-red-700 bg-red-100 px-2 py-1 rounded text-sm" title="Échec de la connexion SSH">
+                                            <i data-lucide="alert-octagon" class="w-4 h-4"></i> Échec SSH
+                                        </span>';
                                 }
                             ?>
                         </td>
@@ -179,17 +198,4 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
     });
 <?php endif; ?>
 
-fetch("/api/ping-status.php")
-  .then(res => res.json())
-  .then(data => {
-    for (const [id, status] of Object.entries(data)) {
-      const cell = document.getElementById(`status-${id}`);
-      if (cell) {
-        cell.innerHTML = status === 'up'
-          ? '<span class="text-green-600 font-semibold"><i class="fa-solid fa-circle-check"></i> UP</span>'
-          : '<span class="text-red-600 font-semibold"><i class="fa-solid fa-circle-xmark"></i> DOWN</span>';
-      }
-    }
-  })
-  .catch(error => console.error("Erreur fetch statut:", error));
 </script>

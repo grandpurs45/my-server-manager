@@ -24,7 +24,7 @@ Ajout d’un `window.history.replaceState(...)` dans la fonction `toggleModal(fa
 
 ---
 
-## 🐞 BUG-002 – Formulaire non réinitialisé après modification
+[#0004] – Formulaire non réinitialisé après modification
 
 📝 Description :
 Après avoir modifié un serveur, si l’utilisateur cliquait sur “➕ Ajouter un serveur”, le formulaire de la modale était pré-rempli avec les anciennes données de modification.
@@ -37,4 +37,15 @@ Ajout d’un resetForm() au clic sur “Ajouter un serveur” + nettoyage de l�
 
 📦 Date du correctif : 2025-06-23
 🔖 Version concernée : Hotfix v0.5.1
+
+---
+
+[#0003] Nom du serveur non mis à jour dans le tableau
+Symptôme : Après modification d’un serveur, le nom affiché dans le tableau restait l’ancien, bien que le champ de formulaire et la base de données montraient la nouvelle valeur.
+
+Cause : Le tableau affichait encore les anciennes données car la requête SQL de récupération (SELECT * FROM servers) était exécutée avant le traitement POST d'édition, donc avec un cache mémoire encore chaud.
+
+Correction : Le traitement d’édition a été déplacé avant la récupération des serveurs, pour refléter les données modifiées dès la redirection vers serveurs.php.
+
+Statut : ✅ Corrigé dans la version v0.5.2.
 
