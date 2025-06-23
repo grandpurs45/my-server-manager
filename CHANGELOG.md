@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.1](https://github.com/grandpurs45/my-server-manager/compare/v0.6.0...v0.6.1) (2025-06-23)
+
+
+### Bug Fixes
+
+* correction du retour du ping sur windows ([d8875fd](https://github.com/grandpurs45/my-server-manager/commit/d8875fd1582b7bfe29b2e271ec00f314e7c08d15))
+
 ## [0.6.0](https://github.com/grandpurs45/my-server-manager/compare/v0.5.2...v0.6.0) (2025-06-23)
 
 
