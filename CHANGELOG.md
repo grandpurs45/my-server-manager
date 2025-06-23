@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.1](https://github.com/grandpurs45/my-server-manager/compare/v0.5.0...v0.5.1) (2025-06-23)
+
+
+### Features
+
+* ajout de composer et de phpseclib ([afa55e4](https://github.com/grandpurs45/my-server-manager/commit/afa55e4fd73e28b3ce677535244791645f8008f5))
+* ajout du support SSH et refonte formulaire serveur ([8985988](https://github.com/grandpurs45/my-server-manager/commit/8985988f1dad65eea09a85e4e8ce19eacd53c3e5))
+* refonte du code pour passer en POO ([f2548ba](https://github.com/grandpurs45/my-server-manager/commit/f2548ba58b6c63a63bf582d8ba27d4b6e681d043))
+
+
+### Bug Fixes
+
+* reset du formulaire d'ajout après modification BUG-002 ([a778b88](https://github.com/grandpurs45/my-server-manager/commit/a778b8850d9f1b538e8fc79eb90394b2c9532a9d))
+
 ## [0.5.0](https://github.com/grandpurs45/my-server-manager/compare/v0.4.1...v0.5.0) (2025-06-22)
 
 
