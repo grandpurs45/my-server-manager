@@ -43,6 +43,46 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete_id'])) {
     }
 }
 
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['form_mode']) && $_POST['form_mode'] === 'edit') {
+    $id = (int) $_POST['id'];
+    $name = trim($_POST['name'] ?? '');
+    $hostname = trim($_POST['hostname'] ?? '');
+    $port = (int) ($_POST['port'] ?? 22);
+    $ssh_user = trim($_POST['ssh_user'] ?? '');
+    $ssh_password = trim($_POST['ssh_password'] ?? '');
+
+    if (!$name || !$hostname || !$ssh_user || !$ssh_password) {
+        $_SESSION['error'] = "Tous les champs sont obligatoires.";
+    } else {
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE servers SET 
+                    name = :name,
+                    hostname = :hostname,
+                    port = :port,
+                    ssh_user = :ssh_user,
+                    ssh_password = :ssh_password
+                WHERE id = :id
+            ");
+            $stmt->execute([
+                ':name' => $name,
+                ':hostname' => $hostname,
+                ':port' => $port,
+                ':ssh_user' => $ssh_user,
+                ':ssh_password' => $ssh_password,
+                ':id' => $id
+            ]);
+
+            $_SESSION['success'] = "Serveur modifié avec succès.";
+        } catch (PDOException $e) {
+            $_SESSION['error'] = "Erreur lors de la modification : " . $e->getMessage();
+        }
+    }
+
+    header("Location: serveurs.php");
+    exit;
+}
+
 require_once __DIR__ . '/../includes/header.php';
 
 $stmt = $pdo->query("SELECT * FROM servers ORDER BY id DESC");
@@ -90,7 +130,7 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php foreach ($servers as $server): ?>
                     <tr class="border-t">
                         <td class="p-3"><?= htmlspecialchars($server['name'] ?? '') ?></td>
-                        <td class="p-3"><?= htmlspecialchars($server['ip_address'] ?? '') ?></td>
+                        <td class="p-3"><?= htmlspecialchars($server['hostname'] ?? '') ?></td>
                         <td class="p-3"><?= htmlspecialchars($server['os'] ?? '—') ?></td>
                         <td class="p-3" id="status-<?= $server['id'] ?>">
                             <div class="text-gray-400 italic flex items-center gap-1">
