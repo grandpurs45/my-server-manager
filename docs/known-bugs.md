@@ -23,3 +23,18 @@ Si on clique sur ❌ ou “Annuler”, l’URL reste inchangée → à la procha
 Ajout d’un `window.history.replaceState(...)` dans la fonction `toggleModal(false)` pour nettoyer l’URL.
 
 ---
+
+## 🐞 BUG-002 – Formulaire non réinitialisé après modification
+
+📝 Description :
+Après avoir modifié un serveur, si l’utilisateur cliquait sur “➕ Ajouter un serveur”, le formulaire de la modale était pré-rempli avec les anciennes données de modification.
+
+🔍 Cause :
+Le paramètre ?edit=ID restait dans l’URL, et la modale se rouvrait avec les anciennes valeurs via $editData.
+
+✅ Fix appliqué :
+Ajout d’un resetForm() au clic sur “Ajouter un serveur” + nettoyage de l’URL pour supprimer edit.
+
+📦 Date du correctif : 2025-06-23
+🔖 Version concernée : Hotfix v0.5.1
+

@@ -9,6 +9,15 @@ All notable changes to this project will be documented in this file. See [standa
 
 * amelioration du ping qui ne se fait plus au chargement de la page mais après ([b02347d](https://github.com/grandpurs45/my-server-manager/commit/b02347de153a09d4eba33d1ee9d6a02686186862))
 * amelioration du spinner ([d85939d](https://github.com/grandpurs45/my-server-manager/commit/d85939d2c37a3c90bbe6c432e33d97861d2cd15a))
+* ✨ Ajout du support SSH à l’ajout de serveur
+* 🧠 Refonte partielle vers une structure orientée objet
+* 🖼️ Modale d’ajout améliorée (design Tailwind + édition dynamique)
+* 🗂️ Démarrage du registre de bugs connus
+
+### Bug Fixes
+
+* 🪲 Correctifs divers (nom/IP vides, statut modale en édition…)
+
 
 ### [0.4.1](https://github.com/grandpurs45/my-server-manager/compare/v0.4.0...v0.4.1) (2025-06-22)
 
