@@ -6,6 +6,9 @@ session_start();
 
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../autoloader.php';
+
+use MSM\SSHUtils;
 
 $editMode = false;
 $editData = null;
@@ -55,13 +58,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['form_mode']) && $_POS
         $_SESSION['error'] = "Tous les champs sont obligatoires.";
     } else {
         try {
+            $os = SSHUtils::detectOS($hostname, $port, $ssh_user, $ssh_password);
+            $ssh_status = ($os === null) ? 'fail' : 'success';
+            if ($os === null) {
+                $os = 'OS inconnu';
+                $_SESSION['error'] = "Connexion SSH impossible. Données mises à jour sans détection d’OS.";
+            } else {
+                $_SESSION['success'] = "Serveur modifié avec succès.";
+            }
+
             $stmt = $pdo->prepare("
                 UPDATE servers SET 
                     name = :name,
                     hostname = :hostname,
                     port = :port,
                     ssh_user = :ssh_user,
-                    ssh_password = :ssh_password
+                    ssh_password = :ssh_password,
+                    os = :os,
+                    ssh_status = :ssh_status
                 WHERE id = :id
             ");
             $stmt->execute([
@@ -70,6 +84,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['form_mode']) && $_POS
                 ':port' => $port,
                 ':ssh_user' => $ssh_user,
                 ':ssh_password' => $ssh_password,
+                ':os' => $os,
+                ':ssh_status' => $ssh_status,
                 ':id' => $id
             ]);
 
@@ -87,6 +103,18 @@ require_once __DIR__ . '/../includes/header.php';
 
 $stmt = $pdo->query("SELECT * FROM servers ORDER BY id DESC");
 $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+function getOSLogo(string $osName): string {
+    $osName = strtolower($osName);
+    return match (true) {
+        str_contains($osName, 'debian') => '/assets/logos/debian.png',
+        str_contains($osName, 'ubuntu') => '/assets/logos/ubuntu.png',
+        str_contains($osName, 'windows') => '/assets/logos/windows.png',
+        default => '/assets/logos/unknown.png',
+    };
+}
+
+include __DIR__ . '/../includes/server-modal.php';
 ?>
 
 <main class="p-6">
@@ -111,8 +139,6 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
         <?php unset($_SESSION['success']); endif; ?>
 
-    <?php include __DIR__ . '/../includes/server-modal.php'; ?>
-
     <table class="w-full table-auto border border-gray-200 rounded-lg overflow-hidden shadow">
         <thead class="bg-gray-100 text-left">
             <tr>
@@ -131,8 +157,12 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <tr class="border-t">
                         <td class="p-3"><?= htmlspecialchars($server['name'] ?? '') ?></td>
                         <td class="p-3"><?= htmlspecialchars($server['hostname'] ?? '') ?></td>
-                        <td class="p-3"><?= htmlspecialchars($server['os'] ?? '—') ?></td>
-                        <!-- Colonne Statut (ping) -->
+                        <td class="p-3">
+                            <div class="flex items-center gap-2">
+                                <img src="<?= getOSLogo($server['os'] ?? '') ?>" alt="Logo OS" class="w-5 h-5">
+                                <span><?= htmlspecialchars($server['os'] ?? '—') ?></span>
+                            </div>
+                        </td>
                         <td class="p-3">
                             <?php
                                  $status = $server['status'] ?? 'unknown';
@@ -151,7 +181,6 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     }
                             ?>
                         </td>
-                        <!-- Colonne SSH -->
                         <td class="p-3">
                             <?php
                                  $ssh = $server['ssh_status'] ?? 'fail';
@@ -188,14 +217,11 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </tbody>
     </table>
 </main>
-
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
-
-<script>
 <?php if ($editMode): ?>
+<script>
     window.addEventListener('DOMContentLoaded', () => {
         toggleModal(true);
     });
-<?php endif; ?>
-
 </script>
+<?php endif; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

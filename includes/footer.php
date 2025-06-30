@@ -9,19 +9,7 @@ $version = getVersionFromPackageJson();
 
 <script>
     lucide.createIcons();
-    function hideLoading() {
-      const spinner = document.getElementById('loading');
-      if (spinner) {
-        spinner.remove(); // supprime complètement le div du DOM
-      }
-    }
-
-    // Exécute dès que le DOM est prêt
-    document.addEventListener('DOMContentLoaded', hideLoading);
-
-    // Sécurité : supprime au bout de 5 secondes max si jamais tout bloque
-    setTimeout(hideLoading, 5000);
-
+    
     function toggleModal(show) {
         console.log("toggleModal called with show =", show); // DEBUG
         document.getElementById('modal').classList.toggle('hidden', !show);
