@@ -9,7 +9,7 @@ function isHostUp(string $ip): bool {
     $pingCmd = (stripos(PHP_OS, 'WIN') === 0)
         ? "ping -n 1 -w " . ($timeout * 1000) . " $ip"
         : "ping -c 1 -W $timeout $ip";
-
+    //file_put_contents(__DIR__ . '/../msm-debug.log', "Ping vers : $ip\n", FILE_APPEND);
     exec($pingCmd, $output, $resultCode);
 
     return $resultCode === 0;

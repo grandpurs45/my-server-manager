@@ -1,7 +1,3 @@
 <?php
-spl_autoload_register(function ($class) {
-    $file = __DIR__ . '/classes/' . $class . '.php';
-    if (file_exists($file)) {
-        require_once $file;
-    }
-});
+// D'abord l'autoloader de Composer (librairies tierces)
+require_once __DIR__ . '/vendor/autoload.php';
