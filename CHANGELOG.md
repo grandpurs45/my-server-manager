@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.3](https://github.com/grandpurs45/my-server-manager/compare/v0.6.1...v0.7.3) (2025-06-30)
+
+
+### Features
+
+* Détection automatique de l’OS lors de l’ajout/modification d’un serveur ([9aca3eb](https://github.com/grandpurs45/my-server-manager/commit/9aca3eb64656951458684b3ca5571e837007b0ee))
+
+
+### Bug Fixes
+
+* ajout colonne status dans bdd qui manquait en prod ([ab43156](https://github.com/grandpurs45/my-server-manager/commit/ab4315654bbee677c199c01bd18e6fedeb41f91f))
+
 ### [0.6.1](https://github.com/grandpurs45/my-server-manager/compare/v0.6.0...v0.6.1) (2025-06-23)
 
 
