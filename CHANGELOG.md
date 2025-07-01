@@ -8,6 +8,33 @@ All notable changes to this project will be documented in this file. See [standa
 ### Features
 
 * Détection automatique de l’OS lors de l’ajout/modification d’un serveur ([9aca3eb](https://github.com/grandpurs45/my-server-manager/commit/9aca3eb64656951458684b3ca5571e837007b0ee))
+- Détection automatique de l'OS à l'ajout/modification d'un serveur :
+  - Linux : via `/etc/os-release`
+  - Windows : via PowerShell `(Get-CimInstance Win32_OperatingSystem).Caption`
+  - Fallback : commande `ver` pour les cas minimaux
+- Affichage du nom complet de l’OS détecté
+- Ajout automatique du logo OS (Debian, Ubuntu, Windows, Unknown, etc.)
+- Gestion des connexions SSH via phpseclib3 avec timeout et logs
+- Création d’un fichier `ssh-debug.log` dans `/logs/` pour le débogage SSH
+- Affichage combiné possible des messages `success` et `error` à l’écran
+- Ping initial et statut SSH mis à jour automatiquement à la modification
+
+### Modifié
+- Suppression du fichier `edit-server.php` (fusionné dans `serveurs.php`)
+- `functions.php` : fonction `isHostUp()` plus robuste et compatible Windows/Linux
+- Amélioration de l’apparence visuelle (logos, icônes statuts, messages utilisateurs)
+- Refactorisation de la classe `SSHUtils` avec timeout, logs, fallback
+
+### Corrigé
+- [#0002] Formulaire non réinitialisé après modification
+- Chargement infini de la page lié au div `#loading`
+- Echec silencieux de `phpseclib` en cas de nom d’hôte non résolu (`.lan`)
+
+### À venir
+- Ping initial à l’ajout du serveur (non encore automatisé)
+- Bouton manuel "Mettre à jour le statut"
+- Suffixe DNS personnalisable dans les paramètres
+- Blocage des doublons lors de l’ajout (hostname/nom identique)
 
 
 ### Bug Fixes
