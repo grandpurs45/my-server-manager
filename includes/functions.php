@@ -1,4 +1,7 @@
 <?php
+
+
+
 //fonction de PING
 function isHostUp(string $ip): bool {
     if (!function_exists('exec')) {
@@ -32,6 +35,21 @@ function getRemoteOS(string $ip): ?string {
     }
 
     return null;
+}
+
+
+function isDebugMode(): bool {
+    if (file_exists(__DIR__ . '/../.debug')) {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+    return 1;
+    } else {
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+    error_reporting(0);
+    return 0;
+    }
 }
 
 ?>

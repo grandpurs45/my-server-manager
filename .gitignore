@@ -11,6 +11,7 @@
 
 # Fichiers système
 .DS_Store
+.debug
 Thumbs.db
 
 # Dossiers à ne pas versionner
