@@ -25,9 +25,14 @@ ob_end_flush();
 <div class="flex h-screen">
     <!-- Sidebar -->
     <aside class="w-60 bg-blue-700 text-white p-6">
-        <div class="text-2xl font-bold mb-10">MSM</div>
+        <a href="<?= $baseUrl ?>index.php" class="flex flex-col items-center gap-2 mb-10">
+                    <div class="bg-white rounded-xl p-2 shadow-md">
+                        <img src="<?= $baseUrl ?>assets/logos/logo_msm.png" alt="Logo MSM" class="w-16 h-16">
+                    </div>
+                    <span class="text-2xl font-bold">MSM</span>
+        </a>
         <nav class="space-y-4">
-            <a href="#" class="flex items-center hover:text-gray-200">
+            <a href="<?= $baseUrl ?>index.php" class="flex items-center hover:text-gray-200">
                 <!-- Dashboard -->
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2"
                      viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
