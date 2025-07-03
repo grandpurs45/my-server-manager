@@ -3,8 +3,9 @@ session_start();
 
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../autoloader.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
+use MSM\SettingsManager;
 use MSM\SSHUtils;
 
 $editMode = false;

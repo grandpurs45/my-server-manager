@@ -14,7 +14,11 @@ $baseUrl = '/'; // Toujours à la racine du projet, que tu sois en /index.php ou
 <body class="bg-gray-100">
 <?php
 require_once __DIR__ . '/functions.php';
-if (isDebugMode()) {
+require_once __DIR__ . '/../includes/bootstrap.php';
+
+use MSM\SettingsManager;
+
+if (defined('DEBUG') && DEBUG) {
      echo '<div class="bg-red-100 border border-red-400 text-red-800 text-sm font-bold px-4 py-2 mb-4 rounded shadow">
         ⚠️ MODE DEBUG ACTIVÉ : les erreurs PHP sont visibles à l’écran.
     </div>';

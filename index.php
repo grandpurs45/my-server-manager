@@ -1,5 +1,8 @@
-<?php include 'includes/header.php'; 
-require_once __DIR__ . '/includes/functions.php';
+<?php 
+include 'includes/header.php'; 
+require_once __DIR__ . '/includes/bootstrap.php';
+
+use MSM\SettingsManager;
 ?>
 
 <div class="container mx-auto px-4 py-8">
