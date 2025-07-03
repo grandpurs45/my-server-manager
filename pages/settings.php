@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../classes/SettingsManager.php';
+require_once __DIR__ . '/../autoloader.php';
+
+use MSM\SettingsManager;
 
 $settingsManager = new SettingsManager($pdo);
 
@@ -64,17 +66,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['category'])) {
         tabBtn.addEventListener('click', () => {
             const selectedTab = tabBtn.getAttribute('data-tab');
 
-            // Activer l'onglet
+            // Désactiver tous les onglets
             document.querySelectorAll('#tab-menu button').forEach(btn => {
                 btn.classList.remove('border-blue-500', 'text-blue-600');
-                btn.classList.add('border-transparent');
+                btn.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
             });
+
+            // Activer l’onglet cliqué
+            tabBtn.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
             tabBtn.classList.add('border-blue-500', 'text-blue-600');
 
-            // Afficher le bon contenu
+            // Masquer tout le contenu
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.add('hidden');
             });
+
+            // Afficher le contenu sélectionné
             document.querySelector(`.tab-content[data-tab-content="${selectedTab}"]`).classList.remove('hidden');
         });
     });

@@ -1,4 +1,6 @@
 <?php
+namespace MSM;
+
 use phpseclib3\Net\SSH2;
 
 class Serveur {

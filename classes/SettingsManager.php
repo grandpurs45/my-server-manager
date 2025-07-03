@@ -1,8 +1,10 @@
 <?php
-class SettingsManager {
-    private PDO $pdo;
+namespace MSM;
 
-    public function __construct(PDO $pdo) {
+class SettingsManager {
+    private \PDO $pdo;
+
+    public function __construct(\PDO $pdo) {
         $this->pdo = $pdo;
     }
 
@@ -24,13 +26,13 @@ class SettingsManager {
     public function getAllByCategory(string $category): array {
         $stmt = $this->pdo->prepare("SELECT setting_key, setting_value FROM settings WHERE category = ?");
         $stmt->execute([$category]);
-        return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+        return $stmt->fetchAll(\PDO::FETCH_KEY_PAIR);
     }
 
     public function getAll(): array {
         $stmt = $this->pdo->query("SELECT category, setting_key, setting_value FROM settings ORDER BY category, setting_key");
         $settings = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $settings[$row['category']][$row['setting_key']] = $row['setting_value'];
         }
         return $settings;
