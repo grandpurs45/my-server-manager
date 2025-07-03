@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0](https://github.com/grandpurs45/my-server-manager/compare/v0.6.1...v0.8.0) (2025-07-03)
+
+
+### Features
+
+* Ajout du mode debug (affiche les erreurs php) ([eccf3ca](https://github.com/grandpurs45/my-server-manager/commit/eccf3ca6bf273a074ca037c25d45e7b7e823ae4f))
+* ajout fonctione debug dans les paramètres ([90667ee](https://github.com/grandpurs45/my-server-manager/commit/90667ee7409f76bba59cb8157aa7f714a3d89352))
+* creation de la page settings et de la classe SettingsManager ([ebaf13c](https://github.com/grandpurs45/my-server-manager/commit/ebaf13cc9a8f843646393d559984db4c24513dd1))
+* Détection automatique de l’OS lors de l’ajout/modification d’un serveur ([2ad5d34](https://github.com/grandpurs45/my-server-manager/commit/2ad5d34e2f1fcb9cb06d26aec9c5c767f99e4713))
+
+
+### Bug Fixes
+
+* ajout colonne status dans bdd qui manquait en prod ([ab43156](https://github.com/grandpurs45/my-server-manager/commit/ab4315654bbee677c199c01bd18e6fedeb41f91f))
+
 ### [0.7.3](https://github.com/grandpurs45/my-server-manager/compare/v0.6.1...v0.7.3) (2025-06-30)
 
 
