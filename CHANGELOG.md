@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.9.0](https://github.com/grandpurs45/my-server-manager/compare/v0.8.0...v0.9.0) (2025-07-04)
+
+
+### Features
+
+* ajout readme ([40592c9](https://github.com/grandpurs45/my-server-manager/commit/40592c9cd8f8fdccfa80001fa3c77b60468728d6))
+* **supervision:** creation de la page de supervision, affichage en mode card ([c47581f](https://github.com/grandpurs45/my-server-manager/commit/c47581f16b363b58a9dae480836fd7a4c2182cec))
+
 ## [0.8.0](https://github.com/grandpurs45/my-server-manager/compare/v0.6.1...v0.8.0) (2025-07-03)
 
 
