@@ -1,5 +1,8 @@
  My Server Manager (MSM)
 
+
+![GitHub tag (latest)](https://img.shields.io/github/v/tag/grandpurs45/my-server-manager)
+
 **MSM** est une application web de supervision et de gestion de serveurs Linux et Windows, développée en PHP avec une interface simple et efficace.
 
 ## 🚀 Fonctionnalités actuelles
