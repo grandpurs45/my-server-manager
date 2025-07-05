@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.10.0](https://github.com/grandpurs45/my-server-manager/compare/v0.9.0...v0.10.0) (2025-07-05)
+
+
+### Features
+
+* CHiffrement AES des mots de passe en base de données ([c378d41](https://github.com/grandpurs45/my-server-manager/commit/c378d41a49190de080babdfdd97ddf6c5ad8d12c))
+
 ## [0.9.0](https://github.com/grandpurs45/my-server-manager/compare/v0.8.0...v0.9.0) (2025-07-04)
 
 
