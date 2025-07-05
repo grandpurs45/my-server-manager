@@ -1,0 +1,1 @@
+ALTER TABLE servers ADD COLUMN ssh_port INT DEFAULT 22;

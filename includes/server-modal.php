@@ -35,9 +35,9 @@ $formAction = $editMode ? 'serveurs.php' : '/pages/add-server.php';
             </div>
 
             <div>
-                <label class="block font-medium mb-1" for="port">Port SSH</label>
-                <input type="number" id="server-port" name="port"
-                       value="<?= htmlspecialchars($editData['port'] ?? 22) ?>"
+                <label class="block font-medium mb-1" for="ssh_port">Port SSH</label>
+                <input type="number" id="ssh_port" name="ssh_port"
+                       value="<?= htmlspecialchars($editData['ssh_port'] ?? 22) ?>"
                        required
                        class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"/>
             </div>
@@ -52,10 +52,7 @@ $formAction = $editMode ? 'serveurs.php' : '/pages/add-server.php';
 
             <div>
                 <label class="block font-medium mb-1" for="ssh_password">Mot de passe SSH</label>
-                <input type="password" id="server-password" name="ssh_password"
-                       value="<?= htmlspecialchars($editData['ssh_password'] ?? '') ?>"
-                       required
-                       class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"/>
+                <input type="password" name="ssh_password" value="" placeholder="Laisser vide pour conserver">
             </div>
 
             <div class="text-right pt-2 flex justify-end gap-2">

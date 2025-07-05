@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file. See [standa
 
 * ajout readme ([40592c9](https://github.com/grandpurs45/my-server-manager/commit/40592c9cd8f8fdccfa80001fa3c77b60468728d6))
 * **supervision:** creation de la page de supervision, affichage en mode card ([c47581f](https://github.com/grandpurs45/my-server-manager/commit/c47581f16b363b58a9dae480836fd7a4c2182cec))
+- Supervision des serveurs en temps réel (ping)
+- Enregistrement de la latence et du statut UP/DOWN en base
+- Table `server_metrics` pour historiser les mesures
+- Bouton manuel de mise à jour des statuts
+- Affichage des dernières latences dans les cartes
+- Code de ping compatible Windows/Linux avec parsing amélioré
 
 ## [0.8.0](https://github.com/grandpurs45/my-server-manager/compare/v0.6.1...v0.8.0) (2025-07-03)
 
