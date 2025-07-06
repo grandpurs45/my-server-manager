@@ -146,10 +146,10 @@ class ServerChecker
 
     private function updateSshOk(int $id, bool $ok): void
     {
-        $stmt = $this->pdo->prepare("UPDATE servers SET ssh_ok = :ok WHERE id = :id");
+        $stmt = $this->pdo->prepare("UPDATE servers SET ssh_status = :status WHERE id = :id");
         $stmt->execute([
-            ':ok' => $ok ? 1 : 0,
-            ':id' => $id
+            ':status' => $ok ? 'success' : 'fail',
+            ':id'     => $id
         ]);
     }
 }
