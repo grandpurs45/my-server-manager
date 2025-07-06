@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.11.0](https://github.com/grandpurs45/my-server-manager/compare/v0.10.0...v0.11.0) (2025-07-06)
+
+
+### Features
+
+* **serveurs:** ajout case a cocher pour ne pas faire de ssh sur un serveur + status ssh désactivé ([dbf46a7](https://github.com/grandpurs45/my-server-manager/commit/dbf46a75ce9c783f37699ff80957658442a213fb))
+* **serveurs:** ajout du ping a la creation du serveur ([60f2194](https://github.com/grandpurs45/my-server-manager/commit/60f2194bbaf83baad0eeddef776651608978adcf))
+
 ## [0.10.0](https://github.com/grandpurs45/my-server-manager/compare/v0.9.0...v0.10.0) (2025-07-05)
 
 
