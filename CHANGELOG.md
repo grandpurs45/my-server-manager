@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.11.2](https://github.com/grandpurs45/my-server-manager/compare/v0.11.1...v0.11.2) (2025-07-06)
+
+
+### Bug Fixes
+
+* actualisation serveur ne mettais pas a jour le ping si SSH désactivé ([0e1ecc1](https://github.com/grandpurs45/my-server-manager/commit/0e1ecc14f09cdb6736599164cace0ef6c70145da))
+
+### [0.11.2](https://github.com/grandpurs45/my-server-manager/compare/v0.11.1...v0.11.2) (2025-07-06)
+
+
+### Bug Fixes
+
+* actualisation serveur ne mettais pas a jour le ping si SSH désactivé ([0e1ecc1](https://github.com/grandpurs45/my-server-manager/commit/0e1ecc14f09cdb6736599164cace0ef6c70145da))
+
 ### [0.11.1](https://github.com/grandpurs45/my-server-manager/compare/v0.11.0...v0.11.1) (2025-07-06)
 
 
