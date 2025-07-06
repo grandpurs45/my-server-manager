@@ -6,6 +6,22 @@ use MSM\SettingsManager;
 
 $stmt = $pdo->query("SELECT * FROM servers ORDER BY name ASC");
 $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Récupération des dernières valeurs de métrique disque
+$metricsStmt = $pdo->query("
+    SELECT server_id, value 
+    FROM server_metrics 
+    WHERE type = 'disk' 
+    AND measured_at = (
+        SELECT MAX(measured_at)
+        FROM server_metrics sm2 
+        WHERE sm2.server_id = server_metrics.server_id AND sm2.type = 'disk'
+    )
+");
+
+$diskUsages = [];
+foreach ($metricsStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+    $diskUsages[$row['server_id']] = round($row['value']);
+}
 ?>
 
 <div class="p-6">
@@ -36,12 +52,36 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <h2 class="text-lg font-semibold mb-1"><?php echo htmlspecialchars($server['name']); ?></h2>
                     <p class="text-sm text-gray-600 mb-2"><?php echo htmlspecialchars($server['hostname']); ?></p>
 
+
+
                     <div class="flex items-center justify-between mb-2">
                         <?php if ($server['status'] === 'up'): ?>
                             <span class="inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">UP</span>
                         <?php else: ?>
                             <span class="inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full">DOWN</span>
                         <?php endif; ?>
+                        
+                        <!--Affichage Pastille SSH -->
+                        <span class="inline-block px-2 py-1 text-xs font-semibold rounded mt-1
+                            <?php
+                                if (!$server['ssh_enabled']) {
+                                    echo 'text-gray-500 bg-gray-100';
+                                } elseif ($server['ssh_status'] === 'success') {
+                                    echo 'text-green-700 bg-green-100';
+                                } else {
+                                    echo 'text-red-700 bg-red-100';
+                                }
+                            ?>">
+                            <?php
+                                if (!$server['ssh_enabled']) {
+                                    echo 'SSH désactivé';
+                                } elseif ($server['ssh_status'] === 'success') {
+                                    echo 'SSH OK';
+                                } else {
+                                    echo 'Échec SSH';
+                                }
+                            ?>
+                        </span>
 
                         <?php
                             if ($lastCheck) {
@@ -72,6 +112,10 @@ $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <p class="text-xs text-gray-500 mt-1 italic">
                             ⏱️ <?php echo (int) $server['latency']; ?> ms
                         </p>
+                    <?php endif; ?>
+                    <!--Affichage Disque dur -->
+                    <?php if (isset($diskUsages[$server['id']])): ?>
+                        <div class="text-sm text-gray-700 mb-1">🗄️ <?php echo $diskUsages[$server['id']]; ?>&nbsp;% utilisé</div>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
