@@ -22,13 +22,6 @@ class ServerChecker
         $now = date('Y-m-d H:i:s');
 
         foreach ($servers as $server) {
-            if (isset($server['ssh_enabled']) && !$server['ssh_enabled']) {
-                echo "[{$server['hostname']}] SSH désactivé\n";
-
-                // Mise à jour SSH KO si jamais activé avant
-                $this->updateSshOk($server['id'], false);
-                continue;
-            }
             $ping = $this->getPingStats($server['hostname']);
             $status = $ping['status'];
             $latency = $ping['latency'];
@@ -56,6 +49,14 @@ class ServerChecker
             }
 
             echo "[{$server['hostname']}] status=$status latency=" . ($latency ?? '-') . "\n";
+            
+            if (isset($server['ssh_enabled']) && !$server['ssh_enabled']) {
+                echo "[{$server['hostname']}] SSH désactivé\n";
+
+                // Mise à jour SSH KO si jamais activé avant
+                $this->updateSshOk($server['id'], false);
+                continue;
+            }
         }
     }
 

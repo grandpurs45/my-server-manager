@@ -31,11 +31,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete_id'])) {
     $id = (int) $_POST['delete_id'];
 
     try {
+        // Supprimer les métriques associées
+        $stmt = $pdo->prepare("DELETE FROM server_metrics WHERE server_id = :id");
+        $stmt->execute([':id' => $id]);
+
+        // Supprimer le serveur
         $stmt = $pdo->prepare("DELETE FROM servers WHERE id = :id");
         $stmt->execute([':id' => $id]);
 
         $_SESSION['success'] = $stmt->rowCount() > 0
-            ? "Serveur supprimé avec succès."
+            ? "Serveur et métriques supprimés avec succès."
             : "Le serveur n'a pas été trouvé.";
 
         header("Location: serveurs.php");
@@ -44,6 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete_id'])) {
         $_SESSION['error'] = "Erreur lors de la suppression : " . $e->getMessage();
     }
 }
+
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['form_mode']) && $_POST['form_mode'] === 'edit') {
     $id = (int) $_POST['id'];
