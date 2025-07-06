@@ -13,31 +13,59 @@ $hostname = trim($_POST['hostname'] ?? '');
 $ssh_port = isset($_POST['ssh_port']) && is_numeric($_POST['ssh_port']) ? (int) $_POST['ssh_port'] : 22;
 $ssh_user = trim($_POST['ssh_user'] ?? '');
 $ssh_password = isset($_POST['ssh_password']) ? encrypt($_POST['ssh_password']) : '';
+$ssh_enabled = isset($_POST['ssh_enabled']) ? 1 : 0;
 
-if (!$name || !$hostname || !$ssh_user || !$ssh_password) {
-    $_SESSION['error'] = "Tous les champs sont obligatoires.";
+if (!$name || !$hostname) {
+    $_SESSION['error'] = "Nom et adresse du serveur sont obligatoires.";
     header("Location: ../pages/serveurs.php");
     exit;
 }
 
-try {
-    $os = SSHUtils::detectOS($hostname, $ssh_port, $ssh_user, $ssh_password);
-    $ssh_status = ($os === null) ? 'fail' : 'success';
+if ($ssh_enabled && (!$ssh_user || !$ssh_password || !$ssh_port)) {
+    $_SESSION['error'] = "Tous les champs SSH sont obligatoires si la connexion SSH est activée.";
+    header("Location: ../pages/serveurs.php");
+    exit;
+}
 
-    if ($os === null) {
-        $os = 'OS inconnu';
-        $_SESSION['error'] = "Connexion SSH impossible. Serveur ajouté sans détection d’OS.";
-    } else {
+if ($ssh_enabled) {
+    $ssh_status = 'fail'; // par défaut
+    $os = 'OS inconnu';
+
+    try {
+        $os_detected = SSHUtils::detectOS($hostname, $ssh_port, $ssh_user, $ssh_password);
+        if ($os_detected !== null) {
+            $os = $os_detected;
+            $ssh_status = 'success';
+            $_SESSION['success'] = "Serveur ajouté avec succès.";
+        } else {
+            $_SESSION['error'] = "Connexion SSH impossible. Serveur ajouté sans détection d’OS.";
+        }
+    } catch (Exception $e) {
+        $_SESSION['error'] = "Erreur SSH : " . $e->getMessage();
+    }
+}
+
+// ✅ Insérer le serveur dans tous les cas
+try {
+    $stmt = $pdo->prepare("INSERT INTO servers (name, hostname, ssh_port, ssh_user, ssh_password, os, ssh_status, ssh_enabled)
+                    VALUES (:name, :hostname, :ssh_port, :ssh_user, :ssh_password, :os, :ssh_status, :ssh_enabled)");
+
+    $stmt->execute([
+        ':name'        => $name,
+        ':hostname'    => $hostname,
+        ':ssh_port'    => $ssh_port,
+        ':ssh_user'    => $ssh_user,
+        ':ssh_password'=> $ssh_password,
+        ':os'          => $os,
+        ':ssh_status'  => $ssh_status,
+        ':ssh_enabled' => $ssh_enabled
+    ]);
+        // ✅ confirmation dans tous les cas sauf si une erreur SSH a déjà été mise
+    if (!isset($_SESSION['error'])) {
         $_SESSION['success'] = "Serveur ajouté avec succès.";
     }
-
-    $stmt = $pdo->prepare("INSERT INTO servers (name, hostname, ssh_port, ssh_user, ssh_password, os, ssh_status)
-                       VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$name, $hostname, $ssh_port, $ssh_user, $ssh_password, $os, $ssh_status]);
-
 } catch (PDOException $e) {
     $_SESSION['error'] = "Erreur lors de l'ajout : " . $e->getMessage();
 }
-
 header("Location: ../pages/serveurs.php");
 exit;

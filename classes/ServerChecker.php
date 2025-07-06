@@ -17,11 +17,18 @@ class ServerChecker
 
     public function run(): void
     {
-        $stmt = $this->pdo->query("SELECT id, hostname, os, ssh_user, ssh_password, ssh_port FROM servers");
+        $stmt = $this->pdo->query("SELECT id, hostname, os, ssh_user, ssh_password, ssh_port, ssh_enabled FROM servers");
         $servers = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $now = date('Y-m-d H:i:s');
 
         foreach ($servers as $server) {
+            if (isset($server['ssh_enabled']) && !$server['ssh_enabled']) {
+                echo "[{$server['hostname']}] SSH désactivé\n";
+
+                // Mise à jour SSH KO si jamais activé avant
+                $this->updateSshOk($server['id'], false);
+                continue;
+            }
             $ping = $this->getPingStats($server['hostname']);
             $status = $ping['status'];
             $latency = $ping['latency'];

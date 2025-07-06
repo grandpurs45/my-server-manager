@@ -8,6 +8,14 @@ All notable changes to this project will be documented in this file. See [standa
 ### Features
 
 * CHiffrement AES des mots de passe en base de données ([c378d41](https://github.com/grandpurs45/my-server-manager/commit/c378d41a49190de080babdfdd97ddf6c5ad8d12c))
+- 🔐 Ajout du chiffrement AES des mots de passe SSH (via fichier .key local)
+- ✅ Génération d'une clé `msm_secret.key` à l'installation (à prévoir)
+- 📝 Champ `ssh_password` ignoré si vide en modification
+- 🛠️ Migration base : ajout de la colonne `ssh_port`
+- 📥 Prise en compte du port SSH personnalisé à l’ajout et modification
+- ✅ Gestion de la persistance du mot de passe chiffré
+- 🛠️ Détection d’OS toujours active lors des modifications
+- 💬 Amélioration des messages (succès/erreur) en fonction des cas
 
 ## [0.9.0](https://github.com/grandpurs45/my-server-manager/compare/v0.8.0...v0.9.0) (2025-07-04)
 

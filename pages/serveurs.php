@@ -52,6 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['form_mode']) && $_POS
     $ssh_user = trim($_POST['ssh_user'] ?? '');
     $ssh_password = isset($_POST['ssh_password']) ? encrypt($_POST['ssh_password']) : '';
     $ssh_port = isset($_POST['ssh_port']) && is_numeric($_POST['ssh_port']) ? (int) $_POST['ssh_port'] : 22;
+    $ssh_enabled = isset($_POST['ssh_enabled']) ? 1 : 0;
 
 
     if (!$name || !$hostname || !$ssh_user) {
@@ -85,7 +86,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['form_mode']) && $_POS
                     ssh_user = :ssh_user,
                     ssh_password = :ssh_password,
                     os = :os,
-                    ssh_status = :ssh_status
+                    ssh_status = :ssh_status,
+                    ssh_enabled = :ssh_enabled
                 WHERE id = :id
             ");
             $stmt->execute([
@@ -96,7 +98,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['form_mode']) && $_POS
                 ':ssh_password' => $ssh_password,
                 ':os' => $os,
                 ':ssh_status' => $ssh_status,
-                ':id' => $id
+                ':id' => $id,
+                ':ssh_enabled' => $ssh_enabled
             ]);
 
            } catch (PDOException $e) {
@@ -122,8 +125,12 @@ function getOSLogo(string $osName): string {
         default => '/assets/logos/unknown.png',
     };
 }
-
-include __DIR__ . '/../includes/server-modal.php';
+if ($editMode): 
+    $server = $editData; 
+    include '../includes/server-modal.php'; 
+else: 
+    include '../includes/server-modal.php'; 
+endif;
 ?>
 
 <main class="p-6">
@@ -192,8 +199,10 @@ include __DIR__ . '/../includes/server-modal.php';
                         </td>
                         <td class="p-3">
                             <?php
-                                 $ssh = $server['ssh_status'] ?? 'fail';
-                                if ($ssh === 'success') {
+                                $ssh = $server['ssh_status'] ?? 'disabled';
+                                if ($ssh === 'disabled') {
+                                    echo '<span class="text-gray-400 bg-gray-100 px-2 py-1 rounded text-sm">SSH désactivé</span>';
+                                }elseif ($ssh === 'success') {
                                     echo '<span class="inline-flex items-center gap-1 text-green-700 bg-green-100 px-2 py-1 rounded text-sm" title="Connexion SSH réussie">
                                             <i data-lucide="terminal" class="w-4 h-4"></i> SSH OK
                                         </span>';

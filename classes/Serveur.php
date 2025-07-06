@@ -32,19 +32,19 @@ class Serveur {
 
     public function save(PDO $pdo, string $status, ?string $os = null): bool {
         $stmt = $pdo->prepare('
-            INSERT INTO servers (name, ip_address, hostname, port, ssh_user, ssh_password, ssh_status, os, last_check)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-        ');
-        return $stmt->execute([
-            $this->name,
-            $this->ip_address,
-            $this->hostname,
-            $this->port,
-            $this->ssh_user,
-            $this->ssh_password,
-            $status,
-            $os
-        ]);
+    INSERT INTO servers (name, ip_address, hostname, port, ssh_user, ssh_password, ssh_status, os, last_check)
+        VALUES (:name, :ip, :hostname, :port, :user, :pass, :status, :os, NOW())
+    ');
+    return $stmt->execute([
+        ':name'     => $this->name,
+        ':ip'       => $this->ip_address,
+        ':hostname' => $this->hostname,
+        ':port'     => $this->port,
+        ':user'     => $this->ssh_user,
+        ':pass'     => $this->ssh_password,
+        ':status'   => $status,
+        ':os'       => $os
+]);
     }
 
     public function update(PDO $pdo, string $status, ?string $os = null): bool {
