@@ -59,7 +59,7 @@ class ServerChecker
         }
     }
 
-    private function getPingStats(string $ip): array
+    public function getPingStats(string $ip): array
     {
         if (!function_exists('exec')) return ['status' => 'down', 'latency' => null];
 

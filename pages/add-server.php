@@ -7,6 +7,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/crypto.php';
 
 use MSM\SSHUtils;
+use MSM\ServerChecker;
 
 $name = trim($_POST['name'] ?? '');
 $hostname = trim($_POST['hostname'] ?? '');
@@ -46,9 +47,12 @@ if ($ssh_enabled) {
 }
 
 // ✅ Insérer le serveur dans tous les cas
+$checker = new ServerChecker($pdo);
+$pingResult = $checker->getPingStats($hostname); // ou $ip si tu préfères
+$status = $pingResult['status'] === 'up' ? 'UP' : 'DOWN';
 try {
-    $stmt = $pdo->prepare("INSERT INTO servers (name, hostname, ssh_port, ssh_user, ssh_password, os, ssh_status, ssh_enabled)
-                    VALUES (:name, :hostname, :ssh_port, :ssh_user, :ssh_password, :os, :ssh_status, :ssh_enabled)");
+    $stmt = $pdo->prepare("INSERT INTO servers (name, hostname, ssh_port, ssh_user, ssh_password, os, ssh_status, ssh_enabled, status)
+                    VALUES (:name, :hostname, :ssh_port, :ssh_user, :ssh_password, :os, :ssh_status, :ssh_enabled, :status)");
 
     $stmt->execute([
         ':name'        => $name,
@@ -58,7 +62,8 @@ try {
         ':ssh_password'=> $ssh_password,
         ':os'          => $os,
         ':ssh_status'  => $ssh_status,
-        ':ssh_enabled' => $ssh_enabled
+        ':ssh_enabled' => $ssh_enabled,
+        ':status' => $status
     ]);
         // ✅ confirmation dans tous les cas sauf si une erreur SSH a déjà été mise
     if (!isset($_SESSION['error'])) {
@@ -67,5 +72,6 @@ try {
 } catch (PDOException $e) {
     $_SESSION['error'] = "Erreur lors de l'ajout : " . $e->getMessage();
 }
+
 header("Location: ../pages/serveurs.php");
 exit;
