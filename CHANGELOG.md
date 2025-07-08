@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.11.3](https://github.com/grandpurs45/my-server-manager/compare/v0.11.2...v0.11.3) (2025-07-08)
+
+
+### Features
+
+* **supervision:** ajout du disque du sur la supervision ([2f1fecf](https://github.com/grandpurs45/my-server-manager/commit/2f1fecf831e47e76eb0c031b908bd226bebd0ef8))
+
+
+### Bug Fixes
+
+* correction connexion ssh ne fonctionnant jamais a la creation du serveur ([232e165](https://github.com/grandpurs45/my-server-manager/commit/232e165a8bf30a2eb2f1ac70f2b4694aa720a4d0))
+
 ### [0.11.2](https://github.com/grandpurs45/my-server-manager/compare/v0.11.1...v0.11.2) (2025-07-06)
 
 
