@@ -13,7 +13,8 @@ $name = trim($_POST['name'] ?? '');
 $hostname = trim($_POST['hostname'] ?? '');
 $ssh_port = isset($_POST['ssh_port']) && is_numeric($_POST['ssh_port']) ? (int) $_POST['ssh_port'] : 22;
 $ssh_user = trim($_POST['ssh_user'] ?? '');
-$ssh_password = isset($_POST['ssh_password']) ? encrypt($_POST['ssh_password']) : '';
+$ssh_password_clair = $_POST['ssh_password'] ?? '';
+$ssh_password_encrypt = $ssh_password_clair ? encrypt($ssh_password_clair) : '';
 $ssh_enabled = isset($_POST['ssh_enabled']) ? 1 : 0;
 
 if (!$name || !$hostname) {
@@ -22,7 +23,7 @@ if (!$name || !$hostname) {
     exit;
 }
 
-if ($ssh_enabled && (!$ssh_user || !$ssh_password || !$ssh_port)) {
+if ($ssh_enabled && (!$ssh_user || !$ssh_password_encrypt || !$ssh_port)) {
     $_SESSION['error'] = "Tous les champs SSH sont obligatoires si la connexion SSH est activée.";
     header("Location: ../pages/serveurs.php");
     exit;
@@ -33,7 +34,7 @@ if ($ssh_enabled) {
     $os = 'OS inconnu';
 
     try {
-        $os_detected = SSHUtils::detectOS($hostname, $ssh_port, $ssh_user, $ssh_password);
+        $os_detected = SSHUtils::detectOS($hostname, $ssh_port, $ssh_user, $ssh_password_clair);
         if ($os_detected !== null) {
             $os = $os_detected;
             $ssh_status = 'success';
@@ -59,7 +60,7 @@ try {
         ':hostname'    => $hostname,
         ':ssh_port'    => $ssh_port,
         ':ssh_user'    => $ssh_user,
-        ':ssh_password'=> $ssh_password,
+        ':ssh_password'=> $ssh_password_encrypt,
         ':os'          => $os,
         ':ssh_status'  => $ssh_status,
         ':ssh_enabled' => $ssh_enabled,

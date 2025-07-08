@@ -57,6 +57,7 @@ class ServerChecker
                 $this->updateSshOk($server['id'], false);
                 continue;
             }
+
         }
     }
 

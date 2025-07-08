@@ -61,28 +61,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['form_mode']) && $_POS
     $ssh_enabled = isset($_POST['ssh_enabled']) ? 1 : 0;
 
 
-    if (!$name || !$hostname || !$ssh_user) {
-        $_SESSION['error'] = "Les champs nom, hôte et utilisateur SSH sont obligatoires.";
+    if (!$name || !$hostname || ($ssh_enabled && !$ssh_user)) {
+    $_SESSION['error'] = "Les champs nom, hôte et utilisateur SSH sont obligatoires si SSH est activé.";
     } else {
         try {
-             if (!empty($ssh_password_input)) {
-                $ssh_password = encrypt($ssh_password_input);
-                $os = MSM\SSHUtils::detectOS($hostname, $ssh_port, $ssh_user, $ssh_password);
-            } else {
-                $stmt = $pdo->prepare("SELECT ssh_password FROM servers WHERE id = :id");
-                $stmt->execute([':id' => $id]);
-                $existing = $stmt->fetch(PDO::FETCH_ASSOC);
-                $ssh_password = $existing['ssh_password'] ?? '';
-                $os = MSM\SSHUtils::detectOS($hostname, $ssh_port, $ssh_user, decrypt($ssh_password));
-            }
+            if ($ssh_enabled) {
+                    if (!empty($ssh_password_input)) {
+                        $ssh_password = encrypt($ssh_password_input);
+                        $os = MSM\SSHUtils::detectOS($hostname, $ssh_port, $ssh_user, $ssh_password);
+                    } else {
+                        $stmt = $pdo->prepare("SELECT ssh_password FROM servers WHERE id = :id");
+                        $stmt->execute([':id' => $id]);
+                        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+                        $ssh_password = $existing['ssh_password'] ?? '';
+                        $os = MSM\SSHUtils::detectOS($hostname, $ssh_port, $ssh_user, decrypt($ssh_password));
+                    }
 
-            $ssh_status = ($os === null) ? 'fail' : 'success';
-            if ($os === null) {
-                $os = 'OS inconnu';
-                $_SESSION['error'] = "Connexion SSH impossible. Données mises à jour sans détection d’OS.";
-            } else {
-                $_SESSION['success'] = "Serveur modifié avec succès.";
-            }
+                    $ssh_status = ($os === null) ? 'fail' : 'success';
+
+                    if ($os === null) {
+                        $os = 'OS inconnu';
+                        $_SESSION['error'] = "Connexion SSH impossible. Données mises à jour sans détection d’OS.";
+                    } else {
+                        $_SESSION['success'] = "Serveur modifié avec succès.";
+                    }
+                    } else {
+                        // SSH désactivé : valeurs par défaut
+                        $stmt = $pdo->prepare("SELECT os, ssh_password FROM servers WHERE id = :id");
+                        $stmt->execute([':id' => $id]);
+                        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+                        $os = $existing['os'] ?? 'OS inconnu';
+                        $ssh_password = $existing['ssh_password'] ?? '';
+                        $ssh_status = 'disabled';
+                        $_SESSION['success'] = "Serveur modifié sans tentative SSH.";
+                    }
 
   $stmt = $pdo->prepare("
                 UPDATE servers SET 
@@ -150,7 +162,7 @@ endif;
     <?php if (!empty($_SESSION['error'])): ?>
         <div class="flex items-center bg-red-100 text-red-700 p-3 rounded mb-4">
             <i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i>
-            <?= htmlspecialchars($_SESSION['error']) ?>
+            <?= htmlspecialchars($_SESSION['error']);?>
         </div>
         <?php unset($_SESSION['error']); endif; ?>
 
@@ -205,10 +217,9 @@ endif;
                         </td>
                         <td class="p-3">
                             <?php
-                                $ssh = $server['ssh_status'] ?? 'disabled';
-                                if ($ssh === 'disabled') {
+                                if (empty($server['ssh_enabled'])) {
                                     echo '<span class="text-gray-400 bg-gray-100 px-2 py-1 rounded text-sm">SSH désactivé</span>';
-                                }elseif ($ssh === 'success') {
+                                } elseif ($server['ssh_status'] === 'success') {
                                     echo '<span class="inline-flex items-center gap-1 text-green-700 bg-green-100 px-2 py-1 rounded text-sm" title="Connexion SSH réussie">
                                             <i data-lucide="terminal" class="w-4 h-4"></i> SSH OK
                                         </span>';

@@ -1,0 +1,3 @@
+<FilesMatch "\.(key|pem|env)$">
+    Require all denied
+</FilesMatch>
