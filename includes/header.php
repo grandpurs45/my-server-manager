@@ -64,15 +64,6 @@ ob_end_flush();
                 Supervision
             </a>
             <a href="#" class="flex items-center hover:text-gray-200">
-                <!-- Sécurité -->
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2"
-                     viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-                Sécurité
-            </a>
-            <a href="#" class="flex items-center hover:text-gray-200">
                 <!-- Alertes -->
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2"
                      viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -80,6 +71,26 @@ ob_end_flush();
                           d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
                 Alertes
+            </a>
+            <!-- Sécurité (menu parent, non cliquable) -->
+            <div class="text-white uppercase text-sm font-bold mt-6 mb-2">Sécurité</div>
+            <a href="<?= $baseUrl ?>pages/securite-serveurs.php" class="flex items-center pl-4 hover:text-gray-200">
+                <!-- Icône terminal/server -->
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 7h18M3 12h18M3 17h18"/>
+                </svg>
+                Serveurs
+            </a>
+            <a href="<?= $baseUrl ?>pages/securite-web.php" class="flex items-center pl-4 hover:text-gray-200">
+                <!-- Icône globe -->
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 3c4.97 0 9 4.03 9 9s-4.03 9-9 9-9-4.03-9-9 4.03-9 9-9zm0 0c2.5 1.5 4 5 4 9s-1.5 7.5-4 9"/>
+                </svg>
+                Web
             </a>
             <a href="<?= $baseUrl ?>pages/settings.php" class="flex items-center hover:text-gray-200">
                 <!-- Paramètres -->
