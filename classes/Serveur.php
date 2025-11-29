@@ -65,4 +65,9 @@ class Serveur {
             $_POST['id'] ?? 0
         ]);
     }
+
+    public static function getAll(\PDO $pdo): array {
+        $stmt = $pdo->query('SELECT * FROM servers ORDER BY name ASC');
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }
