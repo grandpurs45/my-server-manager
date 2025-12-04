@@ -17,8 +17,24 @@ function encrypt(string $plaintext): string {
 
 function decrypt(string $encoded): string {
     $key = getSecretKey();
-    $data = base64_decode($encoded);
+
+    // Décodage strict : si ce n'est pas du base64 valide, on ne tente rien
+    $data = base64_decode($encoded, true);
+    if ($data === false || strlen($data) < 17) {
+        // Cas "legacy" ou non chiffré : on renvoie la valeur originale telle quelle
+        return $encoded;
+    }
+
     $iv = substr($data, 0, 16);
     $ciphertext = substr($data, 16);
-    return openssl_decrypt($ciphertext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+
+    $plaintext = openssl_decrypt($ciphertext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+
+    // Si le déchiffrement échoue (clé différente, données corrompues, etc.),
+    // on renvoie aussi la valeur d'origine plutôt que de faire planter/avertir.
+    if ($plaintext === false) {
+        return $encoded;
+    }
+
+    return $plaintext;
 }
