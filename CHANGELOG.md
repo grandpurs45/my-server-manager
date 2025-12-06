@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.12.0](https://github.com/grandpurs45/my-server-manager/compare/v0.11.3...v0.12.0) (2025-12-06)
+
+
+### Features
+
+* ajout des pages securité serveurs et securité web ([8f0da78](https://github.com/grandpurs45/my-server-manager/commit/8f0da7800083ba0da086eaf3cd301ed26dc64ad4))
+* mise à jour script check-servers + ajouts sécurité (SecurityAudit, détails sécurité) ([e7c7a2f](https://github.com/grandpurs45/my-server-manager/commit/e7c7a2f4acab42dba51a4e3da295c401b0540f25))
+
+
+### Bug Fixes
+
+* rendre decrypt() tolérant aux anciens mots de passe (IV / base64) ([0b1e549](https://github.com/grandpurs45/my-server-manager/commit/0b1e549f543dc3320ec9cf660288f22c2e670f0d))
+
 ### [0.11.3](https://github.com/grandpurs45/my-server-manager/compare/v0.11.2...v0.11.3) (2025-07-08)
 
 
