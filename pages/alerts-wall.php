@@ -1,62 +1,14 @@
 <?php
 require_once __DIR__ . '/../includes/bootstrap.php';
+require_once __DIR__ . '/../includes/alerts_helper.php';
 require_once __DIR__ . '/../includes/header.php';
 
 // On récupère tous les serveurs
 $stmt = $pdo->query("SELECT * FROM servers ORDER BY name ASC");
 $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$alerts = [];
-
-// Construction des "alertes" à partir de l'état des serveurs
-foreach ($servers as $server) {
-    $serverAlerts = [];
-
-    // 1) Serveur DOWN (ping KO)
-    if ($server['status'] !== 'up') {
-        $serverAlerts[] = [
-            'level'   => 'critical',
-            'reason'  => 'Ping KO',
-            'message' => 'Serveur injoignable'
-        ];
-    }
-
-    // 2) SSH KO alors qu’il est activé
-    if (
-        isset($server['ssh_enabled'], $server['ssh_ok'])
-        && (int)$server['ssh_enabled'] === 1
-        && (int)$server['ssh_ok'] === 0
-    ) {
-        $serverAlerts[] = [
-            'level'   => 'warning',
-            'reason'  => 'SSH KO',
-            'message' => 'Connexion SSH impossible'
-        ];
-    }
-
-    // 3) Latence élevée (par ex. > 100 ms) pour un serveur UP
-    if (
-        $server['status'] === 'up'
-        && isset($server['latency'])
-        && $server['latency'] !== null
-        && (int)$server['latency'] > 100
-    ) {
-        $serverAlerts[] = [
-            'level'   => 'warning',
-            'reason'  => 'Latence élevée',
-            'message' => 'Latence ' . (int)$server['latency'] . ' ms'
-        ];
-    }
-
-    foreach ($serverAlerts as $alert) {
-        $alerts[] = [
-            'server' => $server,
-            'level'  => $alert['level'],
-            'reason' => $alert['reason'],
-            'message'=> $alert['message'],
-        ];
-    }
-}
+// Construction des alertes via le helper commun
+$alerts = msm_build_supervision_alerts($servers);
 ?>
 
 <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-slate-100 flex flex-col">
