@@ -25,15 +25,29 @@ foreach ($metricsStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
 ?>
 
 <div class="p-6">
-    <h1 class="text-2xl font-bold mb-6 flex justify-between items-center">
-        Supervision des serveurs
+    <div class="mb-6 flex items-center justify-between">
+        <!-- Titre + bouton Mur d'alertes -->
+        <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-bold text-slate-900">
+                Supervision des serveurs
+            </h1>
+
+            <a href="alerts-wall.php" target="_blank"
+               class="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+                <span>🛰️</span>
+                <span>Mur d'alertes</span>
+            </a>
+        </div>
+
+        <!-- Bouton Mettre à jour les statuts -->
         <form method="post" action="update-status.php">
-            <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded hover:bg-blue-700">
-                🔄 Mettre à jour les statuts
+            <button type="submit"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded shadow hover:bg-blue-700">
+                <span>🔄</span>
+                <span>Mettre à jour les statuts</span>
             </button>
         </form>
-    </h1>
-
+    </div>
     <?php if (isset($_GET['checked'])): ?>
         <div class="mb-4 p-3 bg-green-100 text-green-800 text-sm rounded border border-green-300">
             Statuts des serveurs mis à jour avec succès.
