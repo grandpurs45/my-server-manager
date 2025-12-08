@@ -29,6 +29,8 @@ $alerts = msm_build_supervision_alerts($servers);
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="MSM">
     <link rel="apple-touch-icon" href="/assets/logos/msm-192.png">
+    <link rel="apple-touch-startup-image" href="/assets/logos/splash-2732.png">
+
 
     <style>
         html, body {

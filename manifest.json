@@ -3,8 +3,8 @@
   "short_name": "MSM",
   "start_url": "/pages/alerts-wall-standalone.php",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#020617",
+  "theme_color": "#020617",
   "icons": [
     {
       "src": "/assets/logos/msm-192.png",
@@ -18,3 +18,4 @@
     }
   ]
 }
+
