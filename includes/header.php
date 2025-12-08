@@ -10,6 +10,8 @@ $baseUrl = '/'; // Toujours à la racine du projet, que tu sois en /index.php ou
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="icon" type="image/png" href="/assets/favicon.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0f172a">
 </head>
 <body class="bg-gray-100">
 <?php

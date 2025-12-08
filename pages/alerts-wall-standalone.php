@@ -32,9 +32,96 @@ $alerts = msm_build_supervision_alerts($servers);
             overflow: hidden;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
+        /* Effet scanlines (très léger, style écran de contrôle) */
+        .scanlines {
+            position: relative;
+        }
+        .scanlines::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(255,255,255,0.05) 0px,
+                rgba(255,255,255,0.03) 1px,
+                transparent 2px,
+                transparent 4px
+            );
+            mix-blend-mode: overlay;
+            opacity: 0.12;
+        }
+        /* Glow futuriste autour des cartes */
+        .hud-card {
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .hud-card:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.35);
+        }
+        /* Effet réticule (radar) */
+        .hud-reticule::before {
+            content: "";
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            top: -10%;
+            left: -10%;
+            border-radius: 50%;
+            border: 1px dashed rgba(0, 255, 255, 0.15);
+            animation: rotate 12s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        /* Effet "scan de vaisseau" lent et discret */
+        .ambient-scan {
+            position: relative;
+        }
+
+        /* Balayage lumineux qui traverse l'écran */
+        .ambient-scan::before {
+            content: "";
+            position: fixed;
+            top: -20%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            pointer-events: none;
+            background: radial-gradient(
+                circle at 0% 50%,
+                rgba(56, 189, 248, 0.20),   /* cyan-400 */
+                rgba(56, 189, 248, 0.05),
+                transparent 60%
+            );
+            mix-blend-mode: screen;
+            opacity: 0.15;
+            animation: msm-ship-scan 22s linear infinite;
+        }
+
+        /* Animation du balayage : gauche -> droite -> gauche */
+        @keyframes msm-ship-scan {
+            0% {
+                transform: translateX(-60%) rotate(8deg);
+            }
+            50% {
+                transform: translateX(60%) rotate(8deg);
+            }
+            100% {
+                transform: translateX(-60%) rotate(8deg);
+            }
+        }
+
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black text-slate-100 flex flex-col">
+<body class="ambient-scan min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black text-slate-100 flex flex-col">
 
 <header class="px-6 py-4 border-b border-slate-700/60 bg-slate-900/80 backdrop-blur flex items-center justify-between">
     <div class="flex items-center gap-3">
@@ -56,7 +143,7 @@ $alerts = msm_build_supervision_alerts($servers);
     </div>
 </header>
 
-<main class="flex-1 px-6 py-6 overflow-auto">
+<main class="scanlines flex-1 px-6 py-6 overflow-auto">
     <?php if (empty($alerts)): ?>
         <div class="h-full flex flex-col items-center justify-center gap-6">
             <div class="text-6xl">✅</div>
@@ -87,7 +174,7 @@ $alerts = msm_build_supervision_alerts($servers);
                     default    => 'bg-sky-400 text-slate-900',
                 };
             ?>
-                <div class="border <?= $levelClasses ?> rounded-2xl p-4 shadow-lg relative overflow-hidden">
+                <div class="hud-card hud-reticule border <?= $levelClasses ?> rounded-2xl p-4 shadow-lg relative overflow-hidden">
                     <div class="pointer-events-none absolute inset-0 opacity-20">
                         <div class="absolute -right-10 -top-10 w-32 h-32 border border-slate-500/40 rounded-full"></div>
                         <div class="absolute right-6 bottom-4 w-24 h-24 border border-slate-500/30 rounded-xl rotate-6"></div>
