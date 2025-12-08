@@ -10,16 +10,6 @@ $baseUrl = '/'; // Toujours à la racine du projet, que tu sois en /index.php ou
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="icon" type="image/png" href="/assets/favicon.png">
-    <!-- PWA standard -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#0f172a">
-
-    <!-- Spécifique Apple / iPad -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="MSM">
-    <link rel="apple-touch-icon" href="/assets/logos/msm-192.png">
-
 </head>
 <body class="bg-gray-100">
 <?php

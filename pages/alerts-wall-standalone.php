@@ -20,6 +20,16 @@ $alerts = msm_build_supervision_alerts($servers);
     <!-- Tailwind via CDN (comme dans ton projet) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- PWA standard -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- Spécifique Apple / iPad -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="MSM">
+    <link rel="apple-touch-icon" href="/assets/logos/msm-192.png">
+
     <style>
         html, body {
             margin: 0;
