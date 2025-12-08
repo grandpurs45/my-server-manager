@@ -29,7 +29,20 @@ $alerts = msm_build_supervision_alerts($servers);
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="MSM">
     <link rel="apple-touch-icon" href="/assets/logos/msm-192.png">
-    <link rel="apple-touch-startup-image" href="/assets/logos/splash-2732.png">
+
+    <!-- iPad Air 2 – Portrait -->
+    <link rel="apple-touch-startup-image"
+        media="(device-width: 768px) and (device-height: 1024px)
+                and (-webkit-device-pixel-ratio: 2)
+                and (orientation: portrait)"
+        href="/assets/logos/splash-1536x2048.png">
+
+    <!-- iPad Air 2 – Landscape -->
+    <link rel="apple-touch-startup-image"
+        media="(device-width: 768px) and (device-height: 1024px)
+                and (-webkit-device-pixel-ratio: 2)
+                and (orientation: landscape)"
+        href="/assets/logos/splash-2048x1536.png">
 
 
     <style>
