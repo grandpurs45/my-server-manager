@@ -35,14 +35,14 @@ $alerts = msm_build_supervision_alerts($servers);
         media="(device-width: 768px) and (device-height: 1024px)
                 and (-webkit-device-pixel-ratio: 2)
                 and (orientation: portrait)"
-        href="/assets/logos/splash-1536x2048.png">
+        href="/assets/logos/splash-2048x1536.png">
 
     <!-- iPad Air 2 – Landscape -->
     <link rel="apple-touch-startup-image"
         media="(device-width: 768px) and (device-height: 1024px)
                 and (-webkit-device-pixel-ratio: 2)
                 and (orientation: landscape)"
-        href="/assets/logos/splash-2048x1536.png">
+        href="/assets/logos/splash-1536x2048.png">
 
 
     <style>
