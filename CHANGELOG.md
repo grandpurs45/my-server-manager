@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.13.0](https://github.com/grandpurs45/my-server-manager/compare/v0.12.0...v0.13.0) (2025-12-21)
+
+
+### Features
+
+* ajout d'un manifest.json pour automatiser le plein ecrans sur une tablette  du mur d'alerte ([b822331](https://github.com/grandpurs45/my-server-manager/commit/b822331f4190347e856951d301a3774ce7494047))
+* ajout de la page mur d'alerte pour affichage sur un écran dédié ([0b99537](https://github.com/grandpurs45/my-server-manager/commit/0b995375a3b223a579b45f8717fbb31ae5574433))
+* ajout des logos pour le mur PWA, et ajout d'un splashscreen ([39125d6](https://github.com/grandpurs45/my-server-manager/commit/39125d6d6584c551e17f2de7eac53ce2b9045355))
+* **alerts:** mutualisation de la logique d'alertes via alerts_helper + ajout page standalone (mur d'alertes iPad) ([a892dfb](https://github.com/grandpurs45/my-server-manager/commit/a892dfbd95d634be2acb19470dc5d9fcb339fda2))
+
+
+### Bug Fixes
+
+* correction des balise META necessaire au PWA directement dans la page du mur d'alerte standalone ([c285685](https://github.com/grandpurs45/my-server-manager/commit/c285685f4c5f80fde7f0023f15ef252c4748d405))
+* correction des balise META pour que le PWA fonctionne pour les materiels Apple ([b460f45](https://github.com/grandpurs45/my-server-manager/commit/b460f45e10e92f579fe0478cf08a6d0cb82f0e85))
+* corrections des image pour le splash screen et ajout des deux format pour le paysage et le portrait ([db4fb69](https://github.com/grandpurs45/my-server-manager/commit/db4fb69c9ae823df483e1138e36c035c6b5dc1e4))
+* inversion image splash screen portrait et paysage ([b60a745](https://github.com/grandpurs45/my-server-manager/commit/b60a745c50f3120d49814a6fa9db91afa810f019))
+
 ## [0.12.0](https://github.com/grandpurs45/my-server-manager/compare/v0.11.3...v0.12.0) (2025-12-06)
 
 
