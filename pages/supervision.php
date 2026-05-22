@@ -2,7 +2,11 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/header.php';
 
-$stmt = $pdo->query("SELECT * FROM servers ORDER BY name ASC");
+$stmt = $pdo->query("
+    SELECT servers.*, TIMESTAMPDIFF(SECOND, last_check, NOW()) AS last_check_age_seconds
+    FROM servers
+    ORDER BY name ASC
+");
 $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $metricsStmt = $pdo->query("
@@ -21,7 +25,7 @@ foreach ($metricsStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     $diskUsages[$row['server_id']] = round($row['value']);
 }
 
-function formatLastCheck(?string $lastCheck): array {
+function formatLastCheck(?string $lastCheck, mixed $ageSeconds): array {
     if (empty($lastCheck)) {
         return [
             'text' => 'Jamais verifie',
@@ -29,15 +33,14 @@ function formatLastCheck(?string $lastCheck): array {
         ];
     }
 
-    $lastCheckTime = strtotime($lastCheck);
-    if ($lastCheckTime === false) {
+    if ($ageSeconds === null || !is_numeric($ageSeconds)) {
         return [
             'text' => 'Date invalide',
             'color' => 'text-red-600',
         ];
     }
 
-    $diffSeconds = time() - $lastCheckTime;
+    $diffSeconds = (int) $ageSeconds;
 
     if ($diffSeconds < -60) {
         $futureMinutes = (int) ceil(abs($diffSeconds) / 60);
@@ -114,7 +117,10 @@ function formatLastCheck(?string $lastCheck): array {
     <?php else: ?>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             <?php foreach ($servers as $server):
-                $lastCheckStatus = formatLastCheck($server['last_check'] ?? null);
+                $lastCheckStatus = formatLastCheck(
+                    $server['last_check'] ?? null,
+                    $server['last_check_age_seconds'] ?? null
+                );
             ?>
                 <div class="border rounded-xl p-4 shadow-sm bg-white">
                     <h2 class="text-lg font-semibold mb-1"><?php echo htmlspecialchars($server['name']); ?></h2>
