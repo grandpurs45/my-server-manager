@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 0.14.0 (unreleased)
+
+### Features
+
+* ajout d'un endpoint Prometheus `/metrics` exposant les derniers statuts connus des serveurs
+* ajout de la classe `MSM\PrometheusExporter` pour isoler le formatage des metriques Prometheus
+
+### Bug Fixes
+
+* correction du statut insere a la creation d'un serveur (`up` / `down`) pour rester coherent avec le schema SQL
+* fiabilisation des scripts de migration pour initialiser automatiquement `migrations_applied`
+* correction des migrations initiales pour permettre une installation sur base neuve
+* correction de l'affichage du dernier check dans la page supervision lorsque la date est future ou decalee
+
 ## [0.13.0](https://github.com/grandpurs45/my-server-manager/compare/v0.12.0...v0.13.0) (2025-12-21)
 
 

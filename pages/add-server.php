@@ -50,7 +50,7 @@ if ($ssh_enabled) {
 // ✅ Insérer le serveur dans tous les cas
 $checker = new ServerChecker($pdo);
 $pingResult = $checker->getPingStats($hostname); // ou $ip si tu préfères
-$status = $pingResult['status'] === 'up' ? 'UP' : 'DOWN';
+$status = $pingResult['status'] === 'up' ? 'up' : 'down';
 try {
     $stmt = $pdo->prepare("INSERT INTO servers (name, hostname, ssh_port, ssh_user, ssh_password, os, ssh_status, ssh_enabled, status)
                     VALUES (:name, :hostname, :ssh_port, :ssh_user, :ssh_password, :os, :ssh_status, :ssh_enabled, :status)");

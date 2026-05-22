@@ -53,6 +53,32 @@ msm/
 3. Lancer en local avec XAMPP ou un serveur Apache/PHP
 4. Accéder à l’application via `http://localhost/msm/`
 
+## Export Prometheus
+
+MSM expose un endpoint Prometheus en texte brut :
+
+```text
+http://localhost/msm/metrics
+```
+
+Si la reecriture Apache n'est pas active, utiliser directement :
+
+```text
+http://localhost/msm/metrics.php
+```
+
+Les metriques exposees par cette premiere version viennent uniquement de la base MSM. Le endpoint `/metrics` ne lance pas de ping, SSH ou analyse distante afin de rester rapide et compatible avec un scrape Prometheus regulier.
+
+Exemple de sortie :
+
+```text
+# HELP msm_server_up Last known server reachability status from MSM.
+# TYPE msm_server_up gauge
+msm_server_up{server="srv-docker",hostname="srv-docker.lan"} 1
+msm_ssh_ok{server="srv-docker",hostname="srv-docker.lan"} 1
+msm_server_latency_ms{server="srv-docker",hostname="srv-docker.lan"} 4
+```
+
 ## 🧠 Technologies utilisées
 
 - PHP 8+
@@ -60,6 +86,7 @@ msm/
 - Tailwind CSS
 - phpseclib (connexion SSH)
 - Composer (autoload)
+- Prometheus / Grafana (export de metriques)
 
 ## 📌 TODO / Roadmap
 

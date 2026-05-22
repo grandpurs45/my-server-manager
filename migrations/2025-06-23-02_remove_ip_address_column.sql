@@ -1,1 +1,1 @@
-ALTER TABLE servers DROP COLUMN ip_address;
+ALTER TABLE servers DROP COLUMN IF EXISTS ip_address;

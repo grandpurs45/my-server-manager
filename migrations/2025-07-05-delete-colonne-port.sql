@@ -1,1 +1,1 @@
-ALTER TABLE servers DROP COLUMN port;
+ALTER TABLE servers DROP COLUMN IF EXISTS port;

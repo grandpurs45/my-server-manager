@@ -1,3 +1,6 @@
 <FilesMatch "\.(key|pem|env)$">
     Require all denied
 </FilesMatch>
+
+RewriteEngine On
+RewriteRule ^metrics$ metrics.php [L]
