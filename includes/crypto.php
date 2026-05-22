@@ -1,11 +1,18 @@
 <?php
+require_once __DIR__ . '/config.php';
 
 function getSecretKey(): string {
-    $keyFile = __DIR__ . '/../msm_secret.key';
-    if (!file_exists($keyFile)) {
-        throw new Exception("Clé de chiffrement manquante : msm_secret.key");
+    $envKey = msmEnv('MSM_SECRET_KEY');
+    if (!empty($envKey)) {
+        return $envKey;
     }
-    return trim(file_get_contents($keyFile));
+
+    $keyFile = __DIR__ . '/../msm_secret.key';
+    if (file_exists($keyFile)) {
+        return trim(file_get_contents($keyFile));
+    }
+
+    throw new Exception("Cle de chiffrement manquante. Configure MSM_SECRET_KEY dans .env.");
 }
 
 function encrypt(string $plaintext): string {
@@ -18,10 +25,8 @@ function encrypt(string $plaintext): string {
 function decrypt(string $encoded): string {
     $key = getSecretKey();
 
-    // Décodage strict : si ce n'est pas du base64 valide, on ne tente rien
     $data = base64_decode($encoded, true);
     if ($data === false || strlen($data) < 17) {
-        // Cas "legacy" ou non chiffré : on renvoie la valeur originale telle quelle
         return $encoded;
     }
 
@@ -30,8 +35,6 @@ function decrypt(string $encoded): string {
 
     $plaintext = openssl_decrypt($ciphertext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
 
-    // Si le déchiffrement échoue (clé différente, données corrompues, etc.),
-    // on renvoie aussi la valeur d'origine plutôt que de faire planter/avertir.
     if ($plaintext === false) {
         return $encoded;
     }

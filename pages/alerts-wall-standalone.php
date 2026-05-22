@@ -2,11 +2,8 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/alerts_helper.php';
 
-// Récupération des serveurs
 $stmt = $pdo->query("SELECT * FROM servers ORDER BY name ASC");
 $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Construction des alertes via le helper commun
 $alerts = msm_build_supervision_alerts($servers);
 ?>
 
@@ -16,58 +13,38 @@ $alerts = msm_build_supervision_alerts($servers);
     <meta charset="utf-8">
     <title>MSM - Mur d'alertes</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- Tailwind via CDN (comme dans ton projet) -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- PWA standard -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
-
-    <!-- Spécifique Apple / iPad -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="MSM">
     <link rel="apple-touch-icon" href="/assets/logos/msm-192.png">
-
-    <!-- iPad Air 2 – Portrait -->
     <link rel="apple-touch-startup-image"
-        media="(device-width: 768px) and (device-height: 1024px)
-                and (-webkit-device-pixel-ratio: 2)
-                and (orientation: portrait)"
+        media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
         href="/assets/logos/splash-1536x2048.png">
-
-    <!-- iPad Air 2 – Landscape -->
     <link rel="apple-touch-startup-image"
-        media="(device-width: 768px) and (device-height: 1024px)
-                and (-webkit-device-pixel-ratio: 2)
-                and (orientation: landscape)"
+        media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
         href="/assets/logos/splash-2048x1536.png">
-
-
     <style>
         html, body {
             margin: 0;
             padding: 0;
-            background: #020617; /* slate-950 */
-            color: #e5e7eb;      /* slate-200 */
+            background: #020617;
+            color: #e5e7eb;
             height: 100%;
         }
         body {
             overflow: hidden;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
-        /* Effet scanlines (très léger, style écran de contrôle) */
         .scanlines {
             position: relative;
         }
         .scanlines::after {
             content: "";
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             pointer-events: none;
             background: repeating-linear-gradient(
                 to bottom,
@@ -79,84 +56,26 @@ $alerts = msm_build_supervision_alerts($servers);
             mix-blend-mode: overlay;
             opacity: 0.12;
         }
-        /* Glow futuriste autour des cartes */
         .hud-card {
             transition: box-shadow 0.3s ease, transform 0.3s ease;
         }
-
         .hud-card:hover {
             transform: translateY(-2px) scale(1.02);
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.35);
         }
-        /* Effet réticule (radar) */
-        .hud-reticule::before {
-            content: "";
-            position: absolute;
-            width: 120%;
-            height: 120%;
-            top: -10%;
-            left: -10%;
-            border-radius: 50%;
-            border: 1px dashed rgba(0, 255, 255, 0.15);
-            animation: rotate 12s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-        }
-        /* Effet "scan de vaisseau" lent et discret */
-        .ambient-scan {
-            position: relative;
-        }
-
-        /* Balayage lumineux qui traverse l'écran */
-        .ambient-scan::before {
-            content: "";
-            position: fixed;
-            top: -20%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            pointer-events: none;
-            background: radial-gradient(
-                circle at 0% 50%,
-                rgba(56, 189, 248, 0.20),   /* cyan-400 */
-                rgba(56, 189, 248, 0.05),
-                transparent 60%
-            );
-            mix-blend-mode: screen;
-            opacity: 0.15;
-            animation: msm-ship-scan 22s linear infinite;
-        }
-
-        /* Animation du balayage : gauche -> droite -> gauche */
-        @keyframes msm-ship-scan {
-            0% {
-                transform: translateX(-60%) rotate(8deg);
-            }
-            50% {
-                transform: translateX(60%) rotate(8deg);
-            }
-            100% {
-                transform: translateX(-60%) rotate(8deg);
-            }
-        }
-
     </style>
 </head>
-<body class="ambient-scan min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black text-slate-100 flex flex-col">
+<body class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black text-slate-100 flex flex-col">
 
 <header class="px-6 py-4 border-b border-slate-700/60 bg-slate-900/80 backdrop-blur flex items-center justify-between">
     <div class="flex items-center gap-3">
         <div class="w-8 h-8 rounded-full bg-emerald-400 animate-pulse shadow-lg shadow-emerald-500/40"></div>
         <div>
             <h1 class="text-xl font-semibold tracking-widest uppercase text-slate-100">
-                MSM • Mur d'alertes
+                MSM - Mur d'alertes
             </h1>
             <p class="text-xs text-slate-400 tracking-widest uppercase">
-                Supervision temps réel
+                Supervision temps reel
             </p>
         </div>
     </div>
@@ -171,13 +90,12 @@ $alerts = msm_build_supervision_alerts($servers);
 <main class="scanlines flex-1 px-6 py-6 overflow-auto">
     <?php if (empty($alerts)): ?>
         <div class="h-full flex flex-col items-center justify-center gap-6">
-            <div class="text-6xl">✅</div>
             <div class="text-center">
                 <p class="text-2xl font-semibold text-emerald-300">
                     Aucune alerte active
                 </p>
                 <p class="text-sm text-slate-400 mt-2">
-                    Tous les systèmes sont opérationnels. <span class="italic">Le vaisseau est en régime nominal.</span>
+                    Tous les systemes sont operationnels.
                 </p>
             </div>
         </div>
@@ -185,34 +103,27 @@ $alerts = msm_build_supervision_alerts($servers);
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             <?php foreach ($alerts as $alert):
                 $server = $alert['server'];
-                $level  = $alert['level'];
+                $level = $alert['level'];
 
                 $levelClasses = match ($level) {
                     'critical' => 'border-red-500/70 bg-red-900/30 shadow-red-500/40',
-                    'warning'  => 'border-amber-400/70 bg-amber-900/20 shadow-amber-400/40',
-                    default    => 'border-sky-500/70 bg-sky-900/20 shadow-sky-500/40',
+                    'warning' => 'border-amber-400/70 bg-amber-900/20 shadow-amber-400/40',
+                    default => 'border-sky-500/70 bg-sky-900/20 shadow-sky-500/40',
                 };
 
                 $badgeClasses = match ($level) {
                     'critical' => 'bg-red-500/90 text-white',
-                    'warning'  => 'bg-amber-400 text-slate-900',
-                    default    => 'bg-sky-400 text-slate-900',
+                    'warning' => 'bg-amber-400 text-slate-900',
+                    default => 'bg-sky-400 text-slate-900',
                 };
             ?>
-                <div class="hud-card hud-reticule border <?= $levelClasses ?> rounded-2xl p-4 shadow-lg relative overflow-hidden">
-                    <div class="pointer-events-none absolute inset-0 opacity-20">
-                        <div class="absolute -right-10 -top-10 w-32 h-32 border border-slate-500/40 rounded-full"></div>
-                        <div class="absolute right-6 bottom-4 w-24 h-24 border border-slate-500/30 rounded-xl rotate-6"></div>
-                    </div>
-
+                <div class="hud-card border <?= $levelClasses ?> rounded-2xl p-4 shadow-lg relative overflow-hidden">
                     <div class="flex justify-between items-start relative z-10">
                         <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full <?= $badgeClasses ?> tracking-wide uppercase">
-                                    <?= htmlspecialchars(strtoupper($alert['reason'])) ?>
-                                </span>
-                            </div>
-                            <h2 class="text-lg font-semibold">
+                            <span class="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full <?= $badgeClasses ?> tracking-wide uppercase">
+                                <?= htmlspecialchars(strtoupper($alert['reason'])) ?>
+                            </span>
+                            <h2 class="text-lg font-semibold mt-2">
                                 <?= htmlspecialchars($server['name']) ?>
                             </h2>
                             <p class="text-xs text-slate-400 font-mono">
@@ -222,17 +133,7 @@ $alerts = msm_build_supervision_alerts($servers);
                         <div class="text-right text-xs text-slate-400">
                             <?php if (!empty($server['last_check'])): ?>
                                 <div>Dernier check :</div>
-                                <div class="font-mono">
-                                    <?= htmlspecialchars($server['last_check']) ?>
-                                </div>
-                            <?php endif; ?>
-                            <?php if (!empty($server['latency']) && $server['status'] === 'up'): ?>
-                                <div class="mt-1">
-                                    Latence :
-                                    <span class="font-mono">
-                                        <?= (int)$server['latency'] ?> ms
-                                    </span>
-                                </div>
+                                <div class="font-mono"><?= htmlspecialchars($server['last_check']) ?></div>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -240,15 +141,6 @@ $alerts = msm_build_supervision_alerts($servers);
                     <p class="mt-3 text-sm text-slate-200 relative z-10">
                         <?= htmlspecialchars($alert['message']) ?>
                     </p>
-
-                    <div class="mt-4 flex items-center justify-between text-[11px] text-slate-400 relative z-10">
-                        <span class="font-mono">
-                            ID #<?= (int)$server['id'] ?>
-                        </span>
-                        <span class="tracking-widest uppercase">
-                            Supervision
-                        </span>
-                    </div>
                 </div>
             <?php endforeach; ?>
         </div>
@@ -266,12 +158,10 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// Auto-refresh toutes les 30s
 setTimeout(() => {
     window.location.reload();
 }, 30000);
 
-// Tentative plein écran (certains navigateurs le bloqueront peut-être)
 document.addEventListener('click', () => {
     const elem = document.documentElement;
     if (elem.requestFullscreen) {

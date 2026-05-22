@@ -5,8 +5,8 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/crypto.php';
+require_once __DIR__ . '/../includes/csrf.php';
 
-use MSM\SettingsManager;
 use MSM\SSHUtils;
 
 $editMode = false;
@@ -21,83 +21,82 @@ if (isset($_GET['edit'])) {
     if ($editData) {
         $editMode = true;
     } else {
-        $_SESSION['error'] = "Serveur introuvable.";
-        header("Location: serveurs.php");
+        $_SESSION['error'] = 'Serveur introuvable.';
+        header('Location: serveurs.php');
         exit;
     }
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['delete_id'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    msmRequireValidCsrf('serveurs.php');
+
     $id = (int) $_POST['delete_id'];
 
     try {
-        // Supprimer les métriques associées
         $stmt = $pdo->prepare("DELETE FROM server_metrics WHERE server_id = :id");
         $stmt->execute([':id' => $id]);
 
-        // Supprimer le serveur
         $stmt = $pdo->prepare("DELETE FROM servers WHERE id = :id");
         $stmt->execute([':id' => $id]);
 
         $_SESSION['success'] = $stmt->rowCount() > 0
-            ? "Serveur et métriques supprimés avec succès."
-            : "Le serveur n'a pas été trouvé.";
+            ? 'Serveur et metriques supprimes avec succes.'
+            : "Le serveur n'a pas ete trouve.";
 
-        header("Location: serveurs.php");
+        header('Location: serveurs.php');
         exit;
     } catch (PDOException $e) {
-        $_SESSION['error'] = "Erreur lors de la suppression : " . $e->getMessage();
+        $_SESSION['error'] = 'Erreur lors de la suppression : ' . $e->getMessage();
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'edit') {
+    msmRequireValidCsrf('serveurs.php');
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['form_mode']) && $_POST['form_mode'] === 'edit') {
     $id = (int) $_POST['id'];
     $name = trim($_POST['name'] ?? '');
     $hostname = trim($_POST['hostname'] ?? '');
-    $ssh_user = trim($_POST['ssh_user'] ?? '');
-    $ssh_password = isset($_POST['ssh_password']) ? encrypt($_POST['ssh_password']) : '';
-    $ssh_port = isset($_POST['ssh_port']) && is_numeric($_POST['ssh_port']) ? (int) $_POST['ssh_port'] : 22;
-    $ssh_enabled = isset($_POST['ssh_enabled']) ? 1 : 0;
+    $sshUser = trim($_POST['ssh_user'] ?? '');
+    $sshPasswordInput = $_POST['ssh_password'] ?? '';
+    $sshPort = isset($_POST['ssh_port']) && is_numeric($_POST['ssh_port']) ? (int) $_POST['ssh_port'] : 22;
+    $sshEnabled = isset($_POST['ssh_enabled']) ? 1 : 0;
 
-
-    if (!$name || !$hostname || ($ssh_enabled && !$ssh_user)) {
-    $_SESSION['error'] = "Les champs nom, hôte et utilisateur SSH sont obligatoires si SSH est activé.";
+    if (!$name || !$hostname || ($sshEnabled && !$sshUser)) {
+        $_SESSION['error'] = 'Les champs nom, hote et utilisateur SSH sont obligatoires si SSH est active.';
     } else {
         try {
-            if ($ssh_enabled) {
-                    if (!empty($ssh_password_input)) {
-                        $ssh_password = encrypt($ssh_password_input);
-                        $os = MSM\SSHUtils::detectOS($hostname, $ssh_port, $ssh_user, $ssh_password);
-                    } else {
-                        $stmt = $pdo->prepare("SELECT ssh_password FROM servers WHERE id = :id");
-                        $stmt->execute([':id' => $id]);
-                        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
-                        $ssh_password = $existing['ssh_password'] ?? '';
-                        $os = MSM\SSHUtils::detectOS($hostname, $ssh_port, $ssh_user, decrypt($ssh_password));
-                    }
+            if ($sshEnabled) {
+                if ($sshPasswordInput !== '') {
+                    $sshPassword = encrypt($sshPasswordInput);
+                    $os = SSHUtils::detectOS($hostname, $sshPort, $sshUser, $sshPasswordInput);
+                } else {
+                    $stmt = $pdo->prepare("SELECT ssh_password FROM servers WHERE id = :id");
+                    $stmt->execute([':id' => $id]);
+                    $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $sshPassword = $existing['ssh_password'] ?? '';
+                    $os = SSHUtils::detectOS($hostname, $sshPort, $sshUser, decrypt($sshPassword));
+                }
 
-                    $ssh_status = ($os === null) ? 'fail' : 'success';
+                $sshStatus = ($os === null) ? 'fail' : 'success';
 
-                    if ($os === null) {
-                        $os = 'OS inconnu';
-                        $_SESSION['error'] = "Connexion SSH impossible. Données mises à jour sans détection d’OS.";
-                    } else {
-                        $_SESSION['success'] = "Serveur modifié avec succès.";
-                    }
-                    } else {
-                        // SSH désactivé : valeurs par défaut
-                        $stmt = $pdo->prepare("SELECT os, ssh_password FROM servers WHERE id = :id");
-                        $stmt->execute([':id' => $id]);
-                        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
-                        $os = $existing['os'] ?? 'OS inconnu';
-                        $ssh_password = $existing['ssh_password'] ?? '';
-                        $ssh_status = 'disabled';
-                        $_SESSION['success'] = "Serveur modifié sans tentative SSH.";
-                    }
+                if ($os === null) {
+                    $os = 'OS inconnu';
+                    $_SESSION['error'] = "Connexion SSH impossible. Donnees mises a jour sans detection d'OS.";
+                } else {
+                    $_SESSION['success'] = 'Serveur modifie avec succes.';
+                }
+            } else {
+                $stmt = $pdo->prepare("SELECT os, ssh_password FROM servers WHERE id = :id");
+                $stmt->execute([':id' => $id]);
+                $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+                $os = $existing['os'] ?? 'OS inconnu';
+                $sshPassword = $existing['ssh_password'] ?? '';
+                $sshStatus = 'fail';
+                $_SESSION['success'] = 'Serveur modifie sans tentative SSH.';
+            }
 
-  $stmt = $pdo->prepare("
-                UPDATE servers SET 
+            $stmt = $pdo->prepare("
+                UPDATE servers SET
                     name = :name,
                     hostname = :hostname,
                     ssh_port = :ssh_port,
@@ -111,21 +110,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['form_mode']) && $_POS
             $stmt->execute([
                 ':name' => $name,
                 ':hostname' => $hostname,
-                ':ssh_port' => $ssh_port,
-                ':ssh_user' => $ssh_user,
-                ':ssh_password' => $ssh_password,
+                ':ssh_port' => $sshPort,
+                ':ssh_user' => $sshUser,
+                ':ssh_password' => $sshPassword,
                 ':os' => $os,
-                ':ssh_status' => $ssh_status,
+                ':ssh_status' => $sshStatus,
+                ':ssh_enabled' => $sshEnabled,
                 ':id' => $id,
-                ':ssh_enabled' => $ssh_enabled
             ]);
-
-           } catch (PDOException $e) {
-            $_SESSION['error'] = "Erreur lors de la modification : " . $e->getMessage();
+        } catch (PDOException $e) {
+            $_SESSION['error'] = 'Erreur lors de la modification : ' . $e->getMessage();
         }
     }
 
-    header("Location: serveurs.php");
+    header('Location: serveurs.php');
     exit;
 }
 
@@ -143,35 +141,34 @@ function getOSLogo(string $osName): string {
         default => '/assets/logos/unknown.png',
     };
 }
-if ($editMode): 
-    $server = $editData; 
-    include '../includes/server-modal.php'; 
-else: 
-    include '../includes/server-modal.php'; 
-endif;
+
+$server = $editMode ? $editData : null;
+include __DIR__ . '/../includes/server-modal.php';
 ?>
 
 <main class="p-6">
     <div class="flex justify-between items-center mb-4">
         <h1 class="text-2xl font-bold">Gestion des serveurs</h1>
         <button onclick="resetForm(); toggleModal(true)" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
-            ➕ Ajouter un serveur
+            Ajouter un serveur
         </button>
     </div>
 
     <?php if (!empty($_SESSION['error'])): ?>
         <div class="flex items-center bg-red-100 text-red-700 p-3 rounded mb-4">
             <i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i>
-            <?= htmlspecialchars($_SESSION['error']);?>
+            <?= htmlspecialchars($_SESSION['error']); ?>
         </div>
-        <?php unset($_SESSION['error']); endif; ?>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
 
     <?php if (!empty($_SESSION['success'])): ?>
         <div class="flex items-center bg-green-100 text-green-700 p-3 rounded mb-4">
             <i data-lucide="check-circle" class="w-5 h-5 mr-2"></i>
-            <?= htmlspecialchars($_SESSION['success']) ?>
+            <?= htmlspecialchars($_SESSION['success']); ?>
         </div>
-        <?php unset($_SESSION['success']); endif; ?>
+        <?php unset($_SESSION['success']); ?>
+    <?php endif; ?>
 
     <table class="w-full table-auto border border-gray-200 rounded-lg overflow-hidden shadow">
         <thead class="bg-gray-100 text-left">
@@ -194,49 +191,45 @@ endif;
                         <td class="p-3">
                             <div class="flex items-center gap-2">
                                 <img src="<?= getOSLogo($server['os'] ?? '') ?>" alt="Logo OS" class="w-5 h-5">
-                                <span><?= htmlspecialchars($server['os'] ?? '—') ?></span>
+                                <span><?= htmlspecialchars($server['os'] ?? '-') ?></span>
                             </div>
                         </td>
                         <td class="p-3">
-                            <?php
-                                 $status = $server['status'] ?? 'unknown';
-                                    if ($status === 'up') {
-                                        echo '<span class="inline-flex items-center gap-1 text-green-700 bg-green-100 px-2 py-1 rounded text-sm" title="Ping réussi">
-                                                <i data-lucide="check-circle" class="w-4 h-4"></i> UP
-                                            </span>';
-                                    } elseif ($status === 'down') {
-                                        echo '<span class="inline-flex items-center gap-1 text-red-700 bg-red-100 px-2 py-1 rounded text-sm" title="Hôte injoignable">
-                                                <i data-lucide="x-circle" class="w-4 h-4"></i> DOWN
-                                            </span>';
-                                    } else {
-                                        echo '<span class="inline-flex items-center gap-1 text-gray-600 bg-gray-100 px-2 py-1 rounded text-sm" title="Statut inconnu">
-                                                <i data-lucide="help-circle" class="w-4 h-4"></i> —
-                                            </span>';
-                                    }
-                            ?>
+                            <?php if (($server['status'] ?? 'unknown') === 'up'): ?>
+                                <span class="inline-flex items-center gap-1 text-green-700 bg-green-100 px-2 py-1 rounded text-sm" title="Ping reussi">
+                                    <i data-lucide="check-circle" class="w-4 h-4"></i> UP
+                                </span>
+                            <?php elseif (($server['status'] ?? 'unknown') === 'down'): ?>
+                                <span class="inline-flex items-center gap-1 text-red-700 bg-red-100 px-2 py-1 rounded text-sm" title="Hote injoignable">
+                                    <i data-lucide="x-circle" class="w-4 h-4"></i> DOWN
+                                </span>
+                            <?php else: ?>
+                                <span class="inline-flex items-center gap-1 text-gray-600 bg-gray-100 px-2 py-1 rounded text-sm" title="Statut inconnu">
+                                    <i data-lucide="help-circle" class="w-4 h-4"></i> -
+                                </span>
+                            <?php endif; ?>
                         </td>
                         <td class="p-3">
-                            <?php
-                                if (empty($server['ssh_enabled'])) {
-                                    echo '<span class="text-gray-400 bg-gray-100 px-2 py-1 rounded text-sm">SSH désactivé</span>';
-                                } elseif ($server['ssh_status'] === 'success') {
-                                    echo '<span class="inline-flex items-center gap-1 text-green-700 bg-green-100 px-2 py-1 rounded text-sm" title="Connexion SSH réussie">
-                                            <i data-lucide="terminal" class="w-4 h-4"></i> SSH OK
-                                        </span>';
-                                } else {
-                                    echo '<span class="inline-flex items-center gap-1 text-red-700 bg-red-100 px-2 py-1 rounded text-sm" title="Échec de la connexion SSH">
-                                            <i data-lucide="alert-octagon" class="w-4 h-4"></i> Échec SSH
-                                        </span>';
-                                }
-                            ?>
+                            <?php if (empty($server['ssh_enabled'])): ?>
+                                <span class="text-gray-400 bg-gray-100 px-2 py-1 rounded text-sm">SSH desactive</span>
+                            <?php elseif (($server['ssh_status'] ?? '') === 'success'): ?>
+                                <span class="inline-flex items-center gap-1 text-green-700 bg-green-100 px-2 py-1 rounded text-sm" title="Connexion SSH reussie">
+                                    <i data-lucide="terminal" class="w-4 h-4"></i> SSH OK
+                                </span>
+                            <?php else: ?>
+                                <span class="inline-flex items-center gap-1 text-red-700 bg-red-100 px-2 py-1 rounded text-sm" title="Echec de la connexion SSH">
+                                    <i data-lucide="alert-octagon" class="w-4 h-4"></i> Echec SSH
+                                </span>
+                            <?php endif; ?>
                         </td>
                         <td class="p-3"><?= $server['last_check'] ? htmlspecialchars($server['last_check']) : 'Jamais' ?></td>
                         <td class="px-4 py-2">
-                            <a href="serveurs.php?edit=<?= $server['id'] ?>" class="text-blue-600 hover:underline flex items-center gap-1 mb-2">
+                            <a href="serveurs.php?edit=<?= (int) $server['id'] ?>" class="text-blue-600 hover:underline flex items-center gap-1 mb-2">
                                 <i data-lucide="pencil" class="w-4 h-4"></i> Modifier
                             </a>
                             <form method="POST" action="serveurs.php" onsubmit="return confirm('Confirmer la suppression ?');">
-                                <input type="hidden" name="delete_id" value="<?= $server['id'] ?>">
+                                <?= msmCsrfField() ?>
+                                <input type="hidden" name="delete_id" value="<?= (int) $server['id'] ?>">
                                 <button type="submit" class="text-red-600 hover:underline flex items-center gap-1">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i> Supprimer
                                 </button>
@@ -246,12 +239,13 @@ endif;
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="7" class="text-center text-gray-500 py-4">Aucun serveur enregistré.</td>
+                    <td colspan="7" class="text-center text-gray-500 py-4">Aucun serveur enregistre.</td>
                 </tr>
             <?php endif; ?>
         </tbody>
     </table>
 </main>
+
 <?php if ($editMode): ?>
 <script>
     window.addEventListener('DOMContentLoaded', () => {
@@ -259,4 +253,5 @@ endif;
     });
 </script>
 <?php endif; ?>
+
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

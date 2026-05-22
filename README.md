@@ -1,57 +1,87 @@
- My Server Manager (MSM)
+# My Server Manager (MSM)
 
+MSM est une application web de supervision et de gestion de serveurs Linux et Windows pour homelab et petite infrastructure.
 
-![GitHub tag (latest)](https://img.shields.io/github/v/tag/grandpurs45/my-server-manager)
+## Fonctionnalites
 
-**MSM** est une application web de supervision et de gestion de serveurs Linux et Windows, développée en PHP avec une interface simple et efficace.
+- Gestion des serveurs : ajout, modification, suppression.
+- Supervision : statut UP/DOWN, latence, dernier check.
+- SSH : etat de connexion, detection OS, collecte disque.
+- Parametres dynamiques : debug, supervision, reseau.
+- Migrations SQL versionnees.
+- Export Prometheus pour Grafana.
 
-## 🚀 Fonctionnalités actuelles
+## Installation
 
-- 📋 **Gestion des serveurs** : ajout, modification, statut UP/DOWN, détection OS (via SSH)
-- 🛠️ **Supervision** : vérification régulière de l’état des serveurs (ping)
-- ⚙️ **Paramètres dynamiques** : suffixe DNS, mode debug, etc.
-- 🐞 **Mode debug** : activable depuis l’interface pour afficher les erreurs PHP
-- 📦 **Système de migrations SQL** : versionnage propre des évolutions de la base
-- 🎨 **Interface responsive** avec Tailwind CSS
+Pour une installation complete sur un environnement vierge, suivre [docs/INSTALL.md](docs/INSTALL.md).
 
-## 📁 Structure du projet
+Resume rapide :
 
-```
-msm/
-├── autoloader.php
-├── apply_migrations.php
-├── includes/
-│   ├── bootstrap.php
-│   ├── db.php
-│   ├── header.php / footer.php
-├── classes/
-│   ├── SettingsManager.php
-│   └── SSHUtils.php
-├── config/
-│   └── settings-schema.php
-├── pages/
-│   ├── settings.php
-│   ├── serveurs.php
-├── scripts/
-│   └── check-servers.php
-├── migrations/
-│   └── YYYY-MM-DD-description.sql
-```
+1. Cloner le depot :
 
-## ⚙️ Installation
-
-1. Clone ce repo :
    ```bash
-   git clone https://github.com/ton-user/msm.git
+   git clone https://github.com/grandpurs45/my-server-manager.git
    ```
 
-2. Configure la base de données (MariaDB), puis :
+2. Installer les dependances PHP :
+
+   ```bash
+   composer install
+   ```
+
+3. Preparer la configuration locale :
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Editer `.env` avec les acces MariaDB et une cle locale :
+
+   ```text
+   MSM_DB_HOST=localhost
+   MSM_DB_PORT=3306
+   MSM_DB_NAME=msm
+   MSM_DB_USER=root
+   MSM_DB_PASS=
+   MSM_DB_CHARSET=utf8mb4
+   MSM_SECRET_KEY=replace-with-a-local-random-secret
+   ```
+
+   Pour generer une cle :
+
+   ```bash
+   php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+   ```
+
+5. Configurer la base MariaDB, puis appliquer les migrations :
+
    ```bash
    php apply_migrations.php
    ```
 
-3. Lancer en local avec XAMPP ou un serveur Apache/PHP
-4. Accéder à l’application via `http://localhost/msm/`
+6. Lancer avec XAMPP ou Apache/PHP, puis acceder a l'application :
+
+   ```text
+   http://localhost/msm/
+   ```
+
+## Configuration Locale
+
+La configuration sensible ne doit pas etre versionnee. MSM lit le fichier `.env` a la racine du projet.
+
+Variables disponibles :
+
+```text
+MSM_DB_HOST=localhost
+MSM_DB_PORT=3306
+MSM_DB_NAME=msm
+MSM_DB_USER=root
+MSM_DB_PASS=
+MSM_DB_CHARSET=utf8mb4
+MSM_SECRET_KEY=replace-with-a-local-random-secret
+```
+
+Les anciens fichiers `msm_secret.key` restent supportes temporairement pour compatibilite, mais les nouvelles installations doivent utiliser `MSM_SECRET_KEY` dans `.env`.
 
 ## Export Prometheus
 
@@ -61,13 +91,13 @@ MSM expose un endpoint Prometheus en texte brut :
 http://localhost/msm/metrics.php
 ```
 
-Si `mod_rewrite` est active et qu'une regle serveur est configuree, il est possible d'exposer aussi :
+Si `mod_rewrite` est actif et qu'une regle serveur est configuree, il est possible d'exposer aussi :
 
 ```text
 http://localhost/msm/metrics
 ```
 
-Les metriques exposees par cette premiere version viennent uniquement de la base MSM. Le endpoint `/metrics` ne lance pas de ping, SSH ou analyse distante afin de rester rapide et compatible avec un scrape Prometheus regulier.
+Les metriques exposees viennent uniquement de la base MSM. Le endpoint `metrics.php` ne lance pas de ping, SSH ou analyse distante afin de rester rapide et compatible avec un scrape Prometheus regulier.
 
 Exemple de sortie :
 
@@ -79,27 +109,33 @@ msm_ssh_ok{server="srv-docker",hostname="srv-docker.lan"} 1
 msm_server_latency_ms{server="srv-docker",hostname="srv-docker.lan"} 4
 ```
 
-## 🧠 Technologies utilisées
+## Scripts Utiles
+
+Appliquer les migrations :
+
+```bash
+php apply_migrations.php
+```
+
+Lancer un check de supervision :
+
+```bash
+php scripts/check-servers.php
+```
+
+## Roadmap
+
+Voir [ROADMAP.md](ROADMAP.md).
+
+## Technologies
 
 - PHP 8+
 - MariaDB
 - Tailwind CSS
-- phpseclib (connexion SSH)
-- Composer (autoload)
-- Prometheus / Grafana (export de metriques)
+- phpseclib
+- Composer
+- Prometheus / Grafana
 
-## 📌 TODO / Roadmap
-
-- Supervision CPU / RAM / disque
-- Système d’alertes (mail / Discord)
-- Sécurité des sites web (headers, HSTS…)
-- Authentification utilisateur (mode admin)
-- API REST pour les serveurs
-
-## 🤝 Contribuer
-
-Ce projet est en cours de développement, merci pour votre compréhension !
-
-## 📄 Licence
+## Licence
 
 Projet libre, sous licence MIT.

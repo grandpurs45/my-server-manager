@@ -8,6 +8,7 @@
 
 # Environnement local
 .env
+*.key
 
 # Fichiers système
 .DS_Store

@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/bootstrap.php';
+require_once __DIR__ . '/../includes/csrf.php';
+msmCsrfToken();
 require_once __DIR__ . '/../includes/header.php';
 
 $stmt = $pdo->query("
@@ -99,6 +101,7 @@ function formatLastCheck(?string $lastCheck, mixed $ageSeconds): array {
         </div>
 
         <form method="post" action="update-status.php">
+            <?php echo msmCsrfField(); ?>
             <button type="submit"
                     class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded shadow hover:bg-blue-700">
                 <span>Mettre a jour les statuts</span>

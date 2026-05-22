@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout d'un chargement de configuration locale via `.env`
+* externalisation de la configuration MariaDB et de la cle de chiffrement
+* ajout d'une page diagnostic systeme
+
+### Security
+
+* retrait des fichiers de cle du suivi Git
+* validation et echappement des hotes avant execution des commandes `ping` et `ssh`
+* ajout d'une protection CSRF sur les formulaires critiques
+
+### Documentation
+
+* ajout d'une roadmap projet vers la v1
+* ajout d'un exemple `.env.example`
+* ajout d'une procedure d'installation vierge
+* correction des textes visibles encodes de travers dans les pages principales
+
 ### [0.14.2](https://github.com/grandpurs45/my-server-manager/compare/v0.14.1...v0.14.2) (2026-05-22)
 
 ### Bug Fixes

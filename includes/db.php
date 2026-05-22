@@ -1,19 +1,22 @@
 <?php
-$host = 'localhost';
-$db   = 'msm';
-$user = 'root';
-$pass = ''; // Remplace par le mot de passe root
-$charset = 'utf8mb4';
+require_once __DIR__ . '/config.php';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$host = msmEnv('MSM_DB_HOST', 'localhost');
+$port = msmEnv('MSM_DB_PORT', '3306');
+$db = msmEnv('MSM_DB_NAME', 'msm');
+$user = msmEnv('MSM_DB_USER', 'root');
+$pass = msmEnv('MSM_DB_PASS', '');
+$charset = msmEnv('MSM_DB_CHARSET', 'utf8mb4');
+
+$dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
 $options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 ];
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-    die("Erreur de connexion à la base de données : " . $e->getMessage());
+    error_log('MSM database connection failed: ' . $e->getMessage());
+    die("Erreur de connexion a la base de donnees.");
 }
-?>

@@ -1,6 +1,7 @@
 <?php
 namespace MSM;
 require_once __DIR__ . '/../includes/crypto.php';
+require_once __DIR__ . '/../includes/network.php';
 
 use phpseclib3\Net\SSH2;
 
@@ -65,12 +66,12 @@ class ServerChecker
     {
         if (!function_exists('exec')) return ['status' => 'down', 'latency' => null];
 
-        $timeout = 1;
-        $isWindows = stripos(PHP_OS, 'WIN') === 0;
+        $pingCmd = \msmBuildPingCommand($ip, 1);
+        if ($pingCmd === null) {
+            return ['status' => 'down', 'latency' => null];
+        }
 
-        $pingCmd = $isWindows
-            ? "ping -n 1 -w " . ($timeout * 1000) . " $ip"
-            : "ping -c 1 -W $timeout $ip";
+        $isWindows = stripos(PHP_OS, 'WIN') === 0;
 
         exec($pingCmd, $output, $resultCode);
 

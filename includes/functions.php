@@ -1,27 +1,34 @@
 <?php
+require_once __DIR__ . '/network.php';
 
-
-
-//fonction de PING
 function isHostUp(string $ip): bool {
     if (!function_exists('exec')) {
-        return false; // Sécurité minimale
+        return false;
     }
 
-    $timeout = 1;
-    $pingCmd = (stripos(PHP_OS, 'WIN') === 0)
-        ? "ping -n 1 -w " . ($timeout * 1000) . " $ip"
-        : "ping -c 1 -W $timeout $ip";
-    //file_put_contents(__DIR__ . '/../msm-debug.log', "Ping vers : $ip\n", FILE_APPEND);
+    $pingCmd = msmBuildPingCommand($ip, 1);
+    if ($pingCmd === null) {
+        return false;
+    }
+
     exec($pingCmd, $output, $resultCode);
 
     return $resultCode === 0;
 }
 
-// fonction pour recuperer l'OS du serveur
 function getRemoteOS(string $ip): ?string {
-    $user = 'grandpurs45'; // À adapter
-    $sshCmd = "ssh -o ConnectTimeout=2 -o BatchMode=yes {$user}@{$ip} cat /etc/os-release";
+    if (!function_exists('exec')) {
+        return null;
+    }
+
+    $host = msmNormalizeHost($ip);
+    if ($host === null) {
+        return null;
+    }
+
+    $user = 'grandpurs45';
+    $sshTarget = escapeshellarg($user . '@' . $host);
+    $sshCmd = "ssh -o ConnectTimeout=2 -o BatchMode=yes $sshTarget cat /etc/os-release";
     exec($sshCmd, $output, $code);
 
     if ($code !== 0) {
@@ -36,5 +43,3 @@ function getRemoteOS(string $ip): ?string {
 
     return null;
 }
-
-?>
