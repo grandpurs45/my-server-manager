@@ -180,3 +180,4 @@ Objectif : livrer une version installee, documentee et maintenable.
 - Orchestration automatique de patchs sans validation humaine.
 - interface plus moderne
 - autodiscovery (Proxmox, DOcker, Réseaux...)
+- creer un setup d'installation

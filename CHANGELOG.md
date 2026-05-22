@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file. See [standa
 * ajout d'une roadmap projet vers la v1
 * ajout d'un exemple `.env.example`
 * ajout d'une procedure d'installation vierge
+* ajout des prerequis materiels et des modes d'installation possibles
 * correction des textes visibles encodes de travers dans les pages principales
 
 ### [0.14.2](https://github.com/grandpurs45/my-server-manager/compare/v0.14.1...v0.14.2) (2026-05-22)

@@ -2,7 +2,35 @@
 
 Ce guide decrit une installation neuve de My Server Manager sur un serveur Apache/PHP avec MariaDB.
 
-## Prerequis
+## Modes d'installation possibles
+
+MSM peut etre installe de plusieurs facons selon l'environnement cible :
+
+- Serveur Linux : mode recommande pour une installation homelab ou petite production.
+- Serveur Windows : possible avec une stack PHP/MariaDB locale, par exemple XAMPP ou WAMP.
+- Docker : possible comme mode d'installation cible, avec des volumes persistants pour la base, la configuration et les logs. A ce stade, le projet ne fournit pas encore d'image Docker officielle ni de fichier `compose.yaml` pret a l'emploi.
+
+La procedure ci-dessous decrit principalement une installation native sur serveur Linux avec Apache, PHP et MariaDB. Les principes restent les memes pour Windows ou Docker : installer PHP, MariaDB/MySQL, Composer, creer `.env`, appliquer les migrations, puis configurer l'execution planifiee des checks.
+
+## Prerequis materiel
+
+Configuration minimale pour un petit homelab :
+
+- 1 vCPU.
+- 1 Go de RAM.
+- 5 Go d'espace disque disponible.
+- Acces reseau vers les serveurs a superviser.
+
+Configuration recommandee :
+
+- 2 vCPU.
+- 2 Go de RAM ou plus.
+- 10 Go d'espace disque ou plus.
+- Stockage persistant pour la base de donnees, le fichier `.env` et les logs.
+
+La consommation depend surtout du nombre de serveurs supervises, de la frequence des checks, du volume de logs conserve et des futurs modules actifs.
+
+## Prerequis logiciels
 
 - PHP 8.0 ou plus recent.
 - Extensions PHP :
