@@ -42,6 +42,45 @@ La consommation depend surtout du nombre de serveurs supervises, de la frequence
 - Composer.
 - Git.
 
+## Installation des dependances systeme
+
+Sur une installation Linux vierge, installer d'abord les paquets systeme.
+
+Debian / Ubuntu :
+
+```bash
+sudo apt update
+sudo apt install -y apache2 mariadb-server mariadb-client php php-cli php-mysql php-mbstring php-xml php-curl php-zip unzip git composer
+sudo systemctl enable --now apache2 mariadb
+```
+
+RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+sudo dnf install -y httpd mariadb-server mariadb php php-cli php-mysqlnd php-mbstring php-xml php-curl php-zip unzip git
+sudo systemctl enable --now httpd
+sudo systemctl enable --now mariadb
+```
+
+Sur certaines versions RHEL / Rocky Linux / AlmaLinux, le paquet `composer` n'est pas disponible dans les depots actifs. Installer alors Composer separement :
+
+```bash
+cd /tmp
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php
+sudo mv composer.phar /usr/local/bin/composer
+rm composer-setup.php
+composer --version
+```
+
+Verifier ensuite que PHP est en version 8.0 ou plus recente :
+
+```bash
+php -v
+```
+
+Ces commandes installent les dependances systeme. Les dependances PHP du projet sont ensuite installees avec `composer install` a l'etape 3.
+
 ## Verification manuelle rapide
 
 Avant de recuperer le projet, verifier rapidement les outils de base avec :
@@ -171,7 +210,11 @@ sudo apt install composer
 RHEL / Rocky Linux / AlmaLinux / Fedora :
 
 ```bash
-sudo dnf install composer
+cd /tmp
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php
+sudo mv composer.phar /usr/local/bin/composer
+rm composer-setup.php
 ```
 
 Verifier ensuite :
@@ -194,6 +237,55 @@ RHEL / Rocky Linux / AlmaLinux / Fedora :
 
 ```bash
 sudo dnf install mariadb
+```
+
+#### `Failed to enable unit: Unit mariadb.service does not exist`
+
+Cette erreur signifie generalement que le serveur MariaDB n'est pas installe, ou que l'installation des paquets a echoue avant d'installer `mariadb-server`.
+
+Verifier le paquet :
+
+```bash
+rpm -q mariadb-server
+```
+
+Si le paquet n'est pas installe :
+
+```bash
+sudo dnf install -y mariadb-server
+```
+
+Verifier ensuite que le service existe :
+
+```bash
+systemctl list-unit-files | grep -E 'mariadb|mysql'
+```
+
+Puis activer MariaDB :
+
+```bash
+sudo systemctl enable --now mariadb
+```
+
+#### `copy(composer-setup.php): Failed to open stream: Permission denied`
+
+Cette erreur apparait quand l'installateur Composer est telecharge depuis un dossier non inscriptible par l'utilisateur courant, par exemple `/var/www/html/msm`.
+
+Relancer l'installation depuis `/tmp` :
+
+```bash
+cd /tmp
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php
+sudo mv composer.phar /usr/local/bin/composer
+rm composer-setup.php
+composer --version
+```
+
+Puis revenir dans le projet :
+
+```bash
+cd /var/www/html/msm
 ```
 
 #### `[WARN] Local config .env - missing`
@@ -226,7 +318,7 @@ sudo chmod -R 750 logs
 
 Pendant une installation manuelle, si le script est lance avec votre utilisateur courant, il est aussi possible de donner temporairement les droits a cet utilisateur, puis d'ajuster les droits pour Apache avant la mise en service.
 
-## 3. Installer les dependances
+## 3. Installer les dependances PHP du projet
 
 ```bash
 composer install --no-dev --optimize-autoloader
@@ -236,7 +328,25 @@ Pour une installation de developpement locale, `composer install` suffit.
 
 ## 4. Creer la base de donnees
 
-Exemple MariaDB :
+Verifier que MariaDB est demarre :
+
+```bash
+sudo systemctl status mariadb
+```
+
+Entrer dans le client MariaDB en administrateur :
+
+```bash
+sudo mariadb
+```
+
+Le prompt change et affiche quelque chose comme :
+
+```text
+MariaDB [(none)]>
+```
+
+Executer ensuite les commandes SQL suivantes :
 
 ```sql
 CREATE DATABASE msm CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -245,7 +355,27 @@ GRANT ALL PRIVILEGES ON msm.* TO 'msm'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-Adapter le nom d'utilisateur et le mot de passe selon l'environnement.
+Remplacer `change-me` par un mot de passe local solide.
+
+Quitter le client MariaDB :
+
+```sql
+EXIT;
+```
+
+Tester la connexion avec l'utilisateur cree :
+
+```bash
+mariadb -u msm -p msm
+```
+
+Entrer le mot de passe choisi. Si le prompt MariaDB s'ouvre, la base et l'utilisateur sont corrects.
+
+Quitter ensuite :
+
+```sql
+EXIT;
+```
 
 ## 5. Creer la configuration locale
 

@@ -23,6 +23,11 @@ All notable changes to this project will be documented in this file. See [standa
 * ajout d'un exemple `.env.example`
 * ajout d'une procedure d'installation vierge
 * ajout des prerequis materiels et des modes d'installation possibles
+* ajout des commandes d'installation des dependances systeme Linux
+* clarification de l'installation de Composer sur Rocky/RHEL quand le paquet `composer` est absent
+* documentation du cas `mariadb.service does not exist` sur Rocky/RHEL
+* documentation de l'installation Composer depuis `/tmp` en cas de dossier projet non inscriptible
+* detail de la creation MariaDB avec entree dans le client SQL et test de connexion
 * ajout des commandes de verification des prerequis dans la procedure d'installation
 * documentation des erreurs frequentes du script de verification des prerequis
 * correction des textes visibles encodes de travers dans les pages principales
