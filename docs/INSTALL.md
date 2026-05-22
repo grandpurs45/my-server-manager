@@ -42,7 +42,41 @@ La consommation depend surtout du nombre de serveurs supervises, de la frequence
 - Composer.
 - Git.
 
-## Verification automatique des prerequis
+## Verification manuelle rapide
+
+Avant de recuperer le projet, verifier rapidement les outils de base avec :
+
+```bash
+php -v
+php -m
+composer --version
+git --version
+mysql --version
+apache2 -v
+df -h .
+free -h
+```
+
+Sur Windows avec XAMPP/WAMP, utiliser aussi :
+
+```powershell
+php -v
+php -m
+composer --version
+git --version
+```
+
+## 1. Recuperer le projet
+
+```bash
+cd /var/www/html
+git clone https://github.com/grandpurs45/my-server-manager.git msm
+cd msm
+```
+
+## 2. Verifier automatiquement les prerequis
+
+Une fois le projet clone, le script de verification est disponible dans `scripts/check-prerequisites.php`.
 
 Depuis la racine du projet, lancer :
 
@@ -77,39 +111,7 @@ Exemple :
 [WARN] Local config .env - missing; copy .env.example to .env before running MSM
 ```
 
-## Verification manuelle rapide
-
-Si le script ne peut pas etre lance, verifier les prerequis avec :
-
-```bash
-php -v
-php -m
-composer --version
-git --version
-mysql --version
-apache2 -v
-df -h .
-free -h
-```
-
-Sur Windows avec XAMPP/WAMP, utiliser aussi :
-
-```powershell
-php -v
-php -m
-composer --version
-git --version
-```
-
-## 1. Recuperer le projet
-
-```bash
-cd /var/www/html
-git clone https://github.com/grandpurs45/my-server-manager.git msm
-cd msm
-```
-
-## 2. Installer les dependances
+## 3. Installer les dependances
 
 ```bash
 composer install --no-dev --optimize-autoloader
@@ -117,7 +119,7 @@ composer install --no-dev --optimize-autoloader
 
 Pour une installation de developpement locale, `composer install` suffit.
 
-## 3. Creer la base de donnees
+## 4. Creer la base de donnees
 
 Exemple MariaDB :
 
@@ -130,7 +132,7 @@ FLUSH PRIVILEGES;
 
 Adapter le nom d'utilisateur et le mot de passe selon l'environnement.
 
-## 4. Creer la configuration locale
+## 5. Creer la configuration locale
 
 ```bash
 cp .env.example .env
@@ -158,7 +160,7 @@ Copier la valeur generee dans `MSM_SECRET_KEY`.
 
 Important : conserver cette cle. Elle sert au chiffrement des mots de passe SSH stockes en base.
 
-## 5. Appliquer les migrations
+## 6. Appliquer les migrations
 
 ```bash
 php apply_migrations.php
@@ -166,7 +168,7 @@ php apply_migrations.php
 
 Le script cree automatiquement la table `migrations_applied` si elle n'existe pas.
 
-## 6. Verifier les permissions
+## 7. Verifier les permissions
 
 Le serveur web doit pouvoir lire :
 
@@ -187,7 +189,7 @@ sudo chmod -R 750 logs
 
 Adapter l'utilisateur Apache selon la distribution.
 
-## 7. Configurer Apache
+## 8. Configurer Apache
 
 MSM peut fonctionner dans un sous-dossier, par exemple :
 
@@ -203,7 +205,7 @@ http://srv-msm.lan/msm/metrics.php
 
 Les fichiers sensibles `.env`, `.key` et `.pem` sont bloques par `.htaccess` quand Apache autorise les fichiers `.htaccess`.
 
-## 8. Configurer le check planifie
+## 9. Configurer le check planifie
 
 Exemple cron toutes les minutes. Le script respecte ensuite l'intervalle configure dans MSM :
 
@@ -213,7 +215,7 @@ Exemple cron toutes les minutes. Le script respecte ensuite l'intervalle configu
 
 Adapter les chemins selon l'installation.
 
-## 9. Verifications post-install
+## 10. Verifications post-install
 
 Ouvrir :
 
