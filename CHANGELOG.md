@@ -11,10 +11,13 @@ All notable changes to this project will be documented in this file. See [standa
 * ajout d'une page diagnostic systeme
 * ajout d'un script CLI de verification des prerequis d'installation
 * verification du statut du service Apache dans le script de prerequis
+* verification de `exec()` et `ping` pour les checks de disponibilite
 
 ### Bug Fixes
 
 * correction des liens, formulaires et assets quand MSM est installe dans un sous-dossier comme `/msm/`
+* suppression de wrappers `<main>` imbriques qui fragilisaient la mise en page
+* protection de l'appel JavaScript `lucide.createIcons()` si la librairie externe ne charge pas
 
 ### Security
 

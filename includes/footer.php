@@ -10,7 +10,9 @@ $version = getVersionFromPackageJson();
 </div>
 
 <script>
-    lucide.createIcons();
+    if (window.lucide) {
+        lucide.createIcons();
+    }
 
     function toggleModal(show) {
         const modal = document.getElementById('modal');

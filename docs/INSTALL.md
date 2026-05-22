@@ -42,7 +42,9 @@ La consommation depend surtout du nombre de serveurs supervises, de la frequence
 - Apache avec PHP active.
 - Composer.
 - Git.
+- `ping` pour les checks de disponibilite.
 - `unzip` recommande pour Composer.
+- `ssh` recommande pour certains diagnostics et tests manuels.
 
 ## Installation des dependances systeme
 
@@ -147,9 +149,11 @@ php msm/scripts/check-prerequisites.php
 Le script verifie :
 
 - la version PHP ;
+- la disponibilite de la fonction PHP `exec()` ;
 - les extensions PHP requises ;
 - les extensions PHP recommandees pour Composer ;
 - la presence de Git et Composer ;
+- la presence de `ping` pour les checks de disponibilite ;
 - la presence de `unzip` pour Composer ;
 - la presence d'un client MariaDB/MySQL ;
 - la detection d'Apache quand la commande est disponible ;
@@ -199,6 +203,40 @@ Verifier ensuite :
 
 ```bash
 php -m | grep pdo_mysql
+```
+
+#### `[FAIL] PHP function exec - disabled`
+
+MSM utilise `exec()` pour lancer certains checks systeme, notamment `ping`. Si cette fonction est desactivee dans `php.ini`, les serveurs peuvent rester en statut `DOWN`.
+
+Chercher la directive `disable_functions` :
+
+```bash
+php -i | grep disable_functions
+```
+
+Si `exec` apparait dans la liste, retirer `exec` de `disable_functions`, puis redemarrer Apache.
+
+#### `[FAIL] Command ping - not found in PATH`
+
+MSM utilise `ping` pour determiner si un serveur est joignable.
+
+Debian / Ubuntu :
+
+```bash
+sudo apt install iputils-ping
+```
+
+RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+sudo dnf install iputils
+```
+
+Verifier ensuite :
+
+```bash
+ping -c 1 127.0.0.1
 ```
 
 #### `[FAIL] Command composer - not found in PATH`
@@ -668,6 +706,14 @@ tail -n 50 /var/www/html/msm/logs/check-servers.log
 Verifier aussi la page diagnostic MSM : elle doit afficher un dernier check coherent.
 
 ## 10. Verifications post-install
+
+Verifier d'abord que le serveur contient bien la derniere version recuperee :
+
+```bash
+cd /var/www/html/msm
+git pull
+git rev-parse --short HEAD
+```
 
 Ouvrir :
 

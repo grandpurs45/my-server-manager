@@ -146,7 +146,7 @@ $server = $editMode ? $editData : null;
 include __DIR__ . '/../includes/server-modal.php';
 ?>
 
-<main class="p-6">
+<div class="p-6">
     <div class="flex justify-between items-center mb-4">
         <h1 class="text-2xl font-bold">Gestion des serveurs</h1>
         <button onclick="resetForm(); toggleModal(true)" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
@@ -244,7 +244,7 @@ include __DIR__ . '/../includes/server-modal.php';
             <?php endif; ?>
         </tbody>
     </table>
-</main>
+</div>
 
 <?php if ($editMode): ?>
 <script>

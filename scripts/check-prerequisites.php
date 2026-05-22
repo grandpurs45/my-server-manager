@@ -7,8 +7,8 @@ chdir(__DIR__ . '/..');
 $requiredPhpVersion = '8.0.0';
 $requiredExtensions = ['pdo_mysql', 'openssl', 'mbstring'];
 $recommendedExtensions = ['zip'];
-$requiredCommands = ['git', 'composer'];
-$recommendedCommands = ['unzip'];
+$requiredCommands = ['git', 'composer', 'ping'];
+$recommendedCommands = ['unzip', 'ssh'];
 $recommendedMemoryMb = 1024;
 $recommendedDiskMb = 5120;
 
@@ -108,6 +108,12 @@ if (version_compare(PHP_VERSION, $requiredPhpVersion, '>=')) {
     markOk('PHP version', PHP_VERSION);
 } else {
     markError('PHP version', PHP_VERSION . ' installed, ' . $requiredPhpVersion . ' required');
+}
+
+if (function_exists('exec')) {
+    markOk('PHP function exec');
+} else {
+    markError('PHP function exec', 'disabled; MSM cannot run ping checks');
 }
 
 foreach ($requiredExtensions as $extension) {

@@ -29,7 +29,7 @@ $alerts = msm_build_supervision_alerts($servers);
         </div>
     </header>
 
-    <main class="flex-1 px-6 py-6">
+    <div class="flex-1 px-6 py-6">
         <?php if (empty($alerts)): ?>
             <div class="h-full flex flex-col items-center justify-center gap-6">
                 <div class="text-center">
@@ -87,7 +87,7 @@ $alerts = msm_build_supervision_alerts($servers);
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
-    </main>
+    </div>
 </div>
 
 <script>
