@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file. See [standa
 * documentation du cas `mariadb.service does not exist` sur Rocky/RHEL
 * documentation de l'installation Composer depuis `/tmp` en cas de dossier projet non inscriptible
 * detail de la creation MariaDB avec entree dans le client SQL et test de connexion
+* documentation des erreurs Git `dubious ownership` et Composer `vendor` non creatable
 * ajout des commandes de verification des prerequis dans la procedure d'installation
 * documentation des erreurs frequentes du script de verification des prerequis
 * correction des textes visibles encodes de travers dans les pages principales

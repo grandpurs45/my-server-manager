@@ -318,7 +318,51 @@ sudo chmod -R 750 logs
 
 Pendant une installation manuelle, si le script est lance avec votre utilisateur courant, il est aussi possible de donner temporairement les droits a cet utilisateur, puis d'ajuster les droits pour Apache avant la mise en service.
 
+#### `detected dubious ownership in repository`
+
+Git refuse d'utiliser un depot dont le proprietaire ne correspond pas a l'utilisateur courant.
+
+Si le projet est bien celui que vous venez de cloner dans `/var/www/html/msm`, declarer ce dossier comme sur :
+
+```bash
+git config --global --add safe.directory /var/www/html/msm
+```
+
+#### `/var/www/html/msm/vendor does not exist and could not be created`
+
+Composer ne peut pas creer le dossier `vendor/` car l'utilisateur courant n'a pas les droits d'ecriture sur le dossier projet.
+
+Pendant l'installation, donner le projet a l'utilisateur courant :
+
+```bash
+sudo chown -R "$USER":"$USER" /var/www/html/msm
+```
+
+Puis relancer :
+
+```bash
+composer install --no-dev --optimize-autoloader
+```
+
 ## 3. Installer les dependances PHP du projet
+
+Si le projet est clone dans `/var/www/html`, verifier que l'utilisateur courant peut ecrire dans le dossier projet avant de lancer Composer :
+
+```bash
+pwd
+ls -ld .
+```
+
+Si le dossier appartient a `root`, a `apache` ou a un autre utilisateur, corriger temporairement les droits pour l'utilisateur qui fait l'installation :
+
+```bash
+sudo chown -R "$USER":"$USER" /var/www/html/msm
+git config --global --add safe.directory /var/www/html/msm
+```
+
+Cette commande permet a Composer de creer le dossier `vendor/` et evite l'erreur Git `detected dubious ownership`.
+
+Installer ensuite les dependances PHP :
 
 ```bash
 composer install --no-dev --optimize-autoloader
