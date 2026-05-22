@@ -78,10 +78,29 @@ cd msm
 
 Une fois le projet clone, le script de verification est disponible dans `scripts/check-prerequisites.php`.
 
-Depuis la racine du projet, lancer :
+Verifier d'abord que le terminal est bien place dans la racine du projet :
+
+```bash
+pwd
+ls scripts/check-prerequisites.php
+```
+
+Le dossier courant doit etre le dossier clone, par exemple :
+
+```text
+/var/www/html/msm
+```
+
+Depuis cette racine du projet, lancer :
 
 ```bash
 php scripts/check-prerequisites.php
+```
+
+Si le terminal est encore dans `/var/www/html`, utiliser plutot :
+
+```bash
+php msm/scripts/check-prerequisites.php
 ```
 
 Le script verifie :
@@ -110,6 +129,102 @@ Exemple :
 [OK] PHP extension pdo_mysql
 [WARN] Local config .env - missing; copy .env.example to .env before running MSM
 ```
+
+### Erreurs frequentes du script de prerequis
+
+#### `[FAIL] PHP extension pdo_mysql - missing`
+
+MSM utilise MariaDB/MySQL via PDO. Installer l'extension PHP MySQL, puis redemarrer Apache.
+
+Debian / Ubuntu :
+
+```bash
+sudo apt update
+sudo apt install php-mysql
+sudo systemctl restart apache2
+```
+
+RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+sudo dnf install php-mysqlnd
+sudo systemctl restart httpd
+```
+
+Verifier ensuite :
+
+```bash
+php -m | grep pdo_mysql
+```
+
+#### `[FAIL] Command composer - not found in PATH`
+
+Composer est necessaire pour installer les dependances PHP.
+
+Debian / Ubuntu :
+
+```bash
+sudo apt update
+sudo apt install composer
+```
+
+RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+sudo dnf install composer
+```
+
+Verifier ensuite :
+
+```bash
+composer --version
+```
+
+#### `[WARN] MariaDB/MySQL client - not found in PATH`
+
+Ce warning indique que la commande `mysql` ou `mariadb` n'est pas disponible dans le terminal. Ce n'est pas bloquant si la base est distante ou geree autrement, mais c'est utile pour tester la connexion.
+
+Debian / Ubuntu :
+
+```bash
+sudo apt install mariadb-client
+```
+
+RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+sudo dnf install mariadb
+```
+
+#### `[WARN] Local config .env - missing`
+
+Normal juste apres le clone. Creer la configuration locale :
+
+```bash
+cp .env.example .env
+```
+
+Puis renseigner les variables MariaDB et `MSM_SECRET_KEY`.
+
+#### `[WARN] logs directory - exists but is not writable by the current user`
+
+Le dossier `logs/` doit etre accessible en ecriture par l'utilisateur qui lance les scripts, et par l'utilisateur Apache en production.
+
+Debian / Ubuntu :
+
+```bash
+sudo chown -R www-data:www-data logs
+sudo chmod -R 750 logs
+```
+
+RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+sudo chown -R apache:apache logs
+sudo chmod -R 750 logs
+```
+
+Pendant une installation manuelle, si le script est lance avec votre utilisateur courant, il est aussi possible de donner temporairement les droits a cet utilisateur, puis d'ajuster les droits pour Apache avant la mise en service.
 
 ## 3. Installer les dependances
 

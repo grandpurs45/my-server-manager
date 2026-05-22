@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file. See [standa
 * ajout d'une procedure d'installation vierge
 * ajout des prerequis materiels et des modes d'installation possibles
 * ajout des commandes de verification des prerequis dans la procedure d'installation
+* documentation des erreurs frequentes du script de verification des prerequis
 * correction des textes visibles encodes de travers dans les pages principales
 
 ### [0.14.2](https://github.com/grandpurs45/my-server-manager/compare/v0.14.1...v0.14.2) (2026-05-22)
