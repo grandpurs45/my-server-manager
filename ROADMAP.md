@@ -1,27 +1,29 @@
 # Roadmap MSM vers v1
 
-My Server Manager doit devenir un outil d'exploitation pour homelab et petite infrastructure. La v1 doit rester simple, fiable et utile au quotidien : inventaire, supervision légère, patch management, sécurité de base et export Prometheus/Grafana.
+My Server Manager doit devenir un outil d'exploitation pour homelab et petite infrastructure. La v1 doit rester simple, fiable et utile au quotidien : inventaire, supervision legere, patch management, securite de base et export Prometheus/Grafana.
 
 ## Vision Produit
 
 - Grafana affiche les dashboards et les alertes visuelles.
-- Prometheus collecte les métriques.
-- MSM collecte, analyse, stocke et expose les données métier d'exploitation.
+- Prometheus collecte les metriques.
+- MSM collecte, analyse, stocke et expose les donnees metier d'exploitation.
 
-MSM ne doit pas remplacer Grafana ou Prometheus. MSM doit devenir une source fiable de données d'exploitation.
+MSM ne doit pas remplacer Grafana ou Prometheus. MSM doit devenir une source fiable de donnees d'exploitation.
 
 ## Objectif v1
 
 La v1 sera atteinte quand MSM permettra de :
 
-- gérer un inventaire propre de cibles techniques ;
+- gerer un inventaire propre de cibles techniques ;
 - superviser l'etat de base des serveurs ;
-- exposer des métriques Prometheus stables ;
+- exposer des metriques Prometheus stables ;
 - connaitre les mises a jour disponibles sur les cibles principales ;
-- identifier les signaux de sécurité opérationnelle simples ;
+- identifier les signaux de securite operationnelle simples ;
 - s'installer et se mettre a jour proprement.
 
 ## Phase 0 - Stabilisation du Socle
+
+Statut : terminee dans `v0.15.0`.
 
 Objectif : rendre l'application fiable avant d'ajouter de nouveaux modules.
 
@@ -30,6 +32,7 @@ Objectif : rendre l'application fiable avant d'ajouter de nouveaux modules.
 - [x] Ajouter un modele de configuration locale ignoree par Git.
 - [x] Ajouter un `.env.example` ou equivalent.
 - [x] Documenter la procedure d'installation vierge.
+- [x] Ajouter un script de verification des prerequis.
 - [x] Corriger l'encodage UTF-8 des fichiers et textes visibles.
 - [x] Securiser les commandes systeme comme `ping`.
 - [x] Ajouter une protection CSRF sur les formulaires critiques.
@@ -40,22 +43,38 @@ Objectif : rendre l'application fiable avant d'ajouter de nouveaux modules.
   - heure MariaDB ;
   - dernier check ;
   - statut des chemins et permissions essentiels.
+- [x] Supporter une installation en sous-dossier comme `/msm/`.
+- [x] Publier une release de stabilisation : `v0.15.0`.
+
+## Maintenance Court Terme
+
+Ces points ne bloquent pas la phase 1, mais doivent etre traites avant une v1.
+
+- Traiter les alertes Dependabot GitHub.
+- Verifier les warnings confort `php-zip` / `unzip` sur installation fraiche.
+- Rejouer une installation vierge complete depuis la documentation sans intervention improvisee.
 
 ## Phase 1 - Observabilite Grafana-Proof
 
 Objectif : exposer proprement les donnees MSM sans faire de checks lourds au moment du scrape.
 
-- Stabiliser `/metrics.php`.
-- Exposer les métriques Prometheus de base :
+- [x] Auditer l'endpoint `/metrics.php` actuel.
+- [x] Stabiliser le format Prometheus expose.
+- [x] Exposer les metriques Prometheus de base :
   - `msm_server_up` ;
   - `msm_ssh_ok` ;
   - `msm_server_latency_ms` ;
   - `msm_server_disk_usage_percent` ;
   - `msm_server_last_check_timestamp` ;
   - `msm_check_success`.
-- Documenter un exemple `prometheus.yml`.
-- Preparer un dashboard Grafana minimal.
-- Garantir que `/metrics.php` lit seulement la base et ne lance pas de SSH, ping, apt, Docker ou appel API.
+- [x] Ajouter les labels stables utiles sans surcharger les series :
+  - `server` ;
+  - `hostname`.
+- [x] Reporter le label `type` a la phase Inventaire, quand la donnee sera stable.
+- [x] Garantir que `/metrics.php` lit seulement la base et ne lance pas de SSH, ping, apt, Docker ou appel API.
+- [x] Documenter un exemple `prometheus.yml`.
+- [x] Preparer un dashboard Grafana minimal.
+- [x] Ajouter une verification simple de `/metrics.php` dans la documentation post-install.
 
 ## Phase 2 - Inventaire
 
@@ -98,12 +117,12 @@ Cibles prioritaires :
 Donnees attendues :
 
 - nombre de mises a jour normales ;
-- nombre de mises a jour de sécurité ;
+- nombre de mises a jour de securite ;
 - liste detaillee des paquets ou composants ;
 - reboot requis ;
 - dernier check reussi ;
 - message d'erreur du dernier check ;
-- métriques Prometheus associees.
+- metriques Prometheus associees.
 
 Architecture souhaitee :
 
@@ -163,7 +182,7 @@ Objectif : livrer une version installee, documentee et maintenable.
 
 ## Priorites Immediates
 
-1. Completer les métriques Prometheus existantes.
+1. Finaliser Phase 1 : metriques Prometheus et documentation Grafana/Prometheus.
 2. Concevoir le modele de donnees Patch Management.
 3. Implementer Linux et Proxmox en premier.
 4. Ajouter Docker.
@@ -178,6 +197,6 @@ Objectif : livrer une version installee, documentee et maintenable.
 - Systeme d'alerting complet.
 - Gestion multi-utilisateurs avancee.
 - Orchestration automatique de patchs sans validation humaine.
-- interface plus moderne
-- autodiscovery (Proxmox, DOcker, Réseaux...)
-- creer un setup d'installation
+- Interface plus moderne.
+- Autodiscovery Proxmox, Docker ou reseau.
+- Setup d'installation interactif complet.

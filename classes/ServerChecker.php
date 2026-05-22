@@ -84,7 +84,7 @@ class ServerChecker
             if ($isWindows && preg_match('/temps[=<]?\s*(\d+)\s*ms/i', $line, $matches)) {
                 $latency = (int) $matches[1];
                 break;
-            } elseif (!$isWindows && preg_match('/time[=<]?(\d+\.?\d*)\s*ms/i', $line, $matches)) {
+            } elseif (!$isWindows && preg_match('/(?:time|temps)[=<]?(\d+\.?\d*)\s*ms/i', $line, $matches)) {
                 $latency = round((float) $matches[1]);
                 break;
             }

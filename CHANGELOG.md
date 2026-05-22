@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout des metriques Prometheus disque, timestamp du dernier check et succes du dernier check
+
+### Bug Fixes
+
+* correction du parsing de latence ping sur les environnements francises
+
+### Documentation
+
+* ajout d'une verification concrete de `/metrics.php` dans la procedure post-install
+* ajout d'une documentation Prometheus/Grafana avec exemple `prometheus.yml` et requetes PromQL
+* clarification du report du label Prometheus `type` a la phase Inventaire
+
 ## [0.15.0](https://github.com/grandpurs45/my-server-manager/compare/v0.14.2...v0.15.0) (2026-05-22)
 
 ### Features

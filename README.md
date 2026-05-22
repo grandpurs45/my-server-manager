@@ -105,6 +105,8 @@ http://localhost/msm/metrics
 
 Les metriques exposees viennent uniquement de la base MSM. Le endpoint `metrics.php` ne lance pas de ping, SSH ou analyse distante afin de rester rapide et compatible avec un scrape Prometheus regulier.
 
+Voir aussi [docs/PROMETHEUS.md](docs/PROMETHEUS.md) pour un exemple `prometheus.yml`, des requetes PromQL et un dashboard Grafana minimal.
+
 Exemple de sortie :
 
 ```text
@@ -113,6 +115,9 @@ Exemple de sortie :
 msm_server_up{server="server-01",hostname="server-01.example.local"} 1
 msm_ssh_ok{server="server-01",hostname="server-01.example.local"} 1
 msm_server_latency_ms{server="server-01",hostname="server-01.example.local"} 4
+msm_server_disk_usage_percent{server="server-01",hostname="server-01.example.local"} 67
+msm_server_last_check_timestamp{server="server-01",hostname="server-01.example.local"} 1780000000
+msm_check_success{server="server-01",hostname="server-01.example.local"} 1
 ```
 
 ## Scripts Utiles
