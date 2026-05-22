@@ -57,6 +57,18 @@ function commandExists(string $command): bool
     return $exitCode === 0 && count($output) > 0;
 }
 
+function serviceIsActive(string $service): bool
+{
+    if (PHP_OS_FAMILY === 'Windows' || !commandExists('systemctl')) {
+        return false;
+    }
+
+    $exitCode = 1;
+    exec('systemctl is-active --quiet ' . escapeshellarg($service), $output, $exitCode);
+
+    return $exitCode === 0;
+}
+
 function readEnvFile(string $path): array
 {
     if (!is_readable($path)) {
@@ -145,6 +157,14 @@ if ($apacheAvailable) {
     markOk('Apache command');
 } else {
     markWarning('Apache command', 'not found in PATH; check your web server package manually');
+}
+
+if (PHP_OS_FAMILY !== 'Windows' && commandExists('systemctl')) {
+    if (serviceIsActive('apache2') || serviceIsActive('httpd')) {
+        markOk('Apache service', 'active');
+    } elseif ($apacheAvailable) {
+        markWarning('Apache service', 'installed but not active; run systemctl enable --now apache2 or httpd');
+    }
 }
 
 $diskFreeMb = (int) floor((disk_free_space(__DIR__ . '/..') ?: 0) / 1024 / 1024);

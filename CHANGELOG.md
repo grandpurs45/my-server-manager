@@ -10,6 +10,11 @@ All notable changes to this project will be documented in this file. See [standa
 * externalisation de la configuration MariaDB et de la cle de chiffrement
 * ajout d'une page diagnostic systeme
 * ajout d'un script CLI de verification des prerequis d'installation
+* verification du statut du service Apache dans le script de prerequis
+
+### Bug Fixes
+
+* correction des liens, formulaires et assets quand MSM est installe dans un sous-dossier comme `/msm/`
 
 ### Security
 
@@ -32,6 +37,7 @@ All notable changes to this project will be documented in this file. See [standa
 * detail de la creation MariaDB avec entree dans le client SQL et test de connexion
 * documentation des erreurs Git `dubious ownership` et Composer `vendor` non creatable
 * verification et documentation de `php-zip` et `unzip` pour Composer
+* detail de la configuration cron pour le check planifie
 * ajout des commandes de verification des prerequis dans la procedure d'installation
 * documentation des erreurs frequentes du script de verification des prerequis
 * correction des textes visibles encodes de travers dans les pages principales

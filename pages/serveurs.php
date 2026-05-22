@@ -132,13 +132,13 @@ require_once __DIR__ . '/../includes/header.php';
 $stmt = $pdo->query("SELECT * FROM servers ORDER BY id DESC");
 $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-function getOSLogo(string $osName): string {
+function getOSLogo(string $osName, string $baseUrl): string {
     $osName = strtolower($osName);
     return match (true) {
-        str_contains($osName, 'debian') => '/assets/logos/debian.png',
-        str_contains($osName, 'ubuntu') => '/assets/logos/ubuntu.png',
-        str_contains($osName, 'windows') => '/assets/logos/windows.png',
-        default => '/assets/logos/unknown.png',
+        str_contains($osName, 'debian') => $baseUrl . 'assets/logos/debian.png',
+        str_contains($osName, 'ubuntu') => $baseUrl . 'assets/logos/ubuntu.png',
+        str_contains($osName, 'windows') => $baseUrl . 'assets/logos/windows.png',
+        default => $baseUrl . 'assets/logos/unknown.png',
     };
 }
 
@@ -190,7 +190,7 @@ include __DIR__ . '/../includes/server-modal.php';
                         <td class="p-3"><?= htmlspecialchars($server['hostname'] ?? '') ?></td>
                         <td class="p-3">
                             <div class="flex items-center gap-2">
-                                <img src="<?= getOSLogo($server['os'] ?? '') ?>" alt="Logo OS" class="w-5 h-5">
+                                <img src="<?= getOSLogo($server['os'] ?? '', $baseUrl) ?>" alt="Logo OS" class="w-5 h-5">
                                 <span><?= htmlspecialchars($server['os'] ?? '-') ?></span>
                             </div>
                         </td>

@@ -153,6 +153,7 @@ Le script verifie :
 - la presence de `unzip` pour Composer ;
 - la presence d'un client MariaDB/MySQL ;
 - la detection d'Apache quand la commande est disponible ;
+- le statut du service Apache sur Linux avec systemd ;
 - l'espace disque disponible ;
 - la memoire systeme quand elle est detectable ;
 - la presence de `.env` ;
@@ -250,6 +251,30 @@ Verifier ensuite :
 ```bash
 php -m | grep zip
 unzip -v
+```
+
+#### `[WARN] Apache service - installed but not active`
+
+Apache est installe, mais le service n'est pas demarre. Le site retournera souvent `connection refused` tant que le service est arrete.
+
+Debian / Ubuntu :
+
+```bash
+sudo systemctl enable --now apache2
+sudo systemctl status apache2
+```
+
+RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+sudo systemctl enable --now httpd
+sudo systemctl status httpd
+```
+
+Verifier ensuite que le port HTTP ecoute :
+
+```bash
+sudo ss -ltnp | grep ':80'
 ```
 
 #### `[WARN] MariaDB/MySQL client - not found in PATH`
@@ -523,6 +548,8 @@ http://msm.example.local/msm/metrics.php
 
 Les fichiers sensibles `.env`, `.key` et `.pem` sont bloques par `.htaccess` quand Apache autorise les fichiers `.htaccess`.
 
+MSM detecte automatiquement s'il est installe a la racine du vhost ou dans un sous-dossier comme `/msm/`. Les liens du menu, les formulaires et les assets doivent donc fonctionner dans les deux cas.
+
 ### Attention au pare-feu
 
 Le serveur qui heberge MSM doit autoriser le trafic HTTP ou HTTPS entrant selon la configuration choisie :
@@ -549,13 +576,96 @@ Si MSM doit tester des serveurs distants, verifier aussi que les flux sortants n
 
 ## 9. Configurer le check planifie
 
-Exemple cron toutes les minutes. Le script respecte ensuite l'intervalle configure dans MSM :
+MSM ne lance pas les checks lourds au chargement des pages. Les statuts doivent etre mis a jour par un script planifie :
+
+```bash
+php scripts/check-servers.php
+```
+
+Ce script met a jour les derniers resultats connus en base. Les pages MSM et l'endpoint Prometheus lisent ensuite ces donnees.
+
+### Verifier le script manuellement
+
+Depuis la racine du projet :
+
+```bash
+cd /var/www/html/msm
+php scripts/check-servers.php
+```
+
+Si cette commande retourne une erreur, corriger l'erreur avant de configurer cron.
+
+### Verifier le chemin PHP
+
+Cron doit utiliser le chemin complet de PHP :
+
+```bash
+which php
+```
+
+Exemple courant :
+
+```text
+/usr/bin/php
+```
+
+### Preparer le fichier de log
+
+Creer le dossier `logs/` s'il n'existe pas et verifier les droits :
+
+```bash
+mkdir -p /var/www/html/msm/logs
+touch /var/www/html/msm/logs/check-servers.log
+```
+
+Si le cron est execute avec l'utilisateur courant, cet utilisateur doit pouvoir ecrire dans `logs/`. Si le cron est execute avec l'utilisateur Apache, adapter les droits comme indique dans l'etape 7.
+
+### Installer et activer cron si necessaire
+
+Debian / Ubuntu :
+
+```bash
+sudo apt install -y cron
+sudo systemctl enable --now cron
+```
+
+RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+sudo dnf install -y cronie
+sudo systemctl enable --now crond
+```
+
+### Ajouter la tache cron
+
+Editer la crontab de l'utilisateur qui doit lancer les checks :
+
+```bash
+crontab -e
+```
+
+Ajouter une execution toutes les minutes :
 
 ```cron
 * * * * * /usr/bin/php /var/www/html/msm/scripts/check-servers.php >> /var/www/html/msm/logs/check-servers.log 2>&1
 ```
 
-Adapter les chemins selon l'installation.
+Le script respecte ensuite l'intervalle configure dans MSM, par exemple `check_interval_minutes`. Il est donc normal de lancer cron toutes les minutes meme si MSM ne fait un vrai check que toutes les 5 ou 10 minutes selon la configuration.
+
+Adapter les chemins selon l'installation :
+
+- remplacer `/usr/bin/php` par le resultat de `which php` ;
+- remplacer `/var/www/html/msm` par le dossier reel du projet.
+
+### Verifier l'execution planifiee
+
+Attendre une ou deux minutes, puis consulter le log :
+
+```bash
+tail -n 50 /var/www/html/msm/logs/check-servers.log
+```
+
+Verifier aussi la page diagnostic MSM : elle doit afficher un dernier check coherent.
 
 ## 10. Verifications post-install
 

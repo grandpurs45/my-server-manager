@@ -1,5 +1,12 @@
 <?php
-$baseUrl = '/';
+$scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '/index.php');
+$scriptDirectory = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+
+if (basename($scriptDirectory) === 'pages') {
+    $scriptDirectory = rtrim(str_replace('\\', '/', dirname($scriptDirectory)), '/');
+}
+
+$baseUrl = ($scriptDirectory === '' || $scriptDirectory === '.') ? '/' : $scriptDirectory . '/';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -8,7 +15,7 @@ $baseUrl = '/';
     <title>My Server Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    <link rel="icon" type="image/png" href="/assets/favicon.png">
+    <link rel="icon" type="image/png" href="<?= $baseUrl ?>assets/favicon.png">
 </head>
 <body class="bg-gray-100">
 <?php

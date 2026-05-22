@@ -1,5 +1,5 @@
 <?php
-$formAction = $editMode ? 'serveurs.php' : '/pages/add-server.php';
+$formAction = $editMode ? 'serveurs.php' : $baseUrl . 'pages/add-server.php';
 ?>
 <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
     <div class="bg-white rounded-lg shadow-lg w-full max-w-xl p-6 relative">

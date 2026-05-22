@@ -2,6 +2,13 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/alerts_helper.php';
 
+$scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '/pages/alerts-wall-standalone.php');
+$scriptDirectory = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+if (basename($scriptDirectory) === 'pages') {
+    $scriptDirectory = rtrim(str_replace('\\', '/', dirname($scriptDirectory)), '/');
+}
+$baseUrl = ($scriptDirectory === '' || $scriptDirectory === '.') ? '/' : $scriptDirectory . '/';
+
 $stmt = $pdo->query("SELECT * FROM servers ORDER BY name ASC");
 $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $alerts = msm_build_supervision_alerts($servers);
@@ -14,18 +21,18 @@ $alerts = msm_build_supervision_alerts($servers);
     <title>MSM - Mur d'alertes</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="<?= $baseUrl ?>manifest.json">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="MSM">
-    <link rel="apple-touch-icon" href="/assets/logos/msm-192.png">
+    <link rel="apple-touch-icon" href="<?= $baseUrl ?>assets/logos/msm-192.png">
     <link rel="apple-touch-startup-image"
         media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-        href="/assets/logos/splash-1536x2048.png">
+        href="<?= $baseUrl ?>assets/logos/splash-1536x2048.png">
     <link rel="apple-touch-startup-image"
         media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-        href="/assets/logos/splash-2048x1536.png">
+        href="<?= $baseUrl ?>assets/logos/splash-2048x1536.png">
     <style>
         html, body {
             margin: 0;
