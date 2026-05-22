@@ -15,6 +15,12 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 
 Pour une installation complete sur un environnement vierge, suivre [docs/INSTALL.md](docs/INSTALL.md).
 
+Verifier les prerequis depuis la racine du projet :
+
+```bash
+php scripts/check-prerequisites.php
+```
+
 Resume rapide :
 
 1. Cloner le depot :

@@ -42,6 +42,65 @@ La consommation depend surtout du nombre de serveurs supervises, de la frequence
 - Composer.
 - Git.
 
+## Verification automatique des prerequis
+
+Depuis la racine du projet, lancer :
+
+```bash
+php scripts/check-prerequisites.php
+```
+
+Le script verifie :
+
+- la version PHP ;
+- les extensions PHP requises ;
+- la presence de Git et Composer ;
+- la presence d'un client MariaDB/MySQL ;
+- la detection d'Apache quand la commande est disponible ;
+- l'espace disque disponible ;
+- la memoire systeme quand elle est detectable ;
+- la presence de `.env` ;
+- les permissions de `logs/` ;
+- l'acces au dossier `migrations/`.
+
+Les statuts possibles sont :
+
+- `OK` : le point est valide ;
+- `WARN` : le point doit etre verifie, mais ne bloque pas toujours l'installation ;
+- `FAIL` : le point doit etre corrige avant de continuer.
+
+Exemple :
+
+```text
+[OK] PHP version - 8.2.12
+[OK] PHP extension pdo_mysql
+[WARN] Local config .env - missing; copy .env.example to .env before running MSM
+```
+
+## Verification manuelle rapide
+
+Si le script ne peut pas etre lance, verifier les prerequis avec :
+
+```bash
+php -v
+php -m
+composer --version
+git --version
+mysql --version
+apache2 -v
+df -h .
+free -h
+```
+
+Sur Windows avec XAMPP/WAMP, utiliser aussi :
+
+```powershell
+php -v
+php -m
+composer --version
+git --version
+```
+
 ## 1. Recuperer le projet
 
 ```bash

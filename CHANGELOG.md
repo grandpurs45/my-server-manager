@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. See [standa
 * ajout d'un chargement de configuration locale via `.env`
 * externalisation de la configuration MariaDB et de la cle de chiffrement
 * ajout d'une page diagnostic systeme
+* ajout d'un script CLI de verification des prerequis d'installation
 
 ### Security
 
@@ -22,6 +23,7 @@ All notable changes to this project will be documented in this file. See [standa
 * ajout d'un exemple `.env.example`
 * ajout d'une procedure d'installation vierge
 * ajout des prerequis materiels et des modes d'installation possibles
+* ajout des commandes de verification des prerequis dans la procedure d'installation
 * correction des textes visibles encodes de travers dans les pages principales
 
 ### [0.14.2](https://github.com/grandpurs45/my-server-manager/compare/v0.14.1...v0.14.2) (2026-05-22)
