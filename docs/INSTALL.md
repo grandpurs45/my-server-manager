@@ -37,10 +37,12 @@ La consommation depend surtout du nombre de serveurs supervises, de la frequence
   - `pdo_mysql`
   - `openssl`
   - `mbstring`
+  - `zip` recommande pour Composer.
 - MariaDB ou MySQL.
 - Apache avec PHP active.
 - Composer.
 - Git.
+- `unzip` recommande pour Composer.
 
 ## Installation des dependances systeme
 
@@ -146,7 +148,9 @@ Le script verifie :
 
 - la version PHP ;
 - les extensions PHP requises ;
+- les extensions PHP recommandees pour Composer ;
 - la presence de Git et Composer ;
+- la presence de `unzip` pour Composer ;
 - la presence d'un client MariaDB/MySQL ;
 - la detection d'Apache quand la commande est disponible ;
 - l'espace disque disponible ;
@@ -221,6 +225,31 @@ Verifier ensuite :
 
 ```bash
 composer --version
+```
+
+#### `The zip extension and unzip/7z commands are both missing`
+
+Composer peut continuer en clonant les dependances depuis les sources, mais l'installation est plus lente et plus verbeuse. Installer `php-zip` et `unzip`.
+
+Debian / Ubuntu :
+
+```bash
+sudo apt install php-zip unzip
+sudo systemctl restart apache2
+```
+
+RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+sudo dnf install php-zip unzip
+sudo systemctl restart httpd
+```
+
+Verifier ensuite :
+
+```bash
+php -m | grep zip
+unzip -v
 ```
 
 #### `[WARN] MariaDB/MySQL client - not found in PATH`

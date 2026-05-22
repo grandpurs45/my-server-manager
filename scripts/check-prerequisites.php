@@ -6,7 +6,9 @@ chdir(__DIR__ . '/..');
 
 $requiredPhpVersion = '8.0.0';
 $requiredExtensions = ['pdo_mysql', 'openssl', 'mbstring'];
+$recommendedExtensions = ['zip'];
 $requiredCommands = ['git', 'composer'];
+$recommendedCommands = ['unzip'];
 $recommendedMemoryMb = 1024;
 $recommendedDiskMb = 5120;
 
@@ -104,11 +106,27 @@ foreach ($requiredExtensions as $extension) {
     }
 }
 
+foreach ($recommendedExtensions as $extension) {
+    if (extension_loaded($extension)) {
+        markOk('PHP extension ' . $extension);
+    } else {
+        markWarning('PHP extension ' . $extension, 'missing; Composer may fall back to source installs');
+    }
+}
+
 foreach ($requiredCommands as $command) {
     if (commandExists($command)) {
         markOk('Command ' . $command);
     } else {
         markError('Command ' . $command, 'not found in PATH');
+    }
+}
+
+foreach ($recommendedCommands as $command) {
+    if (commandExists($command)) {
+        markOk('Command ' . $command);
+    } else {
+        markWarning('Command ' . $command, 'not found in PATH; Composer may fall back to source installs');
     }
 }
 
