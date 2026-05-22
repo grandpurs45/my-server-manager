@@ -19,6 +19,8 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Documentation
 
+* retrait des exemples lies a une configuration personnelle dans la procedure d'installation
+* ajout d'un avertissement sur la configuration pare-feu du serveur MSM
 * ajout d'une roadmap projet vers la v1
 * ajout d'un exemple `.env.example`
 * ajout d'une procedure d'installation vierge

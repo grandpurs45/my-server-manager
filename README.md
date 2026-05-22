@@ -110,9 +110,9 @@ Exemple de sortie :
 ```text
 # HELP msm_server_up Last known server reachability status from MSM.
 # TYPE msm_server_up gauge
-msm_server_up{server="srv-docker",hostname="srv-docker.lan"} 1
-msm_ssh_ok{server="srv-docker",hostname="srv-docker.lan"} 1
-msm_server_latency_ms{server="srv-docker",hostname="srv-docker.lan"} 4
+msm_server_up{server="server-01",hostname="server-01.example.local"} 1
+msm_ssh_ok{server="server-01",hostname="server-01.example.local"} 1
+msm_server_latency_ms{server="server-01",hostname="server-01.example.local"} 4
 ```
 
 ## Scripts Utiles

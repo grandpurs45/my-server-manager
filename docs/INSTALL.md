@@ -512,16 +512,40 @@ Adapter l'utilisateur Apache selon la distribution.
 MSM peut fonctionner dans un sous-dossier, par exemple :
 
 ```text
-http://srv-msm.lan/msm/
+http://msm.example.local/msm/
 ```
 
 L'endpoint Prometheus par defaut ne depend pas de `mod_rewrite` :
 
 ```text
-http://srv-msm.lan/msm/metrics.php
+http://msm.example.local/msm/metrics.php
 ```
 
 Les fichiers sensibles `.env`, `.key` et `.pem` sont bloques par `.htaccess` quand Apache autorise les fichiers `.htaccess`.
+
+### Attention au pare-feu
+
+Le serveur qui heberge MSM doit autoriser le trafic HTTP ou HTTPS entrant selon la configuration choisie :
+
+- HTTP : port `80/tcp` ;
+- HTTPS : port `443/tcp`.
+
+Exemple avec `firewalld` sur RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
+```
+
+Exemple avec `ufw` sur Debian / Ubuntu :
+
+```bash
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+```
+
+Si MSM doit tester des serveurs distants, verifier aussi que les flux sortants necessaires sont autorises depuis le serveur MSM, par exemple ICMP pour le ping et `22/tcp` pour SSH.
 
 ## 9. Configurer le check planifie
 
@@ -538,7 +562,7 @@ Adapter les chemins selon l'installation.
 Ouvrir :
 
 ```text
-http://srv-msm.lan/msm/pages/diagnostic.php
+http://msm.example.local/msm/pages/diagnostic.php
 ```
 
 Verifier :
@@ -556,7 +580,7 @@ Verifier :
 Tester aussi :
 
 ```text
-http://srv-msm.lan/msm/metrics.php
+http://msm.example.local/msm/metrics.php
 ```
 
 La page doit retourner du texte au format Prometheus.
