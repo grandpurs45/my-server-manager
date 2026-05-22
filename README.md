@@ -58,13 +58,13 @@ msm/
 MSM expose un endpoint Prometheus en texte brut :
 
 ```text
-http://localhost/msm/metrics
+http://localhost/msm/metrics.php
 ```
 
-Si la reecriture Apache n'est pas active, utiliser directement :
+Si `mod_rewrite` est active et qu'une regle serveur est configuree, il est possible d'exposer aussi :
 
 ```text
-http://localhost/msm/metrics.php
+http://localhost/msm/metrics
 ```
 
 Les metriques exposees par cette premiere version viennent uniquement de la base MSM. Le endpoint `/metrics` ne lance pas de ping, SSH ou analyse distante afin de rester rapide et compatible avec un scrape Prometheus regulier.

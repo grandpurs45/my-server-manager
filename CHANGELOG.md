@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.14.1](https://github.com/grandpurs45/my-server-manager/compare/v0.14.0...v0.14.1) (2026-05-22)
+
+### Bug Fixes
+
+* retrait de la regle de rewrite `/metrics` dans `.htaccess` pour eviter une erreur 500 si `mod_rewrite` est absent
+
 ## [0.14.0](https://github.com/grandpurs45/my-server-manager/compare/v0.13.0...v0.14.0) (2026-05-22)
 
 ### Features
