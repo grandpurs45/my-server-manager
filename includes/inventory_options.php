@@ -90,3 +90,12 @@ function msmInventoryNormalizeSelected(string $value, array $options, string $fa
 {
     return array_key_exists($value, $options) ? $value : $fallback;
 }
+
+function msmInventoryTags(?string $tags): array
+{
+    if ($tags === null || trim($tags) === '') {
+        return [];
+    }
+
+    return array_values(array_filter(array_map('trim', explode(',', $tags))));
+}

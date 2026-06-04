@@ -31,6 +31,28 @@ if (!$serveur) {
     require_once __DIR__ . '/../includes/footer.php';
     exit;
 }
+
+if (empty($serveur['security_enabled'])) {
+    ?>
+    <a href="<?= $baseUrl ?>pages/securite-serveurs.php"
+       class="inline-block mb-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded shadow">
+        Retour a la liste des serveurs
+    </a>
+
+    <div class="rounded border border-slate-200 bg-white p-6 shadow">
+        <h1 class="text-2xl font-bold mb-3">Analyse securite desactivee - <?= htmlspecialchars($serveur['name']) ?></h1>
+        <p class="text-sm text-slate-600 mb-4">
+            Cette cible n'est pas incluse dans le module securite. Aucun controle SSH ou systeme n'a ete lance.
+        </p>
+        <a href="<?= $baseUrl ?>pages/serveurs.php?edit=<?= (int) $serveur['id'] ?>"
+           class="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+            Activer dans les options du serveur
+        </a>
+    </div>
+    <?php
+    require_once __DIR__ . '/../includes/footer.php';
+    exit;
+}
 ?>
 
 <a href="<?= $baseUrl ?>pages/securite-serveurs.php"

@@ -80,6 +80,17 @@ $formAction = $editMode ? 'serveurs.php' : $baseUrl . 'pages/add-server.php';
                 </div>
             </div>
 
+            <div class="rounded border border-slate-200 bg-slate-50 px-3 py-3">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="security_enabled" name="security_enabled" class="form-checkbox"
+                        <?= isset($server['security_enabled']) && (int)$server['security_enabled'] === 1 ? 'checked' : '' ?>>
+                    <span class="ml-2 font-medium">Inclure dans l'analyse securite</span>
+                </label>
+                <p class="mt-1 text-xs text-slate-500">
+                    Active les vues et controles du module securite pour cette cible.
+                </p>
+            </div>
+
             <div>
                 <label class="block font-medium mb-1" for="tags">Tags</label>
                 <input type="hidden" id="tags" name="tags" value="<?= htmlspecialchars($editData['tags'] ?? '') ?>">

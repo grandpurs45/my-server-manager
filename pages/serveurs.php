@@ -73,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
     $sshPasswordInput = $_POST['ssh_password'] ?? '';
     $sshPort = isset($_POST['ssh_port']) && is_numeric($_POST['ssh_port']) ? (int) $_POST['ssh_port'] : 22;
     $sshEnabled = isset($_POST['ssh_enabled']) ? 1 : 0;
+    $securityEnabled = isset($_POST['security_enabled']) ? 1 : 0;
 
     $targetType = msmInventoryNormalizeSelected($targetType, $targetTypes, array_key_first($targetTypes) ?: 'other');
     $environment = msmInventoryNormalizeSelected($environment, $environments, array_key_first($environments) ?: 'other');
@@ -127,7 +128,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
                     ssh_password = :ssh_password,
                     os = :os,
                     ssh_status = :ssh_status,
-                    ssh_enabled = :ssh_enabled
+                    ssh_enabled = :ssh_enabled,
+                    security_enabled = :security_enabled
                 WHERE id = :id
             ");
             $stmt->execute([
@@ -144,6 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
                 ':os' => $os,
                 ':ssh_status' => $sshStatus,
                 ':ssh_enabled' => $sshEnabled,
+                ':security_enabled' => $securityEnabled,
                 ':id' => $id,
             ]);
         } catch (PDOException $e) {
@@ -157,7 +160,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
 
 require_once __DIR__ . '/../includes/header.php';
 
-$stmt = $pdo->query("SELECT * FROM servers ORDER BY id DESC");
+$filters = [
+    'target_type' => msmInventoryNormalizeSelected(
+        trim($_GET['target_type'] ?? ''),
+        array_merge(['' => ''], $targetTypes),
+        ''
+    ),
+    'environment' => msmInventoryNormalizeSelected(
+        trim($_GET['environment'] ?? ''),
+        array_merge(['' => ''], $environments),
+        ''
+    ),
+    'criticality' => msmInventoryNormalizeSelected(
+        trim($_GET['criticality'] ?? ''),
+        array_merge(['' => ''], $criticalities),
+        ''
+    ),
+    'status' => in_array(($_GET['status'] ?? ''), ['up', 'down', 'unknown'], true) ? $_GET['status'] : '',
+    'tag' => trim($_GET['tag'] ?? ''),
+];
+
+$where = [];
+$queryParams = [];
+
+foreach (['target_type', 'environment', 'criticality', 'status'] as $field) {
+    if ($filters[$field] !== '') {
+        $where[] = "$field = :$field";
+        $queryParams[":$field"] = $filters[$field];
+    }
+}
+
+if ($filters['tag'] !== '') {
+    $where[] = 'tags LIKE :tag';
+    $queryParams[':tag'] = '%' . $filters['tag'] . '%';
+}
+
+$sql = 'SELECT * FROM servers';
+if ($where) {
+    $sql .= ' WHERE ' . implode(' AND ', $where);
+}
+$sql .= ' ORDER BY id DESC';
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($queryParams);
 $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 function getOSLogo(string $osName, string $targetType, string $baseUrl): string {
@@ -172,14 +217,6 @@ function getOSLogo(string $osName, string $targetType, string $baseUrl): string 
         $targetType === 'linux' || $targetType === 'proxmox' || $targetType === 'docker' => $baseUrl . 'assets/logos/linux.svg',
         default => $baseUrl . 'assets/logos/unknown.png',
     };
-}
-
-function formatInventoryTags(?string $tags): array {
-    if ($tags === null || trim($tags) === '') {
-        return [];
-    }
-
-    return array_values(array_filter(array_map('trim', explode(',', $tags))));
 }
 
 $server = $editMode ? $editData : null;
@@ -209,6 +246,77 @@ include __DIR__ . '/../includes/server-modal.php';
         </div>
         <?php unset($_SESSION['success']); ?>
     <?php endif; ?>
+
+    <form method="get" class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div>
+                <label for="filter-target-type" class="block text-sm font-medium text-slate-700 mb-1">Type</label>
+                <select id="filter-target-type" name="target_type" class="w-full border rounded px-3 py-2">
+                    <option value="">Tous</option>
+                    <?php foreach ($targetTypes as $value => $label): ?>
+                        <option value="<?= htmlspecialchars($value) ?>" <?= $filters['target_type'] === $value ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div>
+                <label for="filter-environment" class="block text-sm font-medium text-slate-700 mb-1">Environnement</label>
+                <select id="filter-environment" name="environment" class="w-full border rounded px-3 py-2">
+                    <option value="">Tous</option>
+                    <?php foreach ($environments as $value => $label): ?>
+                        <option value="<?= htmlspecialchars($value) ?>" <?= $filters['environment'] === $value ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div>
+                <label for="filter-criticality" class="block text-sm font-medium text-slate-700 mb-1">Criticite</label>
+                <select id="filter-criticality" name="criticality" class="w-full border rounded px-3 py-2">
+                    <option value="">Toutes</option>
+                    <?php foreach ($criticalities as $value => $label): ?>
+                        <option value="<?= htmlspecialchars($value) ?>" <?= $filters['criticality'] === $value ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div>
+                <label for="filter-status" class="block text-sm font-medium text-slate-700 mb-1">Statut</label>
+                <select id="filter-status" name="status" class="w-full border rounded px-3 py-2">
+                    <option value="">Tous</option>
+                    <option value="up" <?= $filters['status'] === 'up' ? 'selected' : '' ?>>UP</option>
+                    <option value="down" <?= $filters['status'] === 'down' ? 'selected' : '' ?>>DOWN</option>
+                    <option value="unknown" <?= $filters['status'] === 'unknown' ? 'selected' : '' ?>>Inconnu</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="filter-tag" class="block text-sm font-medium text-slate-700 mb-1">Tag</label>
+                <input id="filter-tag" type="text" name="tag" value="<?= htmlspecialchars($filters['tag']) ?>"
+                       class="w-full border rounded px-3 py-2" placeholder="docker">
+            </div>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between gap-3">
+            <p class="text-sm text-slate-500">
+                <?= count($servers) ?> cible<?= count($servers) > 1 ? 's' : '' ?> affichee<?= count($servers) > 1 ? 's' : '' ?>.
+            </p>
+            <div class="flex gap-2">
+                <a href="serveurs.php" class="inline-flex items-center gap-1 rounded bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300">
+                    Reinitialiser
+                </a>
+                <button type="submit" class="inline-flex items-center gap-1 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    Filtrer
+                </button>
+            </div>
+        </div>
+    </form>
 
     <table class="w-full table-auto border border-gray-200 rounded-lg overflow-hidden shadow">
         <thead class="bg-gray-100 text-left">
@@ -254,7 +362,7 @@ include __DIR__ . '/../includes/server-modal.php';
                         </td>
                         <td class="p-3">
                             <div class="flex flex-wrap gap-1">
-                                <?php foreach (formatInventoryTags($server['tags'] ?? null) as $tag): ?>
+                                <?php foreach (msmInventoryTags($server['tags'] ?? null) as $tag): ?>
                                     <span class="inline-flex px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs">
                                         <?= htmlspecialchars($tag) ?>
                                     </span>
@@ -297,6 +405,9 @@ include __DIR__ . '/../includes/server-modal.php';
                         </td>
                         <td class="p-3"><?= $server['last_check'] ? htmlspecialchars($server['last_check']) : 'Jamais' ?></td>
                         <td class="px-4 py-2">
+                            <a href="details-cible.php?id=<?= (int) $server['id'] ?>" class="text-slate-700 hover:underline flex items-center gap-1 mb-2">
+                                <i data-lucide="eye" class="w-4 h-4"></i> Details
+                            </a>
                             <a href="serveurs.php?edit=<?= (int) $server['id'] ?>" class="text-blue-600 hover:underline flex items-center gap-1 mb-2">
                                 <i data-lucide="pencil" class="w-4 h-4"></i> Modifier
                             </a>

@@ -79,6 +79,8 @@ Objectif : exposer proprement les donnees MSM sans faire de checks lourds au mom
 
 ## Phase 2 - Inventaire
 
+Statut : terminee fonctionnellement, historique a garder pour plus tard.
+
 Objectif : clarifier les entites gerees par MSM.
 
 Types de cibles v1 :
@@ -107,12 +109,13 @@ Champs cibles :
 - [x] Options parametables pour types de cibles, environnements, criticites et methodes de collecte.
 - [x] Tags affiches comme badges dans la liste.
 - [x] Label Prometheus `type` alimente par l'inventaire.
+- [x] Ajouter des filtres par type, environnement, criticite, statut et tag.
+- [x] Ajouter une page detail cible orientee inventaire.
+- [x] Ajouter une activation par cible pour le module securite.
 
-Reste a faire :
+Report post-v1 ou si besoin confirme :
 
-- [ ] Ajouter des filtres par type, environnement et criticite.
-- [ ] Ajouter une page detail cible orientee inventaire.
-- [ ] Ajouter un historique minimal des changements d'inventaire si necessaire.
+- [ ] Ajouter un historique minimal des changements d'inventaire.
 
 ## Phase 3 - Patch Management
 
@@ -142,6 +145,7 @@ Architecture souhaitee :
 - resultats stockes en base ;
 - UI et `/metrics.php` lisent les derniers resultats connus ;
 - aucun check lourd dans une page de consultation.
+- activation explicite du patch management par cible, comme pour le module securite.
 
 ## Phase 4 - Securite Operationnelle
 
@@ -194,9 +198,9 @@ Objectif : livrer une version installee, documentee et maintenable.
 
 ## Priorites Immediates
 
-1. Finaliser Phase 1 : metriques Prometheus et documentation Grafana/Prometheus.
-2. Concevoir le modele de donnees Patch Management.
-3. Implementer Linux et Proxmox en premier.
+1. Concevoir le modele de donnees Patch Management.
+2. Implementer Linux et Proxmox en premier.
+3. Exposer les resultats Patch Management dans l'interface et Prometheus.
 4. Ajouter Docker.
 5. Ajouter Synology.
 6. Ajouter Windows.

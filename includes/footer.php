@@ -57,6 +57,10 @@ $version = getVersionFromPackageJson();
         if (tagsInput) tagsInput.value = '';
         if (tagList) tagList.innerHTML = '';
         if (tagInput) tagInput.value = '';
+
+        const securityEnabled = document.getElementById('security_enabled');
+        if (securityEnabled) securityEnabled.checked = false;
+
         window.dispatchEvent(new Event('msm:reset-tags'));
     }
 </script>

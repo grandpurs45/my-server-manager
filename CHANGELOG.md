@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout de filtres inventaire sur la liste des serveurs : type, environnement, criticite, statut et tag
+* ajout d'une page detail cible avec synthese inventaire, supervision, metriques recentes et labels Prometheus
+* ajout d'une option par cible pour activer ou exclure l'analyse securite serveur
+
 ## [0.16.0](https://github.com/grandpurs45/my-server-manager/compare/v0.15.0...v0.16.0) (2026-06-04)
 
 ### Features
