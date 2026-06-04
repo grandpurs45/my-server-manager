@@ -742,9 +742,9 @@ http://msm.example.local/msm/metrics.php
 La page doit retourner du texte au format Prometheus. Exemples de lignes attendues :
 
 ```text
-msm_server_up{server="server-01",hostname="server-01.example.local"} 1
-msm_ssh_ok{server="server-01",hostname="server-01.example.local"} 1
-msm_server_last_check_timestamp{server="server-01",hostname="server-01.example.local"} 1780000000
+msm_server_up{server="server-01",hostname="server-01.example.local",type="linux"} 1
+msm_ssh_ok{server="server-01",hostname="server-01.example.local",type="linux"} 1
+msm_server_last_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux"} 1780000000
 ```
 
 Depuis le serveur, il est aussi possible de tester :

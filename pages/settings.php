@@ -8,10 +8,11 @@ use MSM\SettingsManager;
 
 $settingsManager = new SettingsManager($pdo);
 
-$categories = ['reseau', 'supervision', 'bdd', 'msm'];
+$categories = ['reseau', 'supervision', 'inventaire', 'bdd', 'msm'];
 $labels = [
     'reseau' => 'Reseau',
     'supervision' => 'Supervision',
+    'inventaire' => 'Inventaire',
     'bdd' => 'Base de donnees',
     'msm' => 'MSM',
 ];
@@ -37,7 +38,10 @@ require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="p-6">
-    <h1 class="text-2xl font-bold mb-6">Parametres de My Server Manager</h1>
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold">Parametres de My Server Manager</h1>
+        <p class="text-sm text-gray-500 mt-1">Configuration locale de l'application et des listes utilisees par l'inventaire.</p>
+    </div>
 
     <?php if (!empty($_SESSION['error'])): ?>
         <div class="p-4 bg-red-100 text-red-800 rounded mb-4">
@@ -53,8 +57,9 @@ require_once __DIR__ . '/../includes/header.php';
         <?php unset($_SESSION['success']); ?>
     <?php endif; ?>
 
-    <div class="mb-4 border-b border-gray-200">
-        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="tab-menu" role="tablist">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="border-b border-gray-200 px-4">
+            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="tab-menu" role="tablist">
             <?php foreach ($categories as $index => $category): ?>
                 <li class="me-2">
                     <button class="inline-block p-4 border-b-2 rounded-t-lg <?php echo $index === 0 ? 'border-blue-500 text-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'; ?>" data-tab="<?php echo $category; ?>" type="button">
@@ -62,47 +67,65 @@ require_once __DIR__ . '/../includes/header.php';
                     </button>
                 </li>
             <?php endforeach; ?>
-        </ul>
+            </ul>
+        </div>
+
+        <div class="p-6">
+            <?php foreach ($categories as $index => $category):
+                $settings = $settingsManager->getAllByCategory($category);
+                $schema = $settings_schema[$category] ?? [];
+                $keys = !empty($schema)
+                    ? array_keys($schema)
+                    : array_keys($settings);
+            ?>
+            <div class="tab-content <?php echo $index === 0 ? '' : 'hidden'; ?>" data-tab-content="<?php echo $category; ?>">
+                <form method="POST" class="space-y-5 max-w-4xl">
+                    <?php echo msmCsrfField(); ?>
+                    <input type="hidden" name="category" value="<?php echo $category; ?>">
+
+                    <?php if (empty($keys)): ?>
+                        <p class="text-gray-500 italic">Aucun parametre declare pour cette categorie.</p>
+                    <?php else: ?>
+                        <?php foreach ($keys as $key):
+                            $fieldSchema = $schema[$key] ?? [];
+                            $type = $fieldSchema['type'] ?? 'text';
+                            $label = $fieldSchema['label'] ?? $key;
+                            $value = $settings[$key] ?? ($fieldSchema['default'] ?? '');
+                        ?>
+                            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                <label class="block text-sm font-semibold text-gray-800" for="<?php echo htmlspecialchars($key); ?>">
+                                    <?php echo htmlspecialchars($label); ?>
+                                </label>
+
+                                <?php if ($type === 'checkbox'): ?>
+                                    <div class="mt-2">
+                                        <input type="hidden" name="<?php echo htmlspecialchars($key); ?>" value="false">
+                                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                            <input type="checkbox" id="<?php echo htmlspecialchars($key); ?>" name="<?php echo htmlspecialchars($key); ?>" value="true"
+                                                <?php echo $value === 'true' ? 'checked' : ''; ?>
+                                                class="rounded border-gray-300">
+                                            Active
+                                        </label>
+                                    </div>
+                                <?php elseif ($type === 'textarea'): ?>
+                                    <textarea id="<?php echo htmlspecialchars($key); ?>" name="<?php echo htmlspecialchars($key); ?>" rows="7"
+                                              class="mt-2 block w-full border-gray-300 rounded-md shadow-sm font-mono text-sm"><?php echo htmlspecialchars($value); ?></textarea>
+                                    <p class="text-xs text-gray-500 mt-2">Une option par ligne. Format recommande : <code>valeur=Libelle</code>.</p>
+                                <?php else: ?>
+                                    <input type="<?php echo htmlspecialchars($type); ?>" id="<?php echo htmlspecialchars($key); ?>" name="<?php echo htmlspecialchars($key); ?>"
+                                           value="<?php echo htmlspecialchars($value); ?>"
+                                           class="mt-2 block w-full border-gray-300 rounded-md shadow-sm">
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Enregistrer</button>
+                </form>
+            </div>
+            <?php endforeach; ?>
+        </div>
     </div>
-
-    <?php foreach ($categories as $index => $category):
-        $settings = $settingsManager->getAllByCategory($category);
-    ?>
-    <div class="tab-content <?php echo $index === 0 ? '' : 'hidden'; ?>" data-tab-content="<?php echo $category; ?>">
-        <form method="POST" class="space-y-4">
-            <?php echo msmCsrfField(); ?>
-            <input type="hidden" name="category" value="<?php echo $category; ?>">
-
-            <?php if (empty($settings)): ?>
-                <p class="text-gray-500 italic">Aucun parametre enregistre pour cette categorie.</p>
-            <?php else: ?>
-                <?php foreach ($settings as $key => $value):
-                    $type = $settings_schema[$category][$key]['type'] ?? 'text';
-                    $label = $settings_schema[$category][$key]['label'] ?? $key;
-                ?>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700" for="<?php echo htmlspecialchars($key); ?>">
-                            <?php echo htmlspecialchars($label); ?>
-                        </label>
-
-                        <?php if ($type === 'checkbox'): ?>
-                            <input type="hidden" name="<?php echo htmlspecialchars($key); ?>" value="false">
-                            <input type="checkbox" id="<?php echo htmlspecialchars($key); ?>" name="<?php echo htmlspecialchars($key); ?>" value="true"
-                                <?php echo $value === 'true' ? 'checked' : ''; ?>
-                                class="mt-1">
-                        <?php else: ?>
-                            <input type="<?php echo htmlspecialchars($type); ?>" id="<?php echo htmlspecialchars($key); ?>" name="<?php echo htmlspecialchars($key); ?>"
-                                   value="<?php echo htmlspecialchars($value); ?>"
-                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Enregistrer</button>
-        </form>
-    </div>
-    <?php endforeach; ?>
 </div>
 
 <script>

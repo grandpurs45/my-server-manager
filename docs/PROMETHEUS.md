@@ -13,17 +13,18 @@ L'endpoint lit uniquement la base MSM. Il ne lance pas de ping, SSH, analyse de 
 Les labels stables en phase 1 sont :
 
 - `server` : nom MSM du serveur ;
-- `hostname` : hostname ou IP configure dans MSM.
+- `hostname` : hostname ou IP configure dans MSM ;
+- `type` : type de cible issu de l'inventaire MSM.
 
-Le label `type` sera ajoute plus tard avec la phase Inventaire, quand MSM disposera d'une donnee fiable pour distinguer Linux, Windows, Proxmox, Synology, Docker ou site web.
+Le label `type` doit rester une valeur controlee par l'inventaire, par exemple `linux`, `windows`, `proxmox`, `synology`, `docker`, `website`, `network` ou `other`.
 
 ```text
-msm_server_up{server="server-01",hostname="server-01.example.local"} 1
-msm_ssh_ok{server="server-01",hostname="server-01.example.local"} 1
-msm_server_latency_ms{server="server-01",hostname="server-01.example.local"} 4
-msm_server_disk_usage_percent{server="server-01",hostname="server-01.example.local"} 67
-msm_server_last_check_timestamp{server="server-01",hostname="server-01.example.local"} 1780000000
-msm_check_success{server="server-01",hostname="server-01.example.local"} 1
+msm_server_up{server="server-01",hostname="server-01.example.local",type="linux"} 1
+msm_ssh_ok{server="server-01",hostname="server-01.example.local",type="linux"} 1
+msm_server_latency_ms{server="server-01",hostname="server-01.example.local",type="linux"} 4
+msm_server_disk_usage_percent{server="server-01",hostname="server-01.example.local",type="linux"} 67
+msm_server_last_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux"} 1780000000
+msm_check_success{server="server-01",hostname="server-01.example.local",type="linux"} 1
 ```
 
 ## Exemple prometheus.yml

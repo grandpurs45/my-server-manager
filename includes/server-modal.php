@@ -2,7 +2,7 @@
 $formAction = $editMode ? 'serveurs.php' : $baseUrl . 'pages/add-server.php';
 ?>
 <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-xl p-6 relative">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 relative">
         <button type="button" onclick="toggleModal(false)" class="absolute top-2 right-2 text-gray-600 hover:text-black">
             <i data-lucide="x" class="w-5 h-5"></i>
         </button>
@@ -32,6 +32,63 @@ $formAction = $editMode ? 'serveurs.php' : $baseUrl . 'pages/add-server.php';
                        value="<?= htmlspecialchars($editData['hostname'] ?? '') ?>"
                        required
                        class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-medium mb-1" for="target-type">Type de cible</label>
+                    <select id="target-type" name="target_type" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300">
+                        <?php foreach ($targetTypes as $value => $label): ?>
+                            <option value="<?= htmlspecialchars($value) ?>" <?= (($editData['target_type'] ?? 'linux') === $value) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-medium mb-1" for="environment">Environnement</label>
+                    <select id="environment" name="environment" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300">
+                        <?php foreach ($environments as $value => $label): ?>
+                            <option value="<?= htmlspecialchars($value) ?>" <?= (($editData['environment'] ?? 'production') === $value) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-medium mb-1" for="criticality">Criticite</label>
+                    <select id="criticality" name="criticality" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300">
+                        <?php foreach ($criticalities as $value => $label): ?>
+                            <option value="<?= htmlspecialchars($value) ?>" <?= (($editData['criticality'] ?? 'medium') === $value) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-medium mb-1" for="collection-method">Methode de collecte</label>
+                    <select id="collection-method" name="collection_method" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300">
+                        <?php foreach ($collectionMethods as $value => $label): ?>
+                            <option value="<?= htmlspecialchars($value) ?>" <?= (($editData['collection_method'] ?? 'ssh') === $value) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-medium mb-1" for="tags">Tags</label>
+                <input type="hidden" id="tags" name="tags" value="<?= htmlspecialchars($editData['tags'] ?? '') ?>">
+                <div class="border rounded px-2 py-2 min-h-11 focus-within:ring focus-within:border-blue-300">
+                    <div id="tag-list" class="flex flex-wrap gap-2"></div>
+                    <input type="text" id="tag-input"
+                           placeholder="Ajouter un tag puis Entrer"
+                           class="w-full border-0 focus:outline-none mt-2">
+                </div>
             </div>
 
             <div class="mb-4">
@@ -83,6 +140,13 @@ $formAction = $editMode ? 'serveurs.php' : $baseUrl . 'pages/add-server.php';
 </div>
 
 <script>
+window.msmInventoryDefaults = {
+    target_type: <?= json_encode(array_key_first($targetTypes) ?: 'other') ?>,
+    environment: <?= json_encode(array_key_first($environments) ?: 'other') ?>,
+    criticality: <?= json_encode(array_key_first($criticalities) ?: 'medium') ?>,
+    collection_method: <?= json_encode(array_key_first($collectionMethods) ?: 'manual') ?>
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     const checkbox = document.getElementById('ssh_enabled');
     const sshFields = document.getElementById('ssh-fields');
@@ -102,6 +166,62 @@ document.addEventListener('DOMContentLoaded', function () {
     if (checkbox && sshFields) {
         checkbox.addEventListener('change', toggleSSHFields);
         toggleSSHFields();
+    }
+
+    const tagsInput = document.getElementById('tags');
+    const tagInput = document.getElementById('tag-input');
+    const tagList = document.getElementById('tag-list');
+    let tags = [];
+
+    function syncTags() {
+        if (!tagsInput || !tagList) return;
+        tagsInput.value = tags.join(', ');
+        tagList.innerHTML = '';
+
+        tags.forEach(tag => {
+            const badge = document.createElement('button');
+            badge.type = 'button';
+            badge.className = 'inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 px-2 py-1 text-xs';
+            badge.textContent = tag + ' x';
+            badge.addEventListener('click', () => {
+                tags = tags.filter(existing => existing !== tag);
+                syncTags();
+            });
+            tagList.appendChild(badge);
+        });
+    }
+
+    function addTag(rawTag) {
+        const tag = rawTag.trim();
+        if (!tag || tags.includes(tag)) return;
+        tags.push(tag);
+        syncTags();
+    }
+
+    if (tagsInput && tagInput && tagList) {
+        tags = tagsInput.value
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(Boolean);
+        syncTags();
+
+        tagInput.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ',') {
+                event.preventDefault();
+                addTag(tagInput.value.replace(',', ''));
+                tagInput.value = '';
+            }
+        });
+
+        tagInput.addEventListener('blur', () => {
+            addTag(tagInput.value);
+            tagInput.value = '';
+        });
+
+        window.addEventListener('msm:reset-tags', () => {
+            tags = [];
+            syncTags();
+        });
     }
 });
 </script>

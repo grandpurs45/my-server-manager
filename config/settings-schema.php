@@ -4,13 +4,37 @@ return [
     'reseau' => [
         'dns_suffix' => [
             'type' => 'text',
-            'label' => 'Suffixe DNS'
+            'label' => 'Suffixe DNS',
+            'default' => ''
         ]
     ],
     'msm' => [
         'debug_mode' => [
             'type' => 'checkbox',
-            'label' => 'Mode debug'
+            'label' => 'Mode debug',
+            'default' => 'false'
+        ]
+    ],
+    'inventaire' => [
+        'target_types' => [
+            'type' => 'textarea',
+            'label' => 'Types de cibles',
+            'default' => "linux=Linux\nwindows=Windows\nproxmox=Proxmox\nsynology=Synology\ndocker=Docker\nwebsite=Site web\nnetwork=Equipement reseau\nother=Autre"
+        ],
+        'environments' => [
+            'type' => 'textarea',
+            'label' => 'Environnements',
+            'default' => "production=Production\nhomelab=Homelab\nstaging=Staging\ndevelopment=Developpement\ntest=Test\nother=Autre"
+        ],
+        'criticalities' => [
+            'type' => 'textarea',
+            'label' => 'Criticites',
+            'default' => "low=Basse\nmedium=Moyenne\nhigh=Haute\ncritical=Critique"
+        ],
+        'collection_methods' => [
+            'type' => 'textarea',
+            'label' => 'Methodes de collecte',
+            'default' => "ssh=SSH\nping=Ping uniquement\napi=API\nwinrm=WinRM\nmanual=Manuelle\nnone=Aucune"
         ]
     ]
 ];

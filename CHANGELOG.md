@@ -7,10 +7,18 @@ All notable changes to this project will be documented in this file. See [standa
 ### Features
 
 * ajout des metriques Prometheus disque, timestamp du dernier check et succes du dernier check
+* ajout des champs d'inventaire serveur : type, environnement, criticite, tags et methode de collecte
+* ajout du label Prometheus `type` depuis l'inventaire MSM
+* ajout d'options parametables pour les types de cibles, environnements, criticites et methodes de collecte
+* ajout d'un champ tags avec rendu en badges
+* ajout d'un fallback d'icone Linux generique pour les distributions sans icone dediee
 
 ### Bug Fixes
 
 * correction du parsing de latence ping sur les environnements francises
+* classement des serveurs existants en `other` par defaut lors de la migration inventaire
+* affichage des parametres declares dans le schema meme lorsqu'ils ne sont pas encore enregistres en base
+* nettoyage de l'ancien parametre reseau `Suffixe DNS` pour eviter les doublons
 
 ### Documentation
 

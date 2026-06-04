@@ -6,8 +6,16 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/crypto.php';
 require_once __DIR__ . '/../includes/csrf.php';
+require_once __DIR__ . '/../includes/inventory_options.php';
 
 use MSM\SSHUtils;
+use MSM\SettingsManager;
+
+$settingsManager = new SettingsManager($pdo);
+$targetTypes = msmInventoryOptions($settingsManager, 'target_types');
+$environments = msmInventoryOptions($settingsManager, 'environments');
+$criticalities = msmInventoryOptions($settingsManager, 'criticalities');
+$collectionMethods = msmInventoryOptions($settingsManager, 'collection_methods');
 
 $editMode = false;
 $editData = null;
@@ -56,10 +64,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
     $id = (int) $_POST['id'];
     $name = trim($_POST['name'] ?? '');
     $hostname = trim($_POST['hostname'] ?? '');
+    $targetType = trim($_POST['target_type'] ?? 'linux');
+    $environment = trim($_POST['environment'] ?? 'production');
+    $criticality = trim($_POST['criticality'] ?? 'medium');
+    $tags = trim($_POST['tags'] ?? '');
+    $collectionMethod = trim($_POST['collection_method'] ?? 'ssh');
     $sshUser = trim($_POST['ssh_user'] ?? '');
     $sshPasswordInput = $_POST['ssh_password'] ?? '';
     $sshPort = isset($_POST['ssh_port']) && is_numeric($_POST['ssh_port']) ? (int) $_POST['ssh_port'] : 22;
     $sshEnabled = isset($_POST['ssh_enabled']) ? 1 : 0;
+
+    $targetType = msmInventoryNormalizeSelected($targetType, $targetTypes, array_key_first($targetTypes) ?: 'other');
+    $environment = msmInventoryNormalizeSelected($environment, $environments, array_key_first($environments) ?: 'other');
+    $criticality = msmInventoryNormalizeSelected($criticality, $criticalities, array_key_first($criticalities) ?: 'medium');
+    $collectionMethod = msmInventoryNormalizeSelected($collectionMethod, $collectionMethods, array_key_first($collectionMethods) ?: 'manual');
 
     if (!$name || !$hostname || ($sshEnabled && !$sshUser)) {
         $_SESSION['error'] = 'Les champs nom, hote et utilisateur SSH sont obligatoires si SSH est active.';
@@ -99,6 +117,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
                 UPDATE servers SET
                     name = :name,
                     hostname = :hostname,
+                    target_type = :target_type,
+                    environment = :environment,
+                    criticality = :criticality,
+                    tags = :tags,
+                    collection_method = :collection_method,
                     ssh_port = :ssh_port,
                     ssh_user = :ssh_user,
                     ssh_password = :ssh_password,
@@ -110,6 +133,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
             $stmt->execute([
                 ':name' => $name,
                 ':hostname' => $hostname,
+                ':target_type' => $targetType,
+                ':environment' => $environment,
+                ':criticality' => $criticality,
+                ':tags' => $tags !== '' ? $tags : null,
+                ':collection_method' => $collectionMethod,
                 ':ssh_port' => $sshPort,
                 ':ssh_user' => $sshUser,
                 ':ssh_password' => $sshPassword,
@@ -132,14 +160,26 @@ require_once __DIR__ . '/../includes/header.php';
 $stmt = $pdo->query("SELECT * FROM servers ORDER BY id DESC");
 $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-function getOSLogo(string $osName, string $baseUrl): string {
+function getOSLogo(string $osName, string $targetType, string $baseUrl): string {
     $osName = strtolower($osName);
+    $targetType = strtolower($targetType);
+
     return match (true) {
         str_contains($osName, 'debian') => $baseUrl . 'assets/logos/debian.png',
         str_contains($osName, 'ubuntu') => $baseUrl . 'assets/logos/ubuntu.png',
         str_contains($osName, 'windows') => $baseUrl . 'assets/logos/windows.png',
+        str_contains($osName, 'rocky') => $baseUrl . 'assets/logos/linux.svg',
+        $targetType === 'linux' || $targetType === 'proxmox' || $targetType === 'docker' => $baseUrl . 'assets/logos/linux.svg',
         default => $baseUrl . 'assets/logos/unknown.png',
     };
+}
+
+function formatInventoryTags(?string $tags): array {
+    if ($tags === null || trim($tags) === '') {
+        return [];
+    }
+
+    return array_values(array_filter(array_map('trim', explode(',', $tags))));
 }
 
 $server = $editMode ? $editData : null;
@@ -175,6 +215,10 @@ include __DIR__ . '/../includes/server-modal.php';
             <tr>
                 <th class="p-3">Nom</th>
                 <th class="p-3">Adresse IP</th>
+                <th class="p-3">Type</th>
+                <th class="p-3">Env.</th>
+                <th class="p-3">Criticite</th>
+                <th class="p-3">Tags</th>
                 <th class="p-3">OS</th>
                 <th class="p-3">Statut</th>
                 <th class="p-3">SSH</th>
@@ -189,8 +233,37 @@ include __DIR__ . '/../includes/server-modal.php';
                         <td class="p-3"><?= htmlspecialchars($server['name'] ?? '') ?></td>
                         <td class="p-3"><?= htmlspecialchars($server['hostname'] ?? '') ?></td>
                         <td class="p-3">
+                            <span class="inline-flex px-2 py-1 rounded bg-slate-100 text-slate-700 text-xs font-semibold">
+                                <?= htmlspecialchars($targetTypes[$server['target_type'] ?? ''] ?? ($server['target_type'] ?? 'linux')) ?>
+                            </span>
+                        </td>
+                        <td class="p-3"><?= htmlspecialchars($environments[$server['environment'] ?? ''] ?? ($server['environment'] ?? 'production')) ?></td>
+                        <td class="p-3">
+                            <?php
+                            $criticality = $server['criticality'] ?? 'medium';
+                            $criticalityClasses = match ($criticality) {
+                                'critical' => 'bg-red-100 text-red-700',
+                                'high' => 'bg-orange-100 text-orange-700',
+                                'low' => 'bg-gray-100 text-gray-600',
+                                default => 'bg-yellow-100 text-yellow-700',
+                            };
+                            ?>
+                            <span class="inline-flex px-2 py-1 rounded text-xs font-semibold <?= $criticalityClasses ?>">
+                                <?= htmlspecialchars($criticalities[$criticality] ?? $criticality) ?>
+                            </span>
+                        </td>
+                        <td class="p-3">
+                            <div class="flex flex-wrap gap-1">
+                                <?php foreach (formatInventoryTags($server['tags'] ?? null) as $tag): ?>
+                                    <span class="inline-flex px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs">
+                                        <?= htmlspecialchars($tag) ?>
+                                    </span>
+                                <?php endforeach; ?>
+                            </div>
+                        </td>
+                        <td class="p-3">
                             <div class="flex items-center gap-2">
-                                <img src="<?= getOSLogo($server['os'] ?? '', $baseUrl) ?>" alt="Logo OS" class="w-5 h-5">
+                                <img src="<?= getOSLogo($server['os'] ?? '', $server['target_type'] ?? '', $baseUrl) ?>" alt="Logo OS" class="w-5 h-5">
                                 <span><?= htmlspecialchars($server['os'] ?? '-') ?></span>
                             </div>
                         </td>
@@ -239,7 +312,7 @@ include __DIR__ . '/../includes/server-modal.php';
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="7" class="text-center text-gray-500 py-4">Aucun serveur enregistre.</td>
+                    <td colspan="11" class="text-center text-gray-500 py-4">Aucun serveur enregistre.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

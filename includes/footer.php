@@ -38,6 +38,26 @@ $version = getVersionFromPackageJson();
 
         const portInput = document.getElementsByName('ssh_port')[0];
         if (portInput) portInput.value = 22;
+
+        const defaults = window.msmInventoryDefaults || {
+            target_type: 'other',
+            environment: 'other',
+            criticality: 'medium',
+            collection_method: 'manual'
+        };
+
+        Object.entries(defaults).forEach(([name, value]) => {
+            const el = document.getElementsByName(name)[0];
+            if (el) el.value = value;
+        });
+
+        const tagsInput = document.getElementById('tags');
+        const tagList = document.getElementById('tag-list');
+        const tagInput = document.getElementById('tag-input');
+        if (tagsInput) tagsInput.value = '';
+        if (tagList) tagList.innerHTML = '';
+        if (tagInput) tagInput.value = '';
+        window.dispatchEvent(new Event('msm:reset-tags'));
     }
 </script>
 </body>

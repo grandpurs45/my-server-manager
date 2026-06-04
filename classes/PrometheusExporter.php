@@ -33,6 +33,7 @@ class PrometheusExporter
             $labels = $this->formatLabels([
                 'server' => $server['name'] ?? '',
                 'hostname' => $server['hostname'] ?? '',
+                'type' => $server['target_type'] ?? 'other',
             ]);
 
             $serverUp = ($server['status'] ?? '') === 'up' ? 1 : 0;
@@ -63,7 +64,7 @@ class PrometheusExporter
     private function getServers(): array
     {
         $stmt = $this->pdo->query(
-            'SELECT id, name, hostname, status, ssh_status, latency, last_check, UNIX_TIMESTAMP(last_check) AS last_check_timestamp
+            'SELECT id, name, hostname, target_type, status, ssh_status, latency, last_check, UNIX_TIMESTAMP(last_check) AS last_check_timestamp
              FROM servers
              ORDER BY name ASC'
         );

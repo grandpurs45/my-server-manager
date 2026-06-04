@@ -112,12 +112,12 @@ Exemple de sortie :
 ```text
 # HELP msm_server_up Last known server reachability status from MSM.
 # TYPE msm_server_up gauge
-msm_server_up{server="server-01",hostname="server-01.example.local"} 1
-msm_ssh_ok{server="server-01",hostname="server-01.example.local"} 1
-msm_server_latency_ms{server="server-01",hostname="server-01.example.local"} 4
-msm_server_disk_usage_percent{server="server-01",hostname="server-01.example.local"} 67
-msm_server_last_check_timestamp{server="server-01",hostname="server-01.example.local"} 1780000000
-msm_check_success{server="server-01",hostname="server-01.example.local"} 1
+msm_server_up{server="server-01",hostname="server-01.example.local",type="linux"} 1
+msm_ssh_ok{server="server-01",hostname="server-01.example.local",type="linux"} 1
+msm_server_latency_ms{server="server-01",hostname="server-01.example.local",type="linux"} 4
+msm_server_disk_usage_percent{server="server-01",hostname="server-01.example.local",type="linux"} 67
+msm_server_last_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux"} 1780000000
+msm_check_success{server="server-01",hostname="server-01.example.local",type="linux"} 1
 ```
 
 ## Scripts Utiles

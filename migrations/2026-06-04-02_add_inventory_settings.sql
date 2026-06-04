@@ -1,0 +1,26 @@
+INSERT INTO settings (category, setting_key, setting_value) VALUES
+('inventaire', 'target_types', 'linux=Linux
+windows=Windows
+proxmox=Proxmox
+synology=Synology
+docker=Docker
+website=Site web
+network=Equipement reseau
+other=Autre'),
+('inventaire', 'environments', 'production=Production
+homelab=Homelab
+staging=Staging
+development=Developpement
+test=Test
+other=Autre'),
+('inventaire', 'criticalities', 'low=Basse
+medium=Moyenne
+high=Haute
+critical=Critique'),
+('inventaire', 'collection_methods', 'ssh=SSH
+ping=Ping uniquement
+api=API
+winrm=WinRM
+manual=Manuelle
+none=Aucune')
+ON DUPLICATE KEY UPDATE setting_value = setting_value;

@@ -69,8 +69,9 @@ Objectif : exposer proprement les donnees MSM sans faire de checks lourds au mom
   - `msm_check_success`.
 - [x] Ajouter les labels stables utiles sans surcharger les series :
   - `server` ;
-  - `hostname`.
-- [x] Reporter le label `type` a la phase Inventaire, quand la donnee sera stable.
+  - `hostname` ;
+  - `type`.
+- [x] Ajouter le label `type` depuis l'inventaire MSM.
 - [x] Garantir que `/metrics.php` lit seulement la base et ne lance pas de SSH, ping, apt, Docker ou appel API.
 - [x] Documenter un exemple `prometheus.yml`.
 - [x] Preparer un dashboard Grafana minimal.
@@ -82,25 +83,36 @@ Objectif : clarifier les entites gerees par MSM.
 
 Types de cibles v1 :
 
-- serveur Linux ;
-- serveur Windows ;
-- hote Proxmox ;
-- NAS Synology ;
-- hote Docker ;
-- site web ou certificat.
+- [x] serveur Linux ;
+- [x] serveur Windows ;
+- [x] hote Proxmox ;
+- [x] NAS Synology ;
+- [x] hote Docker ;
+- [x] site web ou certificat ;
+- [x] equipement reseau ;
+- [x] autre.
 
 Champs cibles :
 
-- nom ;
-- hostname ou IP ;
-- type ;
-- environnement ;
-- criticite ;
-- tags ;
-- methode de collecte ;
-- SSH active ou non ;
-- date du dernier check ;
-- statut du dernier check.
+- [x] nom ;
+- [x] hostname ou IP ;
+- [x] type ;
+- [x] environnement ;
+- [x] criticite ;
+- [x] tags ;
+- [x] methode de collecte ;
+- [x] SSH active ou non ;
+- [x] date du dernier check ;
+- [x] statut du dernier check.
+- [x] Options parametables pour types de cibles, environnements, criticites et methodes de collecte.
+- [x] Tags affiches comme badges dans la liste.
+- [x] Label Prometheus `type` alimente par l'inventaire.
+
+Reste a faire :
+
+- [ ] Ajouter des filtres par type, environnement et criticite.
+- [ ] Ajouter une page detail cible orientee inventaire.
+- [ ] Ajouter un historique minimal des changements d'inventaire si necessaire.
 
 ## Phase 3 - Patch Management
 
