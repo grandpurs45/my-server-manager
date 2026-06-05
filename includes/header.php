@@ -60,6 +60,12 @@ if (ob_get_level() > 0) {
                 Alertes
             </a>
 
+            <div class="text-white uppercase text-sm font-bold mt-6 mb-2">Exploitation</div>
+            <a href="<?= $baseUrl ?>pages/patch-management.php" class="flex items-center pl-4 hover:text-gray-200">
+                <i data-lucide="package-check" class="w-5 h-5 mr-2"></i>
+                Patch management
+            </a>
+
             <div class="text-white uppercase text-sm font-bold mt-6 mb-2">Securite</div>
             <a href="<?= $baseUrl ?>pages/securite-serveurs.php" class="flex items-center pl-4 hover:text-gray-200">
                 <i data-lucide="terminal-square" class="w-5 h-5 mr-2"></i>

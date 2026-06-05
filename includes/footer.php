@@ -61,6 +61,9 @@ $version = getVersionFromPackageJson();
         const securityEnabled = document.getElementById('security_enabled');
         if (securityEnabled) securityEnabled.checked = false;
 
+        const patchManagementEnabled = document.getElementById('patch_management_enabled');
+        if (patchManagementEnabled) patchManagementEnabled.checked = false;
+
         window.dispatchEvent(new Event('msm:reset-tags'));
     }
 </script>

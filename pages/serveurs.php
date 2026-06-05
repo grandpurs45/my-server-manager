@@ -74,6 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
     $sshPort = isset($_POST['ssh_port']) && is_numeric($_POST['ssh_port']) ? (int) $_POST['ssh_port'] : 22;
     $sshEnabled = isset($_POST['ssh_enabled']) ? 1 : 0;
     $securityEnabled = isset($_POST['security_enabled']) ? 1 : 0;
+    $patchManagementEnabled = isset($_POST['patch_management_enabled']) ? 1 : 0;
 
     $targetType = msmInventoryNormalizeSelected($targetType, $targetTypes, array_key_first($targetTypes) ?: 'other');
     $environment = msmInventoryNormalizeSelected($environment, $environments, array_key_first($environments) ?: 'other');
@@ -129,7 +130,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
                     os = :os,
                     ssh_status = :ssh_status,
                     ssh_enabled = :ssh_enabled,
-                    security_enabled = :security_enabled
+                    security_enabled = :security_enabled,
+                    patch_management_enabled = :patch_management_enabled
                 WHERE id = :id
             ");
             $stmt->execute([
@@ -147,6 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
                 ':ssh_status' => $sshStatus,
                 ':ssh_enabled' => $sshEnabled,
                 ':security_enabled' => $securityEnabled,
+                ':patch_management_enabled' => $patchManagementEnabled,
                 ':id' => $id,
             ]);
         } catch (PDOException $e) {

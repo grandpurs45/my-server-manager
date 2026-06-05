@@ -119,6 +119,8 @@ Report post-v1 ou si besoin confirme :
 
 ## Phase 3 - Patch Management
 
+Statut : en cours.
+
 Objectif : savoir quoi mettre a jour et exposer ces informations a l'interface et a Prometheus.
 
 Cibles prioritaires :
@@ -146,6 +148,24 @@ Architecture souhaitee :
 - UI et `/metrics.php` lisent les derniers resultats connus ;
 - aucun check lourd dans une page de consultation.
 - activation explicite du patch management par cible, comme pour le module securite.
+
+Socle :
+
+- [x] Ajouter le flag `patch_management_enabled` sur les cibles.
+- [x] Creer les tables de synthese et detail des checks patch management.
+- [x] Ajouter une page Patch Management lisant les derniers resultats connus.
+- [x] Preparer les classes metier de resultat et de lecture.
+- [x] Tracer et afficher le collecteur utilise par resultat.
+
+Reste a faire :
+
+- [x] Implementer le collecteur Linux/Proxmox initial via SSH et `apt`.
+- [x] Ajouter le support Linux `dnf` / Rocky / RHEL-like.
+- [ ] Exposer les metriques Prometheus Patch Management.
+- [ ] Ajouter la liste detaillee des paquets par cible.
+- [ ] Ajouter Docker.
+- [ ] Ajouter Synology.
+- [ ] Ajouter Windows.
 
 ## Phase 4 - Securite Operationnelle
 

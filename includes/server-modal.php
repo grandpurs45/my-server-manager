@@ -80,15 +80,28 @@ $formAction = $editMode ? 'serveurs.php' : $baseUrl . 'pages/add-server.php';
                 </div>
             </div>
 
-            <div class="rounded border border-slate-200 bg-slate-50 px-3 py-3">
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="security_enabled" name="security_enabled" class="form-checkbox"
-                        <?= isset($server['security_enabled']) && (int)$server['security_enabled'] === 1 ? 'checked' : '' ?>>
-                    <span class="ml-2 font-medium">Inclure dans l'analyse securite</span>
-                </label>
-                <p class="mt-1 text-xs text-slate-500">
-                    Active les vues et controles du module securite pour cette cible.
-                </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="rounded border border-slate-200 bg-slate-50 px-3 py-3">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="security_enabled" name="security_enabled" class="form-checkbox"
+                            <?= isset($server['security_enabled']) && (int)$server['security_enabled'] === 1 ? 'checked' : '' ?>>
+                        <span class="ml-2 font-medium">Inclure dans l'analyse securite</span>
+                    </label>
+                    <p class="mt-1 text-xs text-slate-500">
+                        Active les vues et controles du module securite pour cette cible.
+                    </p>
+                </div>
+
+                <div class="rounded border border-slate-200 bg-slate-50 px-3 py-3">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="patch_management_enabled" name="patch_management_enabled" class="form-checkbox"
+                            <?= isset($server['patch_management_enabled']) && (int)$server['patch_management_enabled'] === 1 ? 'checked' : '' ?>>
+                        <span class="ml-2 font-medium">Inclure dans le patch management</span>
+                    </label>
+                    <p class="mt-1 text-xs text-slate-500">
+                        Active le suivi des mises a jour pour cette cible.
+                    </p>
+                </div>
             </div>
 
             <div>

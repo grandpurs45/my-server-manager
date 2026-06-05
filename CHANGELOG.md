@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout du socle Patch Management : activation par cible, tables de resultats, classes de lecture et page de synthese
+* ajout du premier collecteur Patch Management Linux/Proxmox via SSH et `apt`
+* ajout du collecteur Patch Management `dnf` pour Rocky Linux et distributions RHEL-like
+* mise en evidence visuelle des reboots requis dans le Patch Management
+* ajout de la tracabilite du collecteur utilise dans les resultats Patch Management
+* ajout d'une vue des collecteurs Patch Management disponibles et prevus
+
 ## [0.17.0](https://github.com/grandpurs45/my-server-manager/compare/v0.16.0...v0.17.0) (2026-06-04)
 
 ### Features
