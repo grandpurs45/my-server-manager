@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.19.0](https://github.com/grandpurs45/my-server-manager/compare/v0.18.0...v0.19.0) (2026-06-06)
 
 ### Features
 
