@@ -32,10 +32,20 @@ Exemple de sortie :
 
 ## Planification
 
-Exemple cron toutes les 6 heures :
+MSM applique un intervalle interne via le parametre :
+
+```text
+patch_management / check_interval_hours
+```
+
+Valeur par defaut : `6` heures.
+
+Le cron peut donc appeler le script regulierement. Si le dernier check est trop recent, le script s'arrete sans lancer de SSH.
+
+Exemple cron toutes les 10 minutes :
 
 ```cron
-0 */6 * * * /usr/bin/php /var/www/html/msm/scripts/check-patches.php >> /var/www/html/msm/logs/check-patches.log 2>&1
+*/10 * * * * /usr/bin/php /var/www/html/msm/scripts/check-patches.php >> /var/www/html/msm/logs/check-patches.log 2>&1
 ```
 
 Adapter le chemin selon l'installation.

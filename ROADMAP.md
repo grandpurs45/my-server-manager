@@ -156,6 +156,7 @@ Socle :
 - [x] Ajouter une page Patch Management lisant les derniers resultats connus.
 - [x] Preparer les classes metier de resultat et de lecture.
 - [x] Tracer et afficher le collecteur utilise par resultat.
+- [x] Ajouter une planification interne configurable des checks patch management.
 
 Reste a faire :
 
@@ -236,3 +237,10 @@ Objectif : livrer une version installee, documentee et maintenable.
 - Interface plus moderne.
 - Autodiscovery Proxmox, Docker ou reseau.
 - Setup d'installation interactif complet.
+- Discovery Proxmox
+- Ajout, Suppression, desactivation, suppression de collecteurs
+- interface d'administration plus moderne
+- interface globale plus moderne
+- modernisation des paramètres d'inventaire
+- agent pour les serveurs ?
+- script d'installation qui créé les cron directement

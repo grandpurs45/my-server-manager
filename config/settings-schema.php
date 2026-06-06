@@ -36,5 +36,12 @@ return [
             'label' => 'Methodes de collecte',
             'default' => "ssh=SSH\nping=Ping uniquement\napi=API\nwinrm=WinRM\nmanual=Manuelle\nnone=Aucune"
         ]
+    ],
+    'patch_management' => [
+        'check_interval_hours' => [
+            'type' => 'number',
+            'label' => 'Intervalle des checks patch management (heures)',
+            'default' => '6'
+        ]
     ]
 ];
