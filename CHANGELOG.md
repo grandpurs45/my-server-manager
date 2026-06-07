@@ -2,17 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.22.0](https://github.com/grandpurs45/my-server-manager/compare/v0.21.0...v0.22.0) (2026-06-07)
+
 
 ### Features
 
-* exposition Prometheus des resultats Patch Management et Cycle de vie OS
-* amelioration de la page Patch Management avec filtres d'exploitation, priorites et statut cycle de vie OS
-* recentrage des pages securite serveur sur les controles d'exposition et de pare-feu
-
-### Documentation
-
-* ajout d'exemples Prometheus pour les updates, reboots requis et upgrades OS
+* expose patch operations metrics ([cff2dc6](https://github.com/grandpurs45/my-server-manager/commit/cff2dc6d269610d7c479326154c18cee7a2dc208))
 
 ## [0.21.0](https://github.com/grandpurs45/my-server-manager/compare/v0.20.0...v0.21.0) (2026-06-07)
 
