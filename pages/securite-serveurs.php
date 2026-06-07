@@ -19,10 +19,11 @@ $excludedCount = (int) $pdo->query("
 
 <h1 class="text-2xl font-bold mb-6">Securite des serveurs</h1>
 
-<div class="mb-4">
-    <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
-        Lancer une analyse securite complete
-    </button>
+<div class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+    <p class="text-sm text-slate-600">
+        Cette vue est centree sur les controles d'exposition et de durcissement. Les mises a jour,
+        reboots requis et upgrades OS sont suivis dans Patch Management.
+    </p>
     <?php if ($excludedCount > 0): ?>
         <p class="mt-2 text-sm text-gray-500">
             <?= $excludedCount ?> cible<?= $excludedCount > 1 ? 's' : '' ?> exclue<?= $excludedCount > 1 ? 's' : '' ?> du module securite.
@@ -37,7 +38,7 @@ $excludedCount = (int) $pdo->query("
             <th class="px-6 py-3 text-left text-sm font-bold uppercase">Nom</th>
             <th class="px-6 py-3 text-left text-sm font-bold uppercase">OS</th>
             <th class="px-6 py-3 text-left text-sm font-bold uppercase">Statut</th>
-            <th class="px-6 py-3 text-left text-sm font-bold uppercase">Vulnerabilites</th>
+            <th class="px-6 py-3 text-left text-sm font-bold uppercase">Controle securite</th>
             <th class="px-6 py-3 text-left text-sm font-bold uppercase">Action</th>
         </tr>
         </thead>
@@ -61,7 +62,7 @@ $excludedCount = (int) $pdo->query("
                         <?php endif; ?>
                     </td>
                     <td class="px-6 py-4">
-                        <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">Audit a venir</span>
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">Ports / pare-feu</span>
                     </td>
                     <td class="px-6 py-4">
                         <a href="<?= $baseUrl ?>pages/details-securite.php?id=<?= (int) $srv['id'] ?>" class="text-blue-600 hover:underline text-sm">Voir details</a>

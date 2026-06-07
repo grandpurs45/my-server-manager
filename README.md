@@ -120,6 +120,9 @@ msm_server_latency_ms{server="server-01",hostname="server-01.example.local",type
 msm_server_disk_usage_percent{server="server-01",hostname="server-01.example.local",type="linux"} 67
 msm_server_last_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux"} 1780000000
 msm_check_success{server="server-01",hostname="server-01.example.local",type="linux"} 1
+msm_updates_available{server="server-01",hostname="server-01.example.local",type="linux",update_type="security"} 2
+msm_reboot_required{server="server-01",hostname="server-01.example.local",type="linux",collector="apt"} 1
+msm_os_upgrade_available{server="server-01",hostname="server-01.example.local",type="linux",os_family="ubuntu",os_version="22.04"} 1
 ```
 
 ## Scripts Utiles

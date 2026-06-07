@@ -164,8 +164,8 @@ Reste a faire :
 - [x] Implementer le collecteur Linux/Proxmox initial via SSH et `apt`.
 - [x] Ajouter le support Linux `dnf` / Rocky / RHEL-like.
 - [x] Ajouter un premier collecteur de cycle de vie OS pour savoir si un systeme est supporte et si un upgrade est connu.
-- [ ] Exposer les metriques Prometheus Patch Management.
-- [ ] Exposer les metriques Prometheus de cycle de vie OS.
+- [x] Exposer les metriques Prometheus Patch Management.
+- [x] Exposer les metriques Prometheus de cycle de vie OS.
 - [x] Ajouter la liste detaillee des paquets par cible.
 - [ ] Ajouter Docker.
 - [ ] Ajouter Synology.

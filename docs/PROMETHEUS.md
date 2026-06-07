@@ -10,13 +10,18 @@ L'endpoint lit uniquement la base MSM. Il ne lance pas de ping, SSH, analyse de 
 
 ## Metriques exposees
 
-Les labels stables en phase 1 sont :
+Les labels communs stables sont :
 
 - `server` : nom MSM du serveur ;
 - `hostname` : hostname ou IP configure dans MSM ;
 - `type` : type de cible issu de l'inventaire MSM.
 
 Le label `type` doit rester une valeur controlee par l'inventaire, par exemple `linux`, `windows`, `proxmox`, `synology`, `docker`, `website`, `network` ou `other`.
+
+Certaines familles ajoutent des labels specialises :
+
+- Patch Management : `update_type`, `collector`, `status` ;
+- Cycle de vie OS : `os_family`, `os_version`, `support_status`.
 
 ```text
 msm_server_up{server="server-01",hostname="server-01.example.local",type="linux"} 1
@@ -25,6 +30,15 @@ msm_server_latency_ms{server="server-01",hostname="server-01.example.local",type
 msm_server_disk_usage_percent{server="server-01",hostname="server-01.example.local",type="linux"} 67
 msm_server_last_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux"} 1780000000
 msm_check_success{server="server-01",hostname="server-01.example.local",type="linux"} 1
+msm_updates_available{server="server-01",hostname="server-01.example.local",type="linux",update_type="security"} 2
+msm_updates_available{server="server-01",hostname="server-01.example.local",type="linux",update_type="normal"} 11
+msm_reboot_required{server="server-01",hostname="server-01.example.local",type="linux",collector="apt"} 1
+msm_patch_check_status{server="server-01",hostname="server-01.example.local",type="linux",collector="apt",status="critical"} 1
+msm_patch_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux",collector="apt"} 1780000000
+msm_os_support_status{server="server-01",hostname="server-01.example.local",type="linux",os_family="ubuntu",os_version="22.04",support_status="supported"} 1
+msm_os_upgrade_available{server="server-01",hostname="server-01.example.local",type="linux",os_family="ubuntu",os_version="22.04"} 1
+msm_os_support_end_timestamp{server="server-01",hostname="server-01.example.local",type="linux",os_family="ubuntu",os_version="22.04"} 1809043200
+msm_os_lifecycle_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux",os_family="ubuntu",os_version="22.04"} 1780000000
 ```
 
 ## Exemple prometheus.yml
@@ -83,6 +97,36 @@ Checks absents depuis plus de 15 minutes :
 time() - msm_server_last_check_timestamp > 900
 ```
 
+Mises a jour de securite disponibles :
+
+```promql
+msm_updates_available{update_type="security"} > 0
+```
+
+Reboot requis :
+
+```promql
+msm_reboot_required == 1
+```
+
+Checks Patch Management en erreur :
+
+```promql
+msm_patch_check_status{status="error"} == 1
+```
+
+Upgrade OS disponible :
+
+```promql
+msm_os_upgrade_available == 1
+```
+
+OS obsolete ou fin de support proche :
+
+```promql
+msm_os_support_status{support_status=~"eol|eol_soon"} == 1
+```
+
 ## Dashboard Grafana minimal
 
 Panneaux recommandes :
@@ -92,6 +136,8 @@ Panneaux recommandes :
 - Time series : latence avec `msm_server_latency_ms`.
 - Gauge : disque avec `msm_server_disk_usage_percent`.
 - Stat : age du dernier check avec `time() - msm_server_last_check_timestamp`.
+- Table : patch management avec `msm_updates_available`, `msm_reboot_required` et `msm_patch_check_status`.
+- Table : cycle de vie OS avec `msm_os_support_status`, `msm_os_upgrade_available` et `msm_os_support_end_timestamp`.
 
 ## Points d'attention
 

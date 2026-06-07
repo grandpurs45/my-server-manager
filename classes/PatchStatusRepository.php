@@ -26,7 +26,13 @@ class PatchStatusRepository
                 pc.security_updates_count,
                 pc.reboot_required,
                 pc.checked_at,
-                pc.error_message
+                pc.error_message,
+                olc.support_status AS os_support_status,
+                olc.support_ends_at AS os_support_ends_at,
+                olc.upgrade_available AS os_upgrade_available,
+                olc.upgrade_target_version AS os_upgrade_target_version,
+                olc.upgrade_target_label AS os_upgrade_target_label,
+                olc.checked_at AS os_lifecycle_checked_at
             FROM servers s
             LEFT JOIN patch_checks pc
                 ON pc.id = (
@@ -34,6 +40,14 @@ class PatchStatusRepository
                     FROM patch_checks pc2
                     WHERE pc2.server_id = s.id
                     ORDER BY pc2.checked_at DESC, pc2.id DESC
+                    LIMIT 1
+                )
+            LEFT JOIN os_lifecycle_checks olc
+                ON olc.id = (
+                    SELECT olc2.id
+                    FROM os_lifecycle_checks olc2
+                    WHERE olc2.server_id = s.id
+                    ORDER BY olc2.checked_at DESC, olc2.id DESC
                     LIMIT 1
                 )
             WHERE s.patch_management_enabled = 1
