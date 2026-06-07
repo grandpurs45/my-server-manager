@@ -45,6 +45,7 @@ $metrics = $metricsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $patchRepository = new PatchStatusRepository($pdo);
 $latestPatchCheck = $patchRepository->getLatestForServer((int) $server['id']);
+$latestPatchUpdates = $latestPatchCheck ? $patchRepository->getUpdatesForCheck((int) $latestPatchCheck['id']) : [];
 
 function msmDetailStatusBadge(?string $status): string
 {
@@ -115,6 +116,42 @@ function msmDetailPatchCollectorBadge(?string $collector): string
     return '<span class="inline-flex rounded bg-blue-50 px-2 py-1 font-mono text-xs font-semibold text-blue-700">'
         . htmlspecialchars($collector)
         . '</span>';
+}
+
+function msmDetailPatchUpdatesTable(array $updates, string $type): string
+{
+    $filtered = array_values(array_filter(
+        $updates,
+        fn (array $update): bool => ($update['update_type'] ?? '') === $type
+    ));
+
+    if ($filtered === []) {
+        return '<p class="text-sm italic text-slate-500">Aucun paquet.</p>';
+    }
+
+    $html = '<div class="overflow-x-auto rounded border border-gray-200">';
+    $html .= '<table class="min-w-full text-sm">';
+    $html .= '<thead class="bg-slate-100 text-left text-slate-600">';
+    $html .= '<tr>';
+    $html .= '<th class="px-3 py-2 font-semibold">Paquet</th>';
+    $html .= '<th class="px-3 py-2 font-semibold">Version installee</th>';
+    $html .= '<th class="px-3 py-2 font-semibold">Version candidate</th>';
+    $html .= '<th class="px-3 py-2 font-semibold">Source</th>';
+    $html .= '</tr>';
+    $html .= '</thead><tbody class="divide-y divide-gray-200">';
+
+    foreach ($filtered as $update) {
+        $html .= '<tr>';
+        $html .= '<td class="px-3 py-2 font-mono font-semibold text-slate-900">' . htmlspecialchars($update['package_name'] ?? '-') . '</td>';
+        $html .= '<td class="px-3 py-2 text-slate-600">' . htmlspecialchars($update['installed_version'] ?: '-') . '</td>';
+        $html .= '<td class="px-3 py-2 text-slate-900">' . htmlspecialchars($update['candidate_version'] ?: '-') . '</td>';
+        $html .= '<td class="px-3 py-2 text-slate-600">' . htmlspecialchars($update['source'] ?: '-') . '</td>';
+        $html .= '</tr>';
+    }
+
+    $html .= '</tbody></table></div>';
+
+    return $html;
 }
 
 $type = $server['target_type'] ?? 'other';
@@ -303,6 +340,24 @@ $diskUsage = msmDetailMetricValue($metrics, 'disk');
                     <p class="mt-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700">
                         <?= htmlspecialchars($latestPatchCheck['error_message']) ?>
                     </p>
+                <?php endif; ?>
+
+                <?php if ($latestPatchUpdates): ?>
+                    <div class="mt-5 space-y-4">
+                        <div>
+                            <h3 class="mb-2 text-sm font-semibold text-red-700">
+                                Paquets securite (<?= (int) ($latestPatchCheck['security_updates_count'] ?? 0) ?>)
+                            </h3>
+                            <?= msmDetailPatchUpdatesTable($latestPatchUpdates, 'security') ?>
+                        </div>
+
+                        <div>
+                            <h3 class="mb-2 text-sm font-semibold text-slate-800">
+                                Paquets normaux (<?= (int) ($latestPatchCheck['normal_updates_count'] ?? 0) ?>)
+                            </h3>
+                            <?= msmDetailPatchUpdatesTable($latestPatchUpdates, 'normal') ?>
+                        </div>
+                    </div>
                 <?php endif; ?>
             <?php endif; ?>
         </div>

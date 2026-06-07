@@ -163,7 +163,7 @@ Reste a faire :
 - [x] Implementer le collecteur Linux/Proxmox initial via SSH et `apt`.
 - [x] Ajouter le support Linux `dnf` / Rocky / RHEL-like.
 - [ ] Exposer les metriques Prometheus Patch Management.
-- [ ] Ajouter la liste detaillee des paquets par cible.
+- [x] Ajouter la liste detaillee des paquets par cible.
 - [ ] Ajouter Docker.
 - [ ] Ajouter Synology.
 - [ ] Ajouter Windows.

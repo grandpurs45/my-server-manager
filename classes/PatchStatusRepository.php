@@ -65,6 +65,27 @@ class PatchStatusRepository
         return $result ?: null;
     }
 
+    public function getUpdatesForCheck(int $patchCheckId): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT
+                update_type,
+                package_name,
+                installed_version,
+                candidate_version,
+                source,
+                severity
+            FROM patch_updates
+            WHERE patch_check_id = :patch_check_id
+            ORDER BY
+                CASE update_type WHEN 'security' THEN 0 ELSE 1 END,
+                package_name ASC
+        ");
+        $stmt->execute([':patch_check_id' => $patchCheckId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function saveResult(PatchCheckResult $result): int
     {
         $this->pdo->beginTransaction();
