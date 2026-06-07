@@ -216,7 +216,7 @@ function getOSLogo(string $osName, string $targetType, string $baseUrl): string 
         str_contains($osName, 'debian') => $baseUrl . 'assets/logos/debian.png',
         str_contains($osName, 'ubuntu') => $baseUrl . 'assets/logos/ubuntu.png',
         str_contains($osName, 'windows') => $baseUrl . 'assets/logos/windows.png',
-        str_contains($osName, 'rocky') => $baseUrl . 'assets/logos/linux.svg',
+        str_contains($osName, 'rocky') => $baseUrl . 'assets/logos/rocky.png',
         $targetType === 'linux' || $targetType === 'proxmox' || $targetType === 'docker' => $baseUrl . 'assets/logos/linux.svg',
         default => $baseUrl . 'assets/logos/unknown.png',
     };
