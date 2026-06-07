@@ -2,16 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.21.0](https://github.com/grandpurs45/my-server-manager/compare/v0.20.0...v0.21.0) (2026-06-07)
+
 
 ### Features
 
-* ajout d'un premier collecteur de cycle de vie OS pour detecter support, fin de support et upgrades connus
-* affichage du cycle de vie OS dans la page detail cible
+* add OS lifecycle checks ([aadbf96](https://github.com/grandpurs45/my-server-manager/commit/aadbf963f210cfcdaf9bdfa5d9fe84f9f3e1d495))
 
-### Documentation
 
-* ajout d'une documentation dediee au check de cycle de vie OS
+### Bug Fixes
+
+* use Rocky Linux inventory logo ([8c37131](https://github.com/grandpurs45/my-server-manager/commit/8c37131774532e7057b17acedddaa5c3350eac33))
 
 ## [0.20.0](https://github.com/grandpurs45/my-server-manager/compare/v0.19.0...v0.20.0) (2026-06-07)
 
