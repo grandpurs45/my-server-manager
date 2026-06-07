@@ -7,6 +7,7 @@ require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/inventory_options.php';
 
 use MSM\PatchStatusRepository;
+use MSM\OsLifecycleRepository;
 use MSM\SettingsManager;
 
 $settingsManager = new SettingsManager($pdo);
@@ -46,6 +47,9 @@ $metrics = $metricsStmt->fetchAll(PDO::FETCH_ASSOC);
 $patchRepository = new PatchStatusRepository($pdo);
 $latestPatchCheck = $patchRepository->getLatestForServer((int) $server['id']);
 $latestPatchUpdates = $latestPatchCheck ? $patchRepository->getUpdatesForCheck((int) $latestPatchCheck['id']) : [];
+
+$osLifecycleRepository = new OsLifecycleRepository($pdo);
+$latestOsLifecycleCheck = $osLifecycleRepository->getLatestForServer((int) $server['id']);
 
 function msmDetailStatusBadge(?string $status): string
 {
@@ -116,6 +120,30 @@ function msmDetailPatchCollectorBadge(?string $collector): string
     return '<span class="inline-flex rounded bg-blue-50 px-2 py-1 font-mono text-xs font-semibold text-blue-700">'
         . htmlspecialchars($collector)
         . '</span>';
+}
+
+function msmDetailOsLifecycleBadge(?string $status): string
+{
+    return match ($status) {
+        'supported' => '<span class="inline-flex rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">Support actif</span>',
+        'eol_soon' => '<span class="inline-flex rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700">Fin proche</span>',
+        'eol' => '<span class="inline-flex rounded bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Obsolete</span>',
+        default => '<span class="inline-flex rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Inconnu</span>',
+    };
+}
+
+function msmDetailOsLifecycleLabel(?array $check): string
+{
+    if (!$check) {
+        return '-';
+    }
+
+    $prettyName = trim((string) ($check['os_pretty_name'] ?? ''));
+    if ($prettyName !== '') {
+        return $prettyName;
+    }
+
+    return trim((string) ($check['os_family'] ?? '') . ' ' . (string) ($check['os_version'] ?? '')) ?: '-';
 }
 
 function msmDetailPatchUpdatesTable(array $updates, string $type): string
@@ -358,6 +386,53 @@ $diskUsage = msmDetailMetricValue($metrics, 'disk');
                             <?= msmDetailPatchUpdatesTable($latestPatchUpdates, 'normal') ?>
                         </div>
                     </div>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+
+        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">Cycle de vie OS</h2>
+            <?php if (!$latestOsLifecycleCheck): ?>
+                <p class="text-sm italic text-slate-500">Aucun check de cycle de vie OS enregistre.</p>
+            <?php else: ?>
+                <?php if (!empty($latestOsLifecycleCheck['upgrade_available'])): ?>
+                    <div class="mb-4 flex items-center gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-800">
+                        <i data-lucide="arrow-up-circle" class="w-4 h-4"></i>
+                        Upgrade disponible vers <?= htmlspecialchars($latestOsLifecycleCheck['upgrade_target_label'] ?: $latestOsLifecycleCheck['upgrade_target_version']) ?>
+                    </div>
+                <?php endif; ?>
+
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <dt class="text-slate-500">Statut support</dt>
+                        <dd class="mt-1"><?= msmDetailOsLifecycleBadge($latestOsLifecycleCheck['support_status'] ?? null) ?></dd>
+                    </div>
+                    <div>
+                        <dt class="text-slate-500">Dernier check</dt>
+                        <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestOsLifecycleCheck['checked_at'] ?? '-') ?></dd>
+                    </div>
+                    <div>
+                        <dt class="text-slate-500">OS detecte</dt>
+                        <dd class="font-semibold text-slate-900"><?= htmlspecialchars(msmDetailOsLifecycleLabel($latestOsLifecycleCheck)) ?></dd>
+                    </div>
+                    <div>
+                        <dt class="text-slate-500">Fin de support connue</dt>
+                        <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestOsLifecycleCheck['support_ends_at'] ?? '-') ?></dd>
+                    </div>
+                    <div>
+                        <dt class="text-slate-500">Famille</dt>
+                        <dd class="font-mono text-slate-900"><?= htmlspecialchars($latestOsLifecycleCheck['os_family'] ?? '-') ?></dd>
+                    </div>
+                    <div>
+                        <dt class="text-slate-500">Version</dt>
+                        <dd class="font-mono text-slate-900"><?= htmlspecialchars($latestOsLifecycleCheck['os_version'] ?? '-') ?></dd>
+                    </div>
+                </dl>
+
+                <?php if (!empty($latestOsLifecycleCheck['error_message'])): ?>
+                    <p class="mt-4 rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+                        <?= htmlspecialchars($latestOsLifecycleCheck['error_message']) ?>
+                    </p>
                 <?php endif; ?>
             <?php endif; ?>
         </div>

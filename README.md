@@ -7,7 +7,8 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Gestion des serveurs : ajout, modification, suppression.
 - Supervision : statut UP/DOWN, latence, dernier check.
 - SSH : etat de connexion, detection OS, collecte disque.
-- Patch Management : collecte planifiee des mises a jour Linux/Proxmox via SSH et `apt`.
+- Patch Management : collecte planifiee des mises a jour Linux/Proxmox via SSH, `apt` et `dnf`.
+- Cycle de vie OS : detection des fins de support et upgrades connus pour les distributions Linux supportees.
 - Parametres dynamiques : debug, supervision, reseau.
 - Migrations SQL versionnees.
 - Export Prometheus pour Grafana.
@@ -142,6 +143,14 @@ php scripts/check-patches.php
 ```
 
 Voir [docs/PATCH_MANAGEMENT.md](docs/PATCH_MANAGEMENT.md).
+
+Lancer un check de cycle de vie OS :
+
+```bash
+php scripts/check-os-lifecycle.php
+```
+
+Voir [docs/OS_LIFECYCLE.md](docs/OS_LIFECYCLE.md).
 
 ## Roadmap
 

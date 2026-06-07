@@ -137,6 +137,7 @@ Donnees attendues :
 - nombre de mises a jour de securite ;
 - liste detaillee des paquets ou composants ;
 - reboot requis ;
+- fin de support OS et upgrade disponible ;
 - dernier check reussi ;
 - message d'erreur du dernier check ;
 - metriques Prometheus associees.
@@ -162,11 +163,24 @@ Reste a faire :
 
 - [x] Implementer le collecteur Linux/Proxmox initial via SSH et `apt`.
 - [x] Ajouter le support Linux `dnf` / Rocky / RHEL-like.
+- [x] Ajouter un premier collecteur de cycle de vie OS pour savoir si un systeme est supporte et si un upgrade est connu.
 - [ ] Exposer les metriques Prometheus Patch Management.
+- [ ] Exposer les metriques Prometheus de cycle de vie OS.
 - [x] Ajouter la liste detaillee des paquets par cible.
 - [ ] Ajouter Docker.
 - [ ] Ajouter Synology.
 - [ ] Ajouter Windows.
+
+Report post-v1 ou si besoin confirme :
+
+- [ ] Rendre le referentiel de cycle de vie OS administrable depuis les parametres :
+  - famille OS ;
+  - version ;
+  - nom de code ;
+  - date de fin de support ;
+  - version cible d'upgrade ;
+  - source ;
+  - note.
 
 ## Phase 4 - Securite Operationnelle
 

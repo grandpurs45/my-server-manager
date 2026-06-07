@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout d'un premier collecteur de cycle de vie OS pour detecter support, fin de support et upgrades connus
+* affichage du cycle de vie OS dans la page detail cible
+
+### Documentation
+
+* ajout d'une documentation dediee au check de cycle de vie OS
+
 ## [0.20.0](https://github.com/grandpurs45/my-server-manager/compare/v0.19.0...v0.20.0) (2026-06-07)
 
 ### Features
