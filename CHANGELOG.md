@@ -2,10 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.25.0](https://github.com/grandpurs45/my-server-manager/compare/v0.24.0...v0.25.0) (2026-06-08)
+
 
 ### Features
 
+* add database-backed alerting ([9a4fb9a](https://github.com/grandpurs45/my-server-manager/commit/9a4fb9a3c258edbf7db956ae53fe227efd615b22))
 * ajout du socle alerting avec stockage en base, script planifie et mur d'alertes base sur les alertes actives
 * ajout d'une vue backoffice des alertes avec filtres simples
 * ajout des metriques Prometheus `msm_alerts_active` et `msm_alert_active`
