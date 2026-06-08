@@ -2,10 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.26.0](https://github.com/grandpurs45/my-server-manager/compare/v0.25.0...v0.26.0) (2026-06-08)
+
 
 ### Features
 
+* add alert rules management ([b96b87e](https://github.com/grandpurs45/my-server-manager/commit/b96b87edc884f583721a31f859c52771842d385a))
 * ajout d'une page minimale de gestion des regles d'alertes
 
 ## [0.25.0](https://github.com/grandpurs45/my-server-manager/compare/v0.24.0...v0.25.0) (2026-06-08)
