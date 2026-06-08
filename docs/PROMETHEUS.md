@@ -22,6 +22,7 @@ Certaines familles ajoutent des labels specialises :
 
 - Patch Management : `update_type`, `collector`, `status` ;
 - Cycle de vie OS : `os_family`, `os_version`, `support_status`.
+- Securite : `status`.
 
 ```text
 msm_server_up{server="server-01",hostname="server-01.example.local",type="linux"} 1
@@ -39,6 +40,12 @@ msm_os_support_status{server="server-01",hostname="server-01.example.local",type
 msm_os_upgrade_available{server="server-01",hostname="server-01.example.local",type="linux",os_family="ubuntu",os_version="22.04"} 1
 msm_os_support_end_timestamp{server="server-01",hostname="server-01.example.local",type="linux",os_family="ubuntu",os_version="22.04"} 1809043200
 msm_os_lifecycle_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux",os_family="ubuntu",os_version="22.04"} 1780000000
+msm_security_check_success{server="server-01",hostname="server-01.example.local",type="linux"} 1
+msm_security_check_status{server="server-01",hostname="server-01.example.local",type="linux",status="warning"} 1
+msm_security_open_ports{server="server-01",hostname="server-01.example.local",type="linux"} 8
+msm_security_exposed_ports{server="server-01",hostname="server-01.example.local",type="linux"} 2
+msm_security_firewall_enabled{server="server-01",hostname="server-01.example.local",type="linux"} 1
+msm_security_last_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux"} 1780000000
 ```
 
 ## Exemple prometheus.yml
@@ -127,6 +134,24 @@ OS obsolete ou fin de support proche :
 msm_os_support_status{support_status=~"eol|eol_soon"} == 1
 ```
 
+Checks securite en erreur :
+
+```promql
+msm_security_check_success == 0
+```
+
+Ports exposes :
+
+```promql
+msm_security_exposed_ports > 0
+```
+
+Firewall inactif ou non detecte :
+
+```promql
+msm_security_firewall_enabled == 0
+```
+
 ## Dashboard Grafana minimal
 
 Panneaux recommandes :
@@ -138,6 +163,7 @@ Panneaux recommandes :
 - Stat : age du dernier check avec `time() - msm_server_last_check_timestamp`.
 - Table : patch management avec `msm_updates_available`, `msm_reboot_required` et `msm_patch_check_status`.
 - Table : cycle de vie OS avec `msm_os_support_status`, `msm_os_upgrade_available` et `msm_os_support_end_timestamp`.
+- Table : securite avec `msm_security_check_status`, `msm_security_exposed_ports` et `msm_security_firewall_enabled`.
 
 ## Points d'attention
 

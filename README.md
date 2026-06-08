@@ -123,6 +123,8 @@ msm_check_success{server="server-01",hostname="server-01.example.local",type="li
 msm_updates_available{server="server-01",hostname="server-01.example.local",type="linux",update_type="security"} 2
 msm_reboot_required{server="server-01",hostname="server-01.example.local",type="linux",collector="apt"} 1
 msm_os_upgrade_available{server="server-01",hostname="server-01.example.local",type="linux",os_family="ubuntu",os_version="22.04"} 1
+msm_security_exposed_ports{server="server-01",hostname="server-01.example.local",type="linux"} 2
+msm_security_firewall_enabled{server="server-01",hostname="server-01.example.local",type="linux"} 1
 ```
 
 ## Scripts Utiles

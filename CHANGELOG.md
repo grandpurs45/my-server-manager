@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout des metriques Prometheus du module securite
+* ajout des signaux securite au dashboard d'exploitation
+
 ## [0.23.0](https://github.com/grandpurs45/my-server-manager/compare/v0.22.0...v0.23.0) (2026-06-08)
 
 

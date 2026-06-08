@@ -3,11 +3,14 @@ require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/bootstrap.php';
 
 use MSM\PatchStatusRepository;
+use MSM\SecurityStatusRepository;
 use MSM\SettingsManager;
 
 $settingsManager = new SettingsManager($pdo);
 $patchRepository = new PatchStatusRepository($pdo);
 $patchTargets = $patchRepository->getOverview();
+$securityRepository = new SecurityStatusRepository($pdo);
+$securityTargets = $securityRepository->getOverview();
 
 $serverStats = $pdo->query("
     SELECT
@@ -29,6 +32,9 @@ $summary = [
     'reboot_required' => array_sum(array_map(fn (array $target): int => (int) ($target['reboot_required'] ?? 0), $patchTargets)),
     'os_upgrades' => array_sum(array_map(fn (array $target): int => (int) ($target['os_upgrade_available'] ?? 0), $patchTargets)),
     'os_risks' => count(array_filter($patchTargets, fn (array $target): bool => in_array($target['os_support_status'] ?? null, ['eol', 'eol_soon'], true))),
+    'security_risks' => count(array_filter($securityTargets, fn (array $target): bool => in_array($target['security_status'] ?? null, ['warning', 'error'], true))),
+    'security_exposed_ports' => array_sum(array_map(fn (array $target): int => (int) ($target['exposed_ports_count'] ?? 0), $securityTargets)),
+    'security_firewall_warnings' => count(array_filter($securityTargets, fn (array $target): bool => in_array($target['firewall_status'] ?? null, ['inactif', 'not_installed', null], true))),
 ];
 
 $priorities = [];
@@ -129,6 +135,47 @@ foreach ($patchTargets as $target) {
     }
 }
 
+foreach ($securityTargets as $target) {
+    $securityStatus = $target['security_status'] ?? null;
+    $exposedPorts = (int) ($target['exposed_ports_count'] ?? 0);
+    $firewallStatus = $target['firewall_status'] ?? null;
+
+    if ($securityStatus === 'error') {
+        $priorities[] = [
+            'score' => 2,
+            'label' => 'Erreur securite',
+            'name' => $target['name'],
+            'hostname' => $target['hostname'],
+            'target_type' => $target['target_type'] ?? 'other',
+            'href' => $baseUrl . 'pages/details-securite.php?id=' . (int) $target['id'],
+            'badge' => 'bg-red-100 text-red-700',
+        ];
+        continue;
+    }
+
+    if ($exposedPorts > 0) {
+        $priorities[] = [
+            'score' => 3,
+            'label' => $exposedPorts . ' port(s) expose(s)',
+            'name' => $target['name'],
+            'hostname' => $target['hostname'],
+            'target_type' => $target['target_type'] ?? 'other',
+            'href' => $baseUrl . 'pages/details-securite.php?id=' . (int) $target['id'],
+            'badge' => 'bg-red-100 text-red-700',
+        ];
+    } elseif (in_array($firewallStatus, ['inactif', 'not_installed', null], true)) {
+        $priorities[] = [
+            'score' => 4,
+            'label' => 'Firewall a verifier',
+            'name' => $target['name'],
+            'hostname' => $target['hostname'],
+            'target_type' => $target['target_type'] ?? 'other',
+            'href' => $baseUrl . 'pages/details-securite.php?id=' . (int) $target['id'],
+            'badge' => 'bg-yellow-100 text-yellow-800',
+        ];
+    }
+}
+
 usort($priorities, fn (array $a, array $b): int => $a['score'] <=> $b['score'] ?: strcasecmp($a['name'], $b['name']));
 $priorities = array_slice($priorities, 0, 8);
 
@@ -215,7 +262,7 @@ $freshness = [
         <p class="text-sm text-slate-600">Vue de synthese des derniers resultats connus. Aucun check lourd n'est lance depuis cette page.</p>
     </div>
 
-    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         <a href="<?= $baseUrl ?>pages/supervision.php" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
             <div class="flex items-center justify-between">
                 <div class="text-xs font-semibold uppercase text-slate-500">Serveurs down</div>
@@ -238,6 +285,17 @@ $freshness = [
                 <i data-lucide="shield-alert" class="h-5 w-5 text-red-500"></i>
             </div>
             <div class="mt-2 text-3xl font-bold text-red-700"><?= $summary['security_updates'] ?></div>
+        </a>
+
+        <a href="<?= $baseUrl ?>pages/securite-serveurs.php" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold uppercase text-slate-500">Risques securite</div>
+                <i data-lucide="shield-warning" class="h-5 w-5 text-red-500"></i>
+            </div>
+            <div class="mt-2 text-3xl font-bold text-red-700"><?= $summary['security_risks'] ?></div>
+            <div class="mt-1 text-xs text-slate-500">
+                <?= $summary['security_exposed_ports'] ?> port(s) expose(s), <?= $summary['security_firewall_warnings'] ?> firewall a verifier
+            </div>
         </a>
 
         <a href="<?= $baseUrl ?>pages/patch-management.php?action=reboot" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">

@@ -41,11 +41,24 @@ class PrometheusExporter
             '# TYPE msm_os_support_end_timestamp gauge',
             '# HELP msm_os_lifecycle_check_timestamp Last known OS lifecycle check timestamp as Unix epoch seconds.',
             '# TYPE msm_os_lifecycle_check_timestamp gauge',
+            '# HELP msm_security_check_success Last known MSM security check success status for the server.',
+            '# TYPE msm_security_check_success gauge',
+            '# HELP msm_security_check_status Last known security check status. Value is always 1 for the current status label.',
+            '# TYPE msm_security_check_status gauge',
+            '# HELP msm_security_open_ports Last known open ports count from MSM security checks.',
+            '# TYPE msm_security_open_ports gauge',
+            '# HELP msm_security_exposed_ports Last known publicly exposed ports count from MSM security checks.',
+            '# TYPE msm_security_exposed_ports gauge',
+            '# HELP msm_security_firewall_enabled Last known firewall enabled status from MSM security checks.',
+            '# TYPE msm_security_firewall_enabled gauge',
+            '# HELP msm_security_last_check_timestamp Last known security check timestamp as Unix epoch seconds.',
+            '# TYPE msm_security_last_check_timestamp gauge',
         ];
 
         $diskUsages = $this->getLatestMetricValues('disk');
         $latestPatchChecks = $this->getLatestPatchChecks();
         $latestOsLifecycleChecks = $this->getLatestOsLifecycleChecks();
+        $latestSecurityChecks = $this->getLatestSecurityChecks();
 
         foreach ($this->getServers() as $server) {
             $baseLabels = [
@@ -120,6 +133,27 @@ class PrometheusExporter
 
                 if ($osCheck['checked_at_timestamp'] !== null) {
                     $lines[] = "msm_os_lifecycle_check_timestamp{{$osLabels}} " . (int) $osCheck['checked_at_timestamp'];
+                }
+            }
+
+            if (isset($latestSecurityChecks[$serverId])) {
+                $securityCheck = $latestSecurityChecks[$serverId];
+                $securityLabels = $this->formatLabels($baseLabels);
+                $securityStatusLabels = $this->formatLabels($baseLabels + [
+                    'status' => $securityCheck['status'] ?: 'unknown',
+                ]);
+
+                $firewallEnabled = ($securityCheck['firewall_status'] ?? null) === 'actif' ? 1 : 0;
+                $securitySuccess = ($securityCheck['status'] ?? null) !== 'error' ? 1 : 0;
+
+                $lines[] = "msm_security_check_success{{$securityLabels}} {$securitySuccess}";
+                $lines[] = "msm_security_check_status{{$securityStatusLabels}} 1";
+                $lines[] = "msm_security_open_ports{{$securityLabels}} " . (int) $securityCheck['open_ports_count'];
+                $lines[] = "msm_security_exposed_ports{{$securityLabels}} " . (int) $securityCheck['exposed_ports_count'];
+                $lines[] = "msm_security_firewall_enabled{{$securityLabels}} {$firewallEnabled}";
+
+                if ($securityCheck['checked_at_timestamp'] !== null) {
+                    $lines[] = "msm_security_last_check_timestamp{{$securityLabels}} " . (int) $securityCheck['checked_at_timestamp'];
                 }
             }
         }
@@ -217,6 +251,37 @@ class PrometheusExporter
              ) latest
                 ON latest.server_id = olc.server_id
                AND latest.checked_at = olc.checked_at'
+        );
+
+        $checks = [];
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $checks[(int) $row['server_id']] = $row;
+        }
+
+        return $checks;
+    }
+
+    private function getLatestSecurityChecks(): array
+    {
+        if (!$this->tableExists('security_checks')) {
+            return [];
+        }
+
+        $stmt = $this->pdo->query(
+            'SELECT sc.server_id,
+                    sc.status,
+                    sc.open_ports_count,
+                    sc.exposed_ports_count,
+                    sc.firewall_status,
+                    UNIX_TIMESTAMP(sc.checked_at) AS checked_at_timestamp
+             FROM security_checks sc
+             INNER JOIN (
+                 SELECT server_id, MAX(checked_at) AS checked_at
+                 FROM security_checks
+                 GROUP BY server_id
+             ) latest
+                ON latest.server_id = sc.server_id
+               AND latest.checked_at = sc.checked_at'
         );
 
         $checks = [];

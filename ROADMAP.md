@@ -186,6 +186,7 @@ Objectif : identifier rapidement les risques simples.
 
 - [x] Ports ouverts via SSH.
 - [x] Firewall actif ou inactif.
+- [x] Metriques Prometheus securite.
 - Reboot requis.
 - Services critiques.
 - Certificats SSL :
@@ -203,6 +204,7 @@ Objectif : identifier rapidement les risques simples.
 Objectif : rendre MSM utilisable au quotidien.
 
 - [x] Dashboard d'accueil utile.
+- [x] Signaux securite visibles dans le dashboard.
 - Page supervision fiable.
 - Page patch management.
 - Page securite.
