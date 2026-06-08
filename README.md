@@ -145,6 +145,12 @@ Lancer un check Patch Management :
 php scripts/check-patches.php
 ```
 
+Forcer un check manuel sans attendre l'intervalle interne :
+
+```bash
+php scripts/check-patches.php --force
+```
+
 Voir [docs/PATCH_MANAGEMENT.md](docs/PATCH_MANAGEMENT.md).
 
 Lancer un check de cycle de vie OS :
@@ -153,7 +159,33 @@ Lancer un check de cycle de vie OS :
 php scripts/check-os-lifecycle.php
 ```
 
+Forcer un check manuel sans attendre l'intervalle interne :
+
+```bash
+php scripts/check-os-lifecycle.php --force
+```
+
 Voir [docs/OS_LIFECYCLE.md](docs/OS_LIFECYCLE.md).
+
+Lancer un check securite :
+
+```bash
+php scripts/check-security.php
+```
+
+Forcer un check securite manuel sans attendre l'intervalle interne :
+
+```bash
+php scripts/check-security.php --force
+```
+
+Planifier les checks en production :
+
+```text
+docs/SCHEDULING.md
+```
+
+Voir [docs/SCHEDULING.md](docs/SCHEDULING.md) pour les exemples cron et systemd timers.
 
 ## Roadmap
 

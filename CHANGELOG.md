@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout d'une planification interne configurable pour les checks de cycle de vie OS
+* ajout de l'option `--force` aux scripts Patch Management et Cycle de vie OS
+* remplacement de la page d'accueil par un dashboard d'exploitation avec priorites et fraicheur des checks
+* ajout d'un script `check-security.php` et du stockage des controles securite en base
+
+### Documentation
+
+* ajout d'une documentation dediee a l'ordonnancement cron et systemd timer des checks MSM
+
+### Bug Fixes
+
+* distinction du collecteur Proxmox via `proxmox_apt` dans les resultats Patch Management
+* ajout des anciennes LTS Ubuntu au referentiel de cycle de vie pour identifier les OS obsoletes
+
 ## [0.22.0](https://github.com/grandpurs45/my-server-manager/compare/v0.21.0...v0.22.0) (2026-06-07)
 
 

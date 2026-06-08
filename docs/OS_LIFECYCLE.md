@@ -19,10 +19,16 @@ Les autres distributions sont enregistrees en statut `unknown` tant qu'aucune re
 
 ## Fonctionnement
 
-Le collecteur se connecte en SSH sur les cibles Linux/Proxmox avec le patch management actif, lit `/etc/os-release`, puis compare la famille et la version avec la table `os_lifecycle_references`.
+Le collecteur se connecte en SSH sur les cibles Linux/Proxmox avec SSH actif, lit `/etc/os-release`, puis compare la famille et la version avec la table `os_lifecycle_references`.
 
 ```bash
 php scripts/check-os-lifecycle.php
+```
+
+Ignorer ponctuellement l'intervalle interne :
+
+```bash
+php scripts/check-os-lifecycle.php --force
 ```
 
 Exemple de sortie :
@@ -48,7 +54,7 @@ La page detail d'une cible affiche un bloc `Cycle de vie OS` avec :
 
 Les references initiales couvrent les versions courantes observees dans le homelab :
 
-- Ubuntu 22.04, 24.04 et 26.04 LTS ;
+- Ubuntu 12.04, 14.04, 16.04, 18.04, 20.04, 22.04, 24.04 et 26.04 LTS ;
 - Debian 12 et 13 ;
 - Rocky Linux 9, 10, 10.1 et 10.2.
 
@@ -57,12 +63,20 @@ Ces donnees sont versionnees par migration SQL. Elles pourront ensuite etre rend
 Sources principales :
 
 - Ubuntu Releases : https://releases.ubuntu.com/
+- Ubuntu 14.04 LTS Trusty Tahr ESM transition : https://ubuntu.com/blog/2019/02/05/ubuntu-14-04-trusty-tahr-end-of-life
+- Ubuntu 18.04 LTS end of standard support : https://ubuntu.com/18-04
 - Debian bookworm release information : https://www.debian.org/releases/bookworm/
 - Rocky Linux Release and Version Guide : https://wiki.rockylinux.org/rocky/version/
 
 ## Planification
 
-Le cycle de vie OS change lentement. Une execution quotidienne ou hebdomadaire suffit.
+Le cycle de vie OS change lentement. MSM applique un intervalle interne via le parametre :
+
+```text
+os_lifecycle / check_interval_hours
+```
+
+Valeur par defaut : `168` heures, soit une semaine. Une execution quotidienne ou hebdomadaire suffit.
 
 Exemple cron hebdomadaire :
 

@@ -264,12 +264,17 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <div class="mb-3 flex items-center justify-between gap-3">
             <h2 class="text-lg font-semibold text-slate-900">Collecteurs</h2>
-            <span class="text-xs font-semibold text-slate-500">Ordre actuel : apt puis dnf</span>
+            <span class="text-xs font-semibold text-slate-500">Ordre actuel : apt / proxmox_apt puis dnf</span>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-2 text-sm">
             <div class="rounded border border-green-200 bg-green-50 p-3">
                 <div class="font-mono text-xs font-bold text-green-800">apt</div>
-                <div class="mt-1 text-slate-700">Debian, Ubuntu, Proxmox</div>
+                <div class="mt-1 text-slate-700">Debian, Ubuntu</div>
+                <div class="mt-1 text-xs font-semibold text-green-700">Disponible</div>
+            </div>
+            <div class="rounded border border-green-200 bg-green-50 p-3">
+                <div class="font-mono text-xs font-bold text-green-800">proxmox_apt</div>
+                <div class="mt-1 text-slate-700">Proxmox VE</div>
                 <div class="mt-1 text-xs font-semibold text-green-700">Disponible</div>
             </div>
             <div class="rounded border border-green-200 bg-green-50 p-3">

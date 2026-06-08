@@ -19,7 +19,7 @@ class OsLifecycleManager
         $stmt = $this->pdo->query("
             SELECT *
             FROM servers
-            WHERE patch_management_enabled = 1
+            WHERE ssh_enabled = 1
               AND target_type IN ('linux', 'proxmox')
             ORDER BY name ASC
         ");

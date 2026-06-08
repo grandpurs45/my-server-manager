@@ -12,7 +12,8 @@ Inclure dans le patch management
 
 Le collecteur initial prend en charge les cibles `linux` et `proxmox` accessibles en SSH avec :
 
-- `apt-get` pour Debian, Ubuntu et Proxmox ;
+- `apt-get` pour Debian et Ubuntu ;
+- `apt-get` avec collecteur `proxmox_apt` pour Proxmox ;
 - `dnf` pour Rocky Linux et distributions RHEL-like.
 
 ## Lancer un check manuel
@@ -21,6 +22,12 @@ Depuis la racine du projet :
 
 ```bash
 php scripts/check-patches.php
+```
+
+Ignorer ponctuellement l'intervalle interne :
+
+```bash
+php scripts/check-patches.php --force
 ```
 
 Exemple de sortie :
@@ -62,7 +69,8 @@ Adapter le chemin selon l'installation.
 
 | Collecteur | Famille | Statut | Prerequis |
 | --- | --- | --- | --- |
-| `apt` | Debian, Ubuntu, Proxmox | Disponible | SSH, `apt-get` |
+| `apt` | Debian, Ubuntu | Disponible | SSH, `apt-get` |
+| `proxmox_apt` | Proxmox VE | Disponible | SSH, `apt-get` |
 | `dnf` | Rocky Linux, RHEL-like | Disponible | SSH, `dnf` |
 | `docker` | Hotes Docker | Prevu | SSH ou API Docker |
 | `synology_dsm` | NAS Synology | Prevu | API DSM ou SSH |
@@ -70,7 +78,8 @@ Adapter le chemin selon l'installation.
 
 ## Limites actuelles
 
-- Debian, Ubuntu et Proxmox via `apt`.
+- Debian et Ubuntu via `apt`.
+- Proxmox via `proxmox_apt`.
 - Rocky / RHEL-like via `dnf`.
 - Docker, Synology et Windows seront ajoutes progressivement.
-- Les metriques Prometheus Patch Management ne sont pas encore exposees.
+- Les metriques Prometheus Patch Management lisent uniquement les derniers resultats stockes.

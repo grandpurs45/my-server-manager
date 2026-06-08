@@ -614,13 +614,30 @@ Si MSM doit tester des serveurs distants, verifier aussi que les flux sortants n
 
 ## 9. Configurer le check planifie
 
-MSM ne lance pas les checks lourds au chargement des pages. Les statuts doivent etre mis a jour par un script planifie :
+MSM ne lance pas les checks lourds au chargement des pages. Les statuts doivent etre mis a jour par des scripts planifies.
+
+La documentation complete d'ordonnancement est disponible ici :
+
+```text
+docs/SCHEDULING.md
+```
+
+Elle couvre :
+
+- cron ;
+- systemd timers ;
+- logs ;
+- frequences conseillees ;
+- scripts `check-servers.php`, `check-patches.php`, `check-os-lifecycle.php` ;
+- option `--force`.
+
+Verification minimale de supervision :
 
 ```bash
 php scripts/check-servers.php
 ```
 
-Ce script met a jour les derniers resultats connus en base. Les pages MSM et l'endpoint Prometheus lisent ensuite ces donnees.
+Les pages MSM et l'endpoint Prometheus lisent ensuite les derniers resultats connus en base.
 
 ### Verifier le script manuellement
 
@@ -704,6 +721,8 @@ tail -n 50 /var/www/html/msm/logs/check-servers.log
 ```
 
 Verifier aussi la page diagnostic MSM : elle doit afficher un dernier check coherent.
+
+Pour une configuration complete, suivre [SCHEDULING.md](SCHEDULING.md).
 
 ## 10. Verifications post-install
 

@@ -3,7 +3,7 @@ session_start();
 
 require_once __DIR__ . '/../includes/bootstrap.php';
 
-use MSM\SecurityAudit;
+use MSM\SecurityStatusRepository;
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
@@ -40,6 +40,40 @@ if (empty($serveur['security_enabled'])) {
     require_once __DIR__ . '/../includes/footer.php';
     exit;
 }
+
+$repository = new SecurityStatusRepository($pdo);
+$latestSecurityCheck = $repository->getLatestForServer((int) $serveur['id']);
+$ports = $latestSecurityCheck ? $repository->getPortsForCheck((int) $latestSecurityCheck['id']) : [];
+
+function msmSecurityDetailStatusBadge(?string $status): string
+{
+    return match ($status) {
+        'ok' => '<span class="inline-flex rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">OK</span>',
+        'warning' => '<span class="inline-flex rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700">A verifier</span>',
+        'error' => '<span class="inline-flex rounded bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Erreur</span>',
+        default => '<span class="inline-flex rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Jamais verifie</span>',
+    };
+}
+
+function msmSecurityDetailFirewallBadge(?string $status): string
+{
+    return match ($status) {
+        'actif' => '<span class="inline-flex rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">Actif</span>',
+        'inactif' => '<span class="inline-flex rounded bg-orange-100 px-2 py-1 text-xs font-semibold text-orange-800">Inactif</span>',
+        'not_installed' => '<span class="inline-flex rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700">Non installe</span>',
+        default => '<span class="inline-flex rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Inconnu</span>',
+    };
+}
+
+function msmSecurityExposureBadge(string $exposure): string
+{
+    return match ($exposure) {
+        'public' => '<span class="rounded bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Expose</span>',
+        'local' => '<span class="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">Local</span>',
+        'bound' => '<span class="rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">Adresse liee</span>',
+        default => '<span class="rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Inconnu</span>',
+    };
+}
 ?>
 
 <a href="<?= $baseUrl ?>pages/securite-serveurs.php"
@@ -53,36 +87,74 @@ if (empty($serveur['security_enabled'])) {
     <div class="bg-white p-4 shadow rounded">
         <h2 class="text-lg font-semibold mb-2">Informations generales</h2>
         <p><strong>Nom :</strong> <?= htmlspecialchars($serveur['name']) ?></p>
-        <p><strong>OS :</strong> <?= htmlspecialchars($serveur['os']) ?></p>
+        <p><strong>OS :</strong> <?= htmlspecialchars($serveur['os'] ?: 'OS inconnu') ?></p>
         <p><strong>Statut :</strong> <?= $serveur['status'] === 'up' ? 'UP' : 'DOWN' ?></p>
         <p><strong>Adresse :</strong> <?= htmlspecialchars($serveur['hostname']) ?>:<?= (int) $serveur['ssh_port'] ?></p>
     </div>
 
     <div class="bg-white p-4 shadow rounded">
-        <h2 class="text-lg font-semibold mb-2">Derniere verification</h2>
-        <p><strong>SSH :</strong> <?= $serveur['ssh_status'] === 'success' ? 'OK' : 'Echec' ?></p>
-        <p><strong>Date :</strong> <?= htmlspecialchars($serveur['last_check']) ?></p>
+        <h2 class="text-lg font-semibold mb-2">Dernier controle securite</h2>
+        <?php if (!$latestSecurityCheck): ?>
+            <p class="text-sm italic text-gray-500">Aucun controle securite enregistre.</p>
+        <?php else: ?>
+            <div class="space-y-2 text-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Statut</span>
+                    <?= msmSecurityDetailStatusBadge($latestSecurityCheck['status'] ?? null) ?>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Pare-feu</span>
+                    <?= msmSecurityDetailFirewallBadge($latestSecurityCheck['firewall_status'] ?? null) ?>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Date</span>
+                    <span class="font-semibold text-slate-900"><?= htmlspecialchars($latestSecurityCheck['checked_at'] ?? '-') ?></span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Ports exposes</span>
+                    <span class="font-semibold text-red-700"><?= (int) ($latestSecurityCheck['exposed_ports_count'] ?? 0) ?></span>
+                </div>
+            </div>
+            <?php if (!empty($latestSecurityCheck['error_message'])): ?>
+                <p class="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700">
+                    <?= htmlspecialchars($latestSecurityCheck['error_message']) ?>
+                </p>
+            <?php endif; ?>
+        <?php endif; ?>
     </div>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div class="bg-white p-4 shadow rounded">
         <h2 class="text-lg font-semibold mb-2">Ports ouverts</h2>
-        <?php
-        $ports = SecurityAudit::getOpenPorts($serveur);
-
-        if (isset($ports['error'])) {
-            echo '<p class="text-red-600">' . htmlspecialchars($ports['error']) . '</p>';
-        } elseif (empty($ports)) {
-            echo '<p class="text-gray-500 italic">Aucun port detecte.</p>';
-        } else {
-            echo '<ul class="text-sm">';
-            foreach ($ports as $p) {
-                echo '<li><strong>' . htmlspecialchars($p['proto']) . '</strong> sur <code>' . htmlspecialchars($p['addr'] . ':' . $p['port']) . '</code></li>';
-            }
-            echo '</ul>';
-        }
-        ?>
+        <?php if (!$latestSecurityCheck): ?>
+            <p class="text-sm italic text-gray-500">Aucun controle securite enregistre.</p>
+        <?php elseif (!$ports): ?>
+            <p class="text-gray-500 italic">Aucun port detecte.</p>
+        <?php else: ?>
+            <div class="overflow-x-auto rounded border border-gray-200">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-slate-100 text-left text-slate-600">
+                        <tr>
+                            <th class="px-3 py-2 font-semibold">Protocole</th>
+                            <th class="px-3 py-2 font-semibold">Adresse</th>
+                            <th class="px-3 py-2 font-semibold">Port</th>
+                            <th class="px-3 py-2 font-semibold">Exposition</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <?php foreach ($ports as $port): ?>
+                            <tr class="<?= ($port['exposure'] ?? '') === 'public' ? 'bg-red-50' : '' ?>">
+                                <td class="px-3 py-2 font-semibold"><?= htmlspecialchars($port['protocol']) ?></td>
+                                <td class="px-3 py-2 font-mono"><?= htmlspecialchars($port['address']) ?></td>
+                                <td class="px-3 py-2 font-mono"><?= (int) $port['port'] ?></td>
+                                <td class="px-3 py-2"><?= msmSecurityExposureBadge($port['exposure'] ?? 'unknown') ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="bg-white p-4 shadow rounded">
@@ -92,25 +164,20 @@ if (empty($serveur['security_enabled'])) {
 
     <div class="bg-white p-4 shadow rounded">
         <h2 class="text-lg font-semibold mb-2">Pare-feu / UFW</h2>
-        <?php
-        $ufw = SecurityAudit::getFirewallStatus($serveur);
-
-        if (isset($ufw['error'])) {
-            echo '<p class="text-red-600">' . htmlspecialchars($ufw['error']) . '</p>';
-        } elseif ($ufw['status'] === 'inactif') {
-            echo '<p class="text-orange-600 font-semibold">UFW inactif</p>';
-        } else {
-            echo '<p class="text-green-600 font-semibold">UFW actif</p>';
-            echo '<pre class="mt-2 text-xs bg-gray-100 p-2 rounded border border-gray-200 whitespace-pre-wrap">'
-                . htmlspecialchars($ufw['raw']) . '</pre>';
-        }
-        ?>
+        <?php if (!$latestSecurityCheck): ?>
+            <p class="text-sm italic text-gray-500">Aucun controle securite enregistre.</p>
+        <?php else: ?>
+            <?= msmSecurityDetailFirewallBadge($latestSecurityCheck['firewall_status'] ?? null) ?>
+            <p class="mt-2 text-sm text-slate-600">
+                Le controle pare-feu est stocke depuis le dernier passage de <code>scripts/check-security.php</code>.
+            </p>
+        <?php endif; ?>
     </div>
 
     <div class="bg-white p-4 shadow rounded">
         <h2 class="text-lg font-semibold mb-2">Patch Management</h2>
         <p class="text-sm text-slate-600">
-            Les mises a jour, reboots requis et upgrades OS sont maintenant suivis dans le module dedie.
+            Les mises a jour, reboots requis et upgrades OS sont suivis dans le module dedie.
         </p>
         <a href="<?= $baseUrl ?>pages/patch-management.php"
            class="mt-3 inline-flex items-center gap-2 rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">

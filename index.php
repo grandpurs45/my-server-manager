@@ -1,39 +1,335 @@
 <?php
-include 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/bootstrap.php';
+
+use MSM\PatchStatusRepository;
+use MSM\SettingsManager;
+
+$settingsManager = new SettingsManager($pdo);
+$patchRepository = new PatchStatusRepository($pdo);
+$patchTargets = $patchRepository->getOverview();
+
+$serverStats = $pdo->query("
+    SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN status = 'down' THEN 1 ELSE 0 END) AS down_count,
+        SUM(CASE WHEN ssh_enabled = 1 AND ssh_status <> 'success' THEN 1 ELSE 0 END) AS ssh_error_count,
+        MAX(last_check) AS last_supervision_check
+    FROM servers
+")->fetch(PDO::FETCH_ASSOC) ?: [];
+
+$latestPatchCheck = $pdo->query("SELECT MAX(checked_at) FROM patch_checks")->fetchColumn() ?: null;
+$latestOsLifecycleCheck = $pdo->query("SELECT MAX(checked_at) FROM os_lifecycle_checks")->fetchColumn() ?: null;
+$latestSecurityCheck = $pdo->query("SELECT MAX(checked_at) FROM security_checks")->fetchColumn() ?: null;
+
+$summary = [
+    'servers_down' => (int) ($serverStats['down_count'] ?? 0),
+    'ssh_errors' => (int) ($serverStats['ssh_error_count'] ?? 0),
+    'security_updates' => array_sum(array_map(fn (array $target): int => (int) ($target['security_updates_count'] ?? 0), $patchTargets)),
+    'reboot_required' => array_sum(array_map(fn (array $target): int => (int) ($target['reboot_required'] ?? 0), $patchTargets)),
+    'os_upgrades' => array_sum(array_map(fn (array $target): int => (int) ($target['os_upgrade_available'] ?? 0), $patchTargets)),
+    'os_risks' => count(array_filter($patchTargets, fn (array $target): bool => in_array($target['os_support_status'] ?? null, ['eol', 'eol_soon'], true))),
+];
+
+$priorities = [];
+
+$serverStmt = $pdo->query("
+    SELECT id, name, hostname, target_type, status, ssh_enabled, ssh_status, last_check
+    FROM servers
+    WHERE status = 'down'
+       OR (ssh_enabled = 1 AND ssh_status <> 'success')
+    ORDER BY name ASC
+");
+
+foreach ($serverStmt->fetchAll(PDO::FETCH_ASSOC) as $server) {
+    if (($server['status'] ?? '') === 'down') {
+        $priorities[] = [
+            'score' => 0,
+            'label' => 'Serveur down',
+            'name' => $server['name'],
+            'hostname' => $server['hostname'],
+            'target_type' => $server['target_type'] ?? 'other',
+            'href' => $baseUrl . 'pages/details-cible.php?id=' . (int) $server['id'],
+            'badge' => 'bg-red-100 text-red-700',
+        ];
+    }
+
+    if (!empty($server['ssh_enabled']) && ($server['ssh_status'] ?? '') !== 'success') {
+        $priorities[] = [
+            'score' => 1,
+            'label' => 'SSH en erreur',
+            'name' => $server['name'],
+            'hostname' => $server['hostname'],
+            'target_type' => $server['target_type'] ?? 'other',
+            'href' => $baseUrl . 'pages/details-cible.php?id=' . (int) $server['id'],
+            'badge' => 'bg-red-100 text-red-700',
+        ];
+    }
+}
+
+foreach ($patchTargets as $target) {
+    if (($target['patch_status'] ?? null) === 'error') {
+        $priorities[] = [
+            'score' => 2,
+            'label' => 'Erreur patch',
+            'name' => $target['name'],
+            'hostname' => $target['hostname'],
+            'target_type' => $target['target_type'] ?? 'other',
+            'href' => $baseUrl . 'pages/patch-management.php?action=errors',
+            'badge' => 'bg-red-100 text-red-700',
+        ];
+    }
+
+    if (in_array($target['os_support_status'] ?? null, ['eol', 'eol_soon'], true)) {
+        $priorities[] = [
+            'score' => 3,
+            'label' => ($target['os_support_status'] ?? '') === 'eol' ? 'OS obsolete' : 'Fin support OS',
+            'name' => $target['name'],
+            'hostname' => $target['hostname'],
+            'target_type' => $target['target_type'] ?? 'other',
+            'href' => $baseUrl . 'pages/patch-management.php?action=os_risk',
+            'badge' => 'bg-red-100 text-red-700',
+        ];
+    }
+
+    if ((int) ($target['security_updates_count'] ?? 0) > 0) {
+        $priorities[] = [
+            'score' => 4,
+            'label' => (int) $target['security_updates_count'] . ' update(s) securite',
+            'name' => $target['name'],
+            'hostname' => $target['hostname'],
+            'target_type' => $target['target_type'] ?? 'other',
+            'href' => $baseUrl . 'pages/patch-management.php?action=security',
+            'badge' => 'bg-red-100 text-red-700',
+        ];
+    }
+
+    if (!empty($target['reboot_required'])) {
+        $priorities[] = [
+            'score' => 5,
+            'label' => 'Reboot requis',
+            'name' => $target['name'],
+            'hostname' => $target['hostname'],
+            'target_type' => $target['target_type'] ?? 'other',
+            'href' => $baseUrl . 'pages/patch-management.php?action=reboot',
+            'badge' => 'bg-orange-100 text-orange-800',
+        ];
+    }
+
+    if (!empty($target['os_upgrade_available'])) {
+        $priorities[] = [
+            'score' => 6,
+            'label' => 'Upgrade OS disponible',
+            'name' => $target['name'],
+            'hostname' => $target['hostname'],
+            'target_type' => $target['target_type'] ?? 'other',
+            'href' => $baseUrl . 'pages/patch-management.php?action=os_upgrade',
+            'badge' => 'bg-blue-100 text-blue-700',
+        ];
+    }
+}
+
+usort($priorities, fn (array $a, array $b): int => $a['score'] <=> $b['score'] ?: strcasecmp($a['name'], $b['name']));
+$priorities = array_slice($priorities, 0, 8);
+
+function msmDashboardDate(?string $date): string
+{
+    return $date ? htmlspecialchars($date) : 'Jamais';
+}
+
+function msmDashboardFreshness(?string $date, int $maxAgeSeconds): array
+{
+    if (!$date) {
+        return ['label' => 'Jamais', 'class' => 'text-red-700 bg-red-50 border-red-200'];
+    }
+
+    try {
+        $checkedAt = new DateTimeImmutable($date);
+    } catch (Exception) {
+        return ['label' => 'Date invalide', 'class' => 'text-red-700 bg-red-50 border-red-200'];
+    }
+
+    $ageSeconds = time() - $checkedAt->getTimestamp();
+    if ($ageSeconds <= $maxAgeSeconds) {
+        return ['label' => 'A jour', 'class' => 'text-green-700 bg-green-50 border-green-200'];
+    }
+
+    return ['label' => 'Ancien', 'class' => 'text-yellow-800 bg-yellow-50 border-yellow-200'];
+}
+
+$supervisionInterval = (int) ($settingsManager->get('supervision', 'check_interval_minutes') ?? 10);
+if ($supervisionInterval < 1) {
+    $supervisionInterval = 10;
+}
+
+$patchInterval = (int) ($settingsManager->get('patch_management', 'check_interval_hours') ?? 6);
+if ($patchInterval < 1) {
+    $patchInterval = 6;
+}
+
+$osLifecycleInterval = (int) ($settingsManager->get('os_lifecycle', 'check_interval_hours') ?? 168);
+if ($osLifecycleInterval < 1) {
+    $osLifecycleInterval = 168;
+}
+
+$securityInterval = (int) ($settingsManager->get('security', 'check_interval_hours') ?? 24);
+if ($securityInterval < 1) {
+    $securityInterval = 24;
+}
+
+$freshness = [
+    [
+        'name' => 'Supervision',
+        'date' => $serverStats['last_supervision_check'] ?? null,
+        'interval' => $supervisionInterval . ' min',
+        'state' => msmDashboardFreshness($serverStats['last_supervision_check'] ?? null, max(900, $supervisionInterval * 60 * 3)),
+        'href' => $baseUrl . 'pages/supervision.php',
+    ],
+    [
+        'name' => 'Patch Management',
+        'date' => $latestPatchCheck,
+        'interval' => $patchInterval . ' h',
+        'state' => msmDashboardFreshness($latestPatchCheck, max(86400, $patchInterval * 3600 * 2)),
+        'href' => $baseUrl . 'pages/patch-management.php',
+    ],
+    [
+        'name' => 'Cycle de vie OS',
+        'date' => $latestOsLifecycleCheck,
+        'interval' => $osLifecycleInterval . ' h',
+        'state' => msmDashboardFreshness($latestOsLifecycleCheck, max(604800, $osLifecycleInterval * 3600 * 2)),
+        'href' => $baseUrl . 'pages/patch-management.php?action=os_upgrade',
+    ],
+    [
+        'name' => 'Securite',
+        'date' => $latestSecurityCheck,
+        'interval' => $securityInterval . ' h',
+        'state' => msmDashboardFreshness($latestSecurityCheck, max(86400, $securityInterval * 3600 * 2)),
+        'href' => $baseUrl . 'pages/securite-serveurs.php',
+    ],
+];
 ?>
 
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <i data-lucide="arrow-right" class="h-7 w-7 text-blue-500"></i>
-        Bienvenue sur My Server Manager
-    </h1>
+<div class="p-6">
+    <div class="mb-6 flex flex-col gap-2">
+        <h1 class="text-2xl font-bold text-slate-900">Dashboard exploitation</h1>
+        <p class="text-sm text-slate-600">Vue de synthese des derniers resultats connus. Aucun check lourd n'est lance depuis cette page.</p>
+    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-2xl shadow">
-            <div class="flex items-center mb-4">
-                <i data-lucide="server" class="h-6 w-6 text-green-500"></i>
-                <h2 class="text-lg font-semibold ml-2">Gestion des serveurs</h2>
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+        <a href="<?= $baseUrl ?>pages/supervision.php" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold uppercase text-slate-500">Serveurs down</div>
+                <i data-lucide="server-off" class="h-5 w-5 text-red-500"></i>
             </div>
-            <p class="text-gray-600">Ajoutez, modifiez ou supprimez vos serveurs Linux et Windows.</p>
-        </div>
+            <div class="mt-2 text-3xl font-bold text-red-700"><?= $summary['servers_down'] ?></div>
+        </a>
 
-        <div class="bg-white p-6 rounded-2xl shadow">
-            <div class="flex items-center mb-4">
-                <i data-lucide="activity" class="h-6 w-6 text-yellow-500"></i>
-                <h2 class="text-lg font-semibold ml-2">Supervision</h2>
+        <a href="<?= $baseUrl ?>pages/supervision.php" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold uppercase text-slate-500">SSH en erreur</div>
+                <i data-lucide="terminal-square" class="h-5 w-5 text-red-500"></i>
             </div>
-            <p class="text-gray-600">Surveillez le statut, la latence, le disque et les derniers checks.</p>
-        </div>
+            <div class="mt-2 text-3xl font-bold text-red-700"><?= $summary['ssh_errors'] ?></div>
+        </a>
 
-        <div class="bg-white p-6 rounded-2xl shadow">
-            <div class="flex items-center mb-4">
-                <i data-lucide="shield-alert" class="h-6 w-6 text-red-500"></i>
-                <h2 class="text-lg font-semibold ml-2">Securite</h2>
+        <a href="<?= $baseUrl ?>pages/patch-management.php?action=security" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold uppercase text-slate-500">Updates securite</div>
+                <i data-lucide="shield-alert" class="h-5 w-5 text-red-500"></i>
             </div>
-            <p class="text-gray-600">Analyse des ports, du pare-feu, des mises a jour et des certificats.</p>
-        </div>
+            <div class="mt-2 text-3xl font-bold text-red-700"><?= $summary['security_updates'] ?></div>
+        </a>
+
+        <a href="<?= $baseUrl ?>pages/patch-management.php?action=reboot" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold uppercase text-slate-500">Reboots requis</div>
+                <i data-lucide="rotate-cw" class="h-5 w-5 text-orange-500"></i>
+            </div>
+            <div class="mt-2 text-3xl font-bold text-orange-700"><?= $summary['reboot_required'] ?></div>
+        </a>
+
+        <a href="<?= $baseUrl ?>pages/patch-management.php?action=os_upgrade" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold uppercase text-slate-500">Upgrades OS</div>
+                <i data-lucide="arrow-up-circle" class="h-5 w-5 text-blue-500"></i>
+            </div>
+            <div class="mt-2 text-3xl font-bold text-blue-700"><?= $summary['os_upgrades'] ?></div>
+        </a>
+
+        <a href="<?= $baseUrl ?>pages/patch-management.php?action=os_risk" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold uppercase text-slate-500">OS a risque</div>
+                <i data-lucide="calendar-warning" class="h-5 w-5 text-yellow-600"></i>
+            </div>
+            <div class="mt-2 text-3xl font-bold text-yellow-700"><?= $summary['os_risks'] ?></div>
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <section class="xl:col-span-2 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div class="mb-4 flex items-center justify-between gap-3">
+                <h2 class="text-lg font-semibold text-slate-900">Priorites</h2>
+                <a href="<?= $baseUrl ?>pages/patch-management.php?action=needs_action" class="text-sm font-semibold text-blue-700 hover:underline">
+                    Voir Patch Management
+                </a>
+            </div>
+
+            <?php if (!$priorities): ?>
+                <p class="rounded border border-green-200 bg-green-50 px-3 py-3 text-sm font-semibold text-green-700">
+                    Aucune priorite operationnelle detectee.
+                </p>
+            <?php else: ?>
+                <div class="divide-y divide-gray-200">
+                    <?php foreach ($priorities as $priority): ?>
+                        <a href="<?= htmlspecialchars($priority['href']) ?>" class="flex items-center justify-between gap-4 py-3 hover:bg-slate-50">
+                            <div>
+                                <div class="font-semibold text-slate-900"><?= htmlspecialchars($priority['name']) ?></div>
+                                <div class="text-xs text-slate-500">
+                                    <?= htmlspecialchars($priority['hostname']) ?> · <?= htmlspecialchars($priority['target_type']) ?>
+                                </div>
+                            </div>
+                            <span class="shrink-0 rounded px-2 py-1 text-xs font-semibold <?= htmlspecialchars($priority['badge']) ?>">
+                                <?= htmlspecialchars($priority['label']) ?>
+                            </span>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">Fraicheur des checks</h2>
+            <div class="space-y-3">
+                <?php foreach ($freshness as $item): ?>
+                    <a href="<?= htmlspecialchars($item['href']) ?>" class="block rounded border border-gray-200 p-3 hover:border-blue-300">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="font-semibold text-slate-900"><?= htmlspecialchars($item['name']) ?></div>
+                            <span class="rounded border px-2 py-1 text-xs font-semibold <?= htmlspecialchars($item['state']['class']) ?>">
+                                <?= htmlspecialchars($item['state']['label']) ?>
+                            </span>
+                        </div>
+                        <div class="mt-2 text-xs text-slate-500">
+                            Dernier : <?= msmDashboardDate($item['date']) ?>
+                        </div>
+                        <div class="text-xs text-slate-500">
+                            Intervalle : <?= htmlspecialchars($item['interval']) ?>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+
+            <div class="mt-4 grid grid-cols-2 gap-2">
+                <a href="<?= $baseUrl ?>pages/diagnostic.php" class="inline-flex items-center justify-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50">
+                    <i data-lucide="stethoscope" class="h-4 w-4"></i>
+                    Diagnostic
+                </a>
+                <a href="<?= $baseUrl ?>metrics.php" class="inline-flex items-center justify-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50">
+                    <i data-lucide="activity" class="h-4 w-4"></i>
+                    Metrics
+                </a>
+            </div>
+        </section>
     </div>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

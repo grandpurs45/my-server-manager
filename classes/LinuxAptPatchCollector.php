@@ -12,11 +12,13 @@ class LinuxAptPatchCollector
         $startedAt = microtime(true);
         $checkedAt = date('Y-m-d H:i:s');
         $serverId = (int) $server['id'];
+        $collector = ($server['target_type'] ?? '') === 'proxmox' ? 'proxmox_apt' : 'apt';
 
         try {
             if (empty($server['ssh_enabled']) || empty($server['ssh_user']) || empty($server['ssh_password'])) {
                 return $this->result(
                     $serverId,
+                    $collector,
                     'error',
                     [],
                     false,
@@ -32,6 +34,7 @@ class LinuxAptPatchCollector
             if (!$ssh->login($server['ssh_user'], decrypt($server['ssh_password']))) {
                 return $this->result(
                     $serverId,
+                    $collector,
                     'error',
                     [],
                     false,
@@ -44,6 +47,7 @@ class LinuxAptPatchCollector
             if (trim($ssh->exec('command -v apt-get')) === '') {
                 return $this->result(
                     $serverId,
+                    $collector,
                     'unsupported',
                     [],
                     false,
@@ -64,10 +68,11 @@ class LinuxAptPatchCollector
                 $status = 'warning';
             }
 
-            return $this->result($serverId, $status, $updates, $rebootRequired, $checkedAt, $startedAt);
+            return $this->result($serverId, $collector, $status, $updates, $rebootRequired, $checkedAt, $startedAt);
         } catch (\Throwable $e) {
             return $this->result(
                 $serverId,
+                $collector,
                 'error',
                 [],
                 false,
@@ -118,6 +123,7 @@ class LinuxAptPatchCollector
 
     private function result(
         int $serverId,
+        string $collector,
         string $status,
         array $updates,
         bool $rebootRequired,
@@ -127,7 +133,7 @@ class LinuxAptPatchCollector
     ): PatchCheckResult {
         return new PatchCheckResult(
             serverId: $serverId,
-            collector: 'apt',
+            collector: $collector,
             status: $status,
             normalUpdatesCount: $this->countByType($updates, 'normal'),
             securityUpdatesCount: $this->countByType($updates, 'security'),

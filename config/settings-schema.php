@@ -43,5 +43,19 @@ return [
             'label' => 'Intervalle des checks patch management (heures)',
             'default' => '6'
         ]
+    ],
+    'os_lifecycle' => [
+        'check_interval_hours' => [
+            'type' => 'number',
+            'label' => 'Intervalle des checks cycle de vie OS (heures)',
+            'default' => '168'
+        ]
+    ],
+    'security' => [
+        'check_interval_hours' => [
+            'type' => 'number',
+            'label' => 'Intervalle des checks securite (heures)',
+            'default' => '24'
+        ]
     ]
 ];

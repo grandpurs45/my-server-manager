@@ -127,7 +127,6 @@ Cibles prioritaires :
 
 - Linux via SSH et `apt` ;
 - Proxmox via SSH, `apt` et `pveversion` ;
-- Docker via SSH sur l'hote Docker ;
 - Synology via SSH ou API DSM ;
 - Windows via PowerShell SSH ou WinRM.
 
@@ -167,7 +166,6 @@ Reste a faire :
 - [x] Exposer les metriques Prometheus Patch Management.
 - [x] Exposer les metriques Prometheus de cycle de vie OS.
 - [x] Ajouter la liste detaillee des paquets par cible.
-- [ ] Ajouter Docker.
 - [ ] Ajouter Synology.
 - [ ] Ajouter Windows.
 
@@ -186,8 +184,8 @@ Report post-v1 ou si besoin confirme :
 
 Objectif : identifier rapidement les risques simples.
 
-- Ports ouverts via SSH.
-- Firewall actif ou inactif.
+- [x] Ports ouverts via SSH.
+- [x] Firewall actif ou inactif.
 - Reboot requis.
 - Services critiques.
 - Certificats SSL :
@@ -204,7 +202,7 @@ Objectif : identifier rapidement les risques simples.
 
 Objectif : rendre MSM utilisable au quotidien.
 
-- Dashboard d'accueil utile.
+- [x] Dashboard d'accueil utile.
 - Page supervision fiable.
 - Page patch management.
 - Page securite.
@@ -224,21 +222,49 @@ Objectif : livrer une version installee, documentee et maintenable.
 - README complet.
 - Guide d'installation.
 - Guide de mise a jour.
-- Exemple cron ou systemd timer.
+- [x] Exemple cron ou systemd timer.
 - Exemple configuration Prometheus.
 - Notes de compatibilite.
 - Changelog propre.
 - Tag `v1.0.0`.
 - Verification sur installation fraiche.
 
+## Roadmap v1.x
+
+Objectif : etendre MSM apres une v1.0 stable, sans alourdir le socle initial.
+
+Docker :
+
+- [ ] Ajouter un inventaire Docker via SSH sur l'hote Docker :
+  - containers ;
+  - images ;
+  - tags ;
+  - statut ;
+  - ports exposes.
+- [ ] Stocker les resultats Docker en base sans check lourd dans l'UI.
+- [ ] Afficher les containers dans la fiche cible ou une page dediee.
+- [ ] Ajouter une synthese Docker dans Patch Management.
+- [ ] Detecter prudemment les images obsoletes ou mises a jour disponibles.
+- [ ] Exposer les metriques Prometheus Docker utiles.
+
+Autres extensions v1.x :
+
+- [ ] Ajouter Synology.
+- [ ] Ajouter Windows.
+- [ ] Ajouter l'historique minimal des changements d'inventaire.
+- [ ] Rendre le referentiel de cycle de vie OS administrable depuis les parametres.
+- [ ] Ajouter une synchronisation optionnelle du referentiel OS Lifecycle depuis `endoflife.date` :
+  - script CLI dedie ;
+  - cache local en base ;
+  - aucune dependance API au chargement des pages ou de `/metrics.php` ;
+  - conservation de la source et de la date de synchronisation.
+
 ## Priorites Immediates
 
-1. Concevoir le modele de donnees Patch Management.
-2. Implementer Linux et Proxmox en premier.
-3. Exposer les resultats Patch Management dans l'interface et Prometheus.
-4. Ajouter Docker.
-5. Ajouter Synology.
-6. Ajouter Windows.
+1. Stabiliser les checks Linux, Proxmox et cycle de vie OS.
+2. Ameliorer le dashboard v1.
+3. Finaliser la page securite operationnelle minimale.
+4. Preparer la release v1.0.0.
 
 ## Hors Scope v1
 
@@ -250,6 +276,7 @@ Objectif : livrer une version installee, documentee et maintenable.
 - Orchestration automatique de patchs sans validation humaine.
 - Interface plus moderne.
 - Autodiscovery Proxmox, Docker ou reseau.
+- Collecteur Docker avance.
 - Setup d'installation interactif complet.
 - Discovery Proxmox
 - Ajout, Suppression, desactivation, suppression de collecteurs
