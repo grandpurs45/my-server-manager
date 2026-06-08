@@ -194,6 +194,16 @@ Evaluer les alertes actives :
 php scripts/check-alerts.php
 ```
 
+## Alerting
+
+MSM dispose d'un moteur d'alerting interne base sur les derniers resultats stockes en base.
+
+- Backoffice des alertes : `pages/alerts.php`
+- Mur d'alertes pour affichage dedie : `pages/alerts-wall.php`
+- Regles globales d'alertes : `pages/alert-rules.php`
+
+La v1 couvre les regles globales, la severite et les seuils simples. Les notifications sortantes, les silences et les desactivations par hote ou par item sont prevus pour la roadmap v1.x.
+
 Planifier les checks en production :
 
 ```text

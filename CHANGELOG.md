@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout d'une page minimale de gestion des regles d'alertes
+
 ## [0.25.0](https://github.com/grandpurs45/my-server-manager/compare/v0.24.0...v0.25.0) (2026-06-08)
 
 

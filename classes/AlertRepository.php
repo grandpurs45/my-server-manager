@@ -30,6 +30,38 @@ class AlertRepository
         return $rules;
     }
 
+    public function getRules(): array
+    {
+        if (!$this->tableExists('alert_rules')) {
+            return [];
+        }
+
+        $stmt = $this->pdo->query("
+            SELECT rule_key, name, source, severity, enabled, threshold_value, updated_at
+            FROM alert_rules
+            ORDER BY source ASC, name ASC
+        ");
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function updateRule(string $ruleKey, bool $enabled, string $severity, ?int $thresholdValue): void
+    {
+        $stmt = $this->pdo->prepare("
+            UPDATE alert_rules
+            SET enabled = :enabled,
+                severity = :severity,
+                threshold_value = :threshold_value
+            WHERE rule_key = :rule_key
+        ");
+        $stmt->execute([
+            ':enabled' => $enabled ? 1 : 0,
+            ':severity' => $severity,
+            ':threshold_value' => $thresholdValue,
+            ':rule_key' => $ruleKey,
+        ]);
+    }
+
     public function getActiveAlerts(array $filters = []): array
     {
         $filters['status'] = 'active';

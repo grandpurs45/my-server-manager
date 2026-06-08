@@ -59,6 +59,10 @@ if (ob_get_level() > 0) {
                 <i data-lucide="bell" class="w-5 h-5 mr-2"></i>
                 Alertes
             </a>
+            <a href="<?= $baseUrl ?>pages/alert-rules.php" class="flex items-center pl-4 text-sm hover:text-gray-200">
+                <i data-lucide="sliders-horizontal" class="w-4 h-4 mr-2"></i>
+                Regles alertes
+            </a>
 
             <div class="text-white uppercase text-sm font-bold mt-6 mb-2">Exploitation</div>
             <a href="<?= $baseUrl ?>pages/patch-management.php" class="flex items-center pl-4 hover:text-gray-200">

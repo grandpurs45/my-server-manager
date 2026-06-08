@@ -58,11 +58,18 @@ function msmAlertStatusClass(string $status): string
                 Vue backoffice des alertes generees par <code>scripts/check-alerts.php</code>.
             </p>
         </div>
-        <a href="<?= $baseUrl ?>pages/alerts-wall.php" target="_blank"
-           class="inline-flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-            <i data-lucide="monitor" class="h-4 w-4"></i>
-            Mur d'alertes
-        </a>
+        <div class="flex flex-wrap gap-2">
+            <a href="<?= $baseUrl ?>pages/alert-rules.php"
+               class="inline-flex items-center gap-2 rounded border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50">
+                <i data-lucide="sliders-horizontal" class="h-4 w-4"></i>
+                Regles
+            </a>
+            <a href="<?= $baseUrl ?>pages/alerts-wall.php" target="_blank"
+               class="inline-flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                <i data-lucide="monitor" class="h-4 w-4"></i>
+                Mur d'alertes
+            </a>
+        </div>
     </div>
 
     <div class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">

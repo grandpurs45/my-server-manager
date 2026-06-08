@@ -246,6 +246,7 @@ Socle technique :
 - [x] Ajouter un script `scripts/check-alerts.php`.
 - [x] Ajouter une page Mur d'alertes lisant uniquement la base.
 - [x] Ajouter une vue backoffice des alertes.
+- [x] Ajouter une page minimale de gestion des regles globales.
 - [x] Ajouter les alertes actives au dashboard.
 - [x] Exposer des metriques Prometheus :
   - `msm_alerts_active` ;
@@ -299,7 +300,7 @@ Alerting avance :
   - seuils ;
   - delai avant ouverture ;
   - delai avant resolution.
-- [ ] Permettre de desactiver la supervision ou l'alerting pour un hote complet.
+- [ ] Permettre de desactiver l'alerting ou certaines familles d'alertes pour un hote complet.
 - [ ] Permettre de desactiver une alerte pour un module precis d'une cible :
   - supervision ;
   - SSH ;
@@ -314,6 +315,13 @@ Alerting avance :
   - un OS volontairement conserve.
 - [ ] Ajouter une notion de silence ou maintenance temporaire avec date de fin.
 - [ ] Tracer les desactivations et silences dans l'historique.
+
+Explicitement hors v1 :
+
+- [ ] Desactivation par hote.
+- [ ] Desactivation par item precis.
+- [ ] Silences et fenetres de maintenance.
+- [ ] Notifications sortantes.
 
 Notifications v1.x :
 
