@@ -2,15 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.27.0](https://github.com/grandpurs45/my-server-manager/compare/v0.26.0...v0.27.0) (2026-06-09)
+
 
 ### Features
 
+* improve server module visibility ([94e96a3](https://github.com/grandpurs45/my-server-manager/commit/94e96a3db651d55fb51520d499ca065affbbf574))
 * ajout d'indicateurs Patch Management et Securite dans la liste des serveurs
+
 
 ### Documentation
 
 * ajout d'un guide de mise a jour `docs/UPDATE.md`
+* mise a jour du README, du guide d'installation et de la roadmap
 
 ## [0.26.0](https://github.com/grandpurs45/my-server-manager/compare/v0.25.0...v0.26.0) (2026-06-08)
 
