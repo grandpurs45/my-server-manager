@@ -333,6 +333,7 @@ include __DIR__ . '/../includes/server-modal.php';
                 <th class="p-3">OS</th>
                 <th class="p-3">Statut</th>
                 <th class="p-3">SSH</th>
+                <th class="p-3">Modules</th>
                 <th class="p-3">Dernier check</th>
                 <th class="px-4 py-2 text-left">Actions</th>
             </tr>
@@ -406,6 +407,33 @@ include __DIR__ . '/../includes/server-modal.php';
                                 </span>
                             <?php endif; ?>
                         </td>
+                        <td class="p-3">
+                            <div class="flex flex-wrap gap-1">
+                                <?php if (!empty($server['patch_management_enabled'])): ?>
+                                    <span class="inline-flex items-center gap-1 rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700" title="Patch Management active">
+                                        <i data-lucide="package-check" class="w-3 h-3"></i>
+                                        Patch
+                                    </span>
+                                <?php else: ?>
+                                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-400" title="Patch Management desactive">
+                                        <i data-lucide="package" class="w-3 h-3"></i>
+                                        Patch
+                                    </span>
+                                <?php endif; ?>
+
+                                <?php if (!empty($server['security_enabled'])): ?>
+                                    <span class="inline-flex items-center gap-1 rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700" title="Analyse securite active">
+                                        <i data-lucide="shield-check" class="w-3 h-3"></i>
+                                        Secu
+                                    </span>
+                                <?php else: ?>
+                                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-400" title="Analyse securite desactive">
+                                        <i data-lucide="shield-off" class="w-3 h-3"></i>
+                                        Secu
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </td>
                         <td class="p-3"><?= $server['last_check'] ? htmlspecialchars($server['last_check']) : 'Jamais' ?></td>
                         <td class="px-4 py-2">
                             <a href="details-cible.php?id=<?= (int) $server['id'] ?>" class="text-slate-700 hover:underline flex items-center gap-1 mb-2">
@@ -426,7 +454,7 @@ include __DIR__ . '/../includes/server-modal.php';
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="11" class="text-center text-gray-500 py-4">Aucun serveur enregistre.</td>
+                    <td colspan="12" class="text-center text-gray-500 py-4">Aucun serveur enregistre.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

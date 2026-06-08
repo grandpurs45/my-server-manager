@@ -2,6 +2,8 @@
 
 Ce guide decrit une installation neuve de My Server Manager sur un serveur Apache/PHP avec MariaDB.
 
+Pour une instance deja installee, utiliser le guide de mise a jour : [UPDATE.md](UPDATE.md).
+
 ## Modes d'installation possibles
 
 MSM peut etre installe de plusieurs facons selon l'environnement cible :
@@ -773,6 +775,8 @@ curl -s http://localhost/msm/metrics.php | head
 ```
 
 ## Mise a jour depuis une ancienne installation
+
+La procedure complete de mise a jour est decrite dans [UPDATE.md](UPDATE.md).
 
 Avant de passer a une version utilisant `.env`, copier la valeur actuelle de `msm_secret.key` dans `MSM_SECRET_KEY`.
 

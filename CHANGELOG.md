@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout d'indicateurs Patch Management et Securite dans la liste des serveurs
+
+### Documentation
+
+* ajout d'un guide de mise a jour `docs/UPDATE.md`
+
 ## [0.26.0](https://github.com/grandpurs45/my-server-manager/compare/v0.25.0...v0.26.0) (2026-06-08)
 
 

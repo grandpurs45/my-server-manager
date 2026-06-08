@@ -113,6 +113,7 @@ Champs cibles :
 - [x] Ajouter des filtres par type, environnement, criticite, statut et tag.
 - [x] Ajouter une page detail cible orientee inventaire.
 - [x] Ajouter une activation par cible pour le module securite.
+- [x] Afficher rapidement les modules actifs par cible dans la liste des serveurs.
 
 Report post-v1 ou si besoin confirme :
 
@@ -266,7 +267,7 @@ Objectif : livrer une version installee, documentee et maintenable.
 
 - README complet.
 - Guide d'installation.
-- Guide de mise a jour.
+- [x] Guide de mise a jour.
 - [x] Exemple cron ou systemd timer.
 - Exemple configuration Prometheus.
 - Notes de compatibilite.
@@ -343,6 +344,13 @@ Autres extensions v1.x :
 
 - [ ] Ajouter Synology.
 - [ ] Ajouter Windows.
+- [ ] Ajouter un setup d'installation assiste pour l'ordonnancement :
+  - choix explicite entre cron et systemd timers ;
+  - ne pas configurer les deux par defaut ;
+  - generation des commandes selon le dossier reel d'installation ;
+  - verification adaptee au mode choisi ;
+  - creation des logs et permissions necessaires ;
+  - confirmation utilisateur avant modification de cron ou systemd.
 - [ ] Ajouter une authentification applicative :
   - page de connexion ;
   - session utilisateur ;
