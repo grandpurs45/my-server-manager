@@ -125,6 +125,7 @@ msm_reboot_required{server="server-01",hostname="server-01.example.local",type="
 msm_os_upgrade_available{server="server-01",hostname="server-01.example.local",type="linux",os_family="ubuntu",os_version="22.04"} 1
 msm_security_exposed_ports{server="server-01",hostname="server-01.example.local",type="linux"} 2
 msm_security_firewall_enabled{server="server-01",hostname="server-01.example.local",type="linux"} 1
+msm_alerts_active{severity="critical"} 1
 ```
 
 ## Scripts Utiles
@@ -139,6 +140,12 @@ Lancer un check de supervision :
 
 ```bash
 php scripts/check-servers.php
+```
+
+Forcer un check de supervision sans attendre l'intervalle interne :
+
+```bash
+php scripts/check-servers.php --force
 ```
 
 Lancer un check Patch Management :
@@ -179,6 +186,12 @@ Forcer un check securite manuel sans attendre l'intervalle interne :
 
 ```bash
 php scripts/check-security.php --force
+```
+
+Evaluer les alertes actives :
+
+```bash
+php scripts/check-alerts.php
 ```
 
 Planifier les checks en production :

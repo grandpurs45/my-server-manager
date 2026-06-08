@@ -53,12 +53,18 @@ class PrometheusExporter
             '# TYPE msm_security_firewall_enabled gauge',
             '# HELP msm_security_last_check_timestamp Last known security check timestamp as Unix epoch seconds.',
             '# TYPE msm_security_last_check_timestamp gauge',
+            '# HELP msm_alerts_active Active MSM alerts count grouped by severity.',
+            '# TYPE msm_alerts_active gauge',
+            '# HELP msm_alert_active Active MSM alert. Value is always 1 for each active alert.',
+            '# TYPE msm_alert_active gauge',
         ];
 
         $diskUsages = $this->getLatestMetricValues('disk');
         $latestPatchChecks = $this->getLatestPatchChecks();
         $latestOsLifecycleChecks = $this->getLatestOsLifecycleChecks();
         $latestSecurityChecks = $this->getLatestSecurityChecks();
+        $activeAlerts = $this->getActiveAlerts();
+        $activeAlertCounts = ['critical' => 0, 'warning' => 0, 'info' => 0];
 
         foreach ($this->getServers() as $server) {
             $baseLabels = [
@@ -156,6 +162,28 @@ class PrometheusExporter
                     $lines[] = "msm_security_last_check_timestamp{{$securityLabels}} " . (int) $securityCheck['checked_at_timestamp'];
                 }
             }
+        }
+
+        foreach ($activeAlerts as $alert) {
+            $severity = $alert['severity'] ?: 'info';
+            if (!isset($activeAlertCounts[$severity])) {
+                $activeAlertCounts[$severity] = 0;
+            }
+            $activeAlertCounts[$severity]++;
+
+            $alertLabels = $this->formatLabels([
+                'server' => $alert['server_name'] ?? 'global',
+                'hostname' => $alert['hostname'] ?? '',
+                'type' => $alert['target_type'] ?? 'other',
+                'rule' => $alert['rule_key'] ?? 'unknown',
+                'severity' => $severity,
+            ]);
+            $lines[] = "msm_alert_active{{$alertLabels}} 1";
+        }
+
+        foreach ($activeAlertCounts as $severity => $count) {
+            $alertCountLabels = $this->formatLabels(['severity' => $severity]);
+            $lines[] = "msm_alerts_active{{$alertCountLabels}} " . (int) $count;
         }
 
         return implode("\n", $lines) . "\n";
@@ -290,6 +318,28 @@ class PrometheusExporter
         }
 
         return $checks;
+    }
+
+    private function getActiveAlerts(): array
+    {
+        if (!$this->tableExists('alerts')) {
+            return [];
+        }
+
+        $stmt = $this->pdo->query(
+            "SELECT
+                a.rule_key,
+                a.severity,
+                s.name AS server_name,
+                s.hostname,
+                s.target_type
+             FROM alerts a
+             LEFT JOIN servers s ON s.id = a.server_id
+             WHERE a.status = 'active'
+             ORDER BY a.id ASC"
+        );
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     private function tableExists(string $tableName): bool

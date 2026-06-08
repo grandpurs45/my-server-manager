@@ -10,6 +10,7 @@ MSM ne lance pas les checks lourds pendant l'affichage des pages ni pendant le s
 | `scripts/check-patches.php` | patch management Linux/Proxmox | toutes les 10 a 15 minutes | `patch_management / check_interval_hours` |
 | `scripts/check-os-lifecycle.php` | cycle de vie OS et upgrades connus | toutes les heures ou tous les jours | `os_lifecycle / check_interval_hours` |
 | `scripts/check-security.php` | ports ouverts et pare-feu | toutes les heures ou tous les jours | `security / check_interval_hours` |
+| `scripts/check-alerts.php` | evaluation des alertes actives | toutes les 1 a 5 minutes | `alerting / check_interval_minutes` |
 
 Les scripts peuvent etre appeles plus souvent que necessaire : chacun respecte son intervalle interne et saute l'execution si le dernier check est trop recent.
 
@@ -22,14 +23,17 @@ php scripts/check-servers.php
 php scripts/check-patches.php
 php scripts/check-os-lifecycle.php
 php scripts/check-security.php
+php scripts/check-alerts.php
 ```
 
 Pour ignorer ponctuellement l'intervalle interne :
 
 ```bash
+php scripts/check-servers.php --force
 php scripts/check-patches.php --force
 php scripts/check-os-lifecycle.php --force
 php scripts/check-security.php --force
+php scripts/check-alerts.php --force
 ```
 
 `--force` est utile apres une correction de configuration ou pour verifier immediatement une cible. Ne pas l'utiliser dans cron sauf besoin specifique.
@@ -51,6 +55,7 @@ logs/check-servers.log
 logs/check-patches.log
 logs/check-os-lifecycle.log
 logs/check-security.log
+logs/check-alerts.log
 ```
 
 ## Option 1 - Cron simple
@@ -74,6 +79,7 @@ Exemple :
 */10 * * * * /usr/bin/php /var/www/html/msm/scripts/check-patches.php >> /var/www/html/msm/logs/check-patches.log 2>&1
 15 * * * * /usr/bin/php /var/www/html/msm/scripts/check-os-lifecycle.php >> /var/www/html/msm/logs/check-os-lifecycle.log 2>&1
 30 * * * * /usr/bin/php /var/www/html/msm/scripts/check-security.php >> /var/www/html/msm/logs/check-security.log 2>&1
+*/5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-alerts.php >> /var/www/html/msm/logs/check-alerts.log 2>&1
 ```
 
 Recommandations :
@@ -82,6 +88,7 @@ Recommandations :
 - lancer `check-patches.php` regulierement, mais laisser MSM appliquer son intervalle interne ;
 - lancer `check-os-lifecycle.php` au moins une fois par jour ou par heure, sans `--force`.
 - lancer `check-security.php` au moins une fois par jour ou par heure, sans `--force`.
+- lancer `check-alerts.php` plus frequemment, car il lit uniquement la base.
 
 Verifier :
 
@@ -90,6 +97,7 @@ tail -n 50 /var/www/html/msm/logs/check-servers.log
 tail -n 50 /var/www/html/msm/logs/check-patches.log
 tail -n 50 /var/www/html/msm/logs/check-os-lifecycle.log
 tail -n 50 /var/www/html/msm/logs/check-security.log
+tail -n 50 /var/www/html/msm/logs/check-alerts.log
 ```
 
 ## Option 2 - Systemd timers
@@ -220,6 +228,37 @@ Unit=msm-check-security.service
 WantedBy=timers.target
 ```
 
+### Alerting
+
+`/etc/systemd/system/msm-check-alerts.service`
+
+```ini
+[Unit]
+Description=MSM alerting evaluation
+
+[Service]
+Type=oneshot
+WorkingDirectory=/var/www/html/msm
+ExecStart=/usr/bin/php /var/www/html/msm/scripts/check-alerts.php
+User=www-data
+Group=www-data
+```
+
+`/etc/systemd/system/msm-check-alerts.timer`
+
+```ini
+[Unit]
+Description=Run MSM alerting evaluation every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=msm-check-alerts.service
+
+[Install]
+WantedBy=timers.target
+```
+
 ### Activer les timers
 
 ```bash
@@ -228,6 +267,7 @@ sudo systemctl enable --now msm-check-servers.timer
 sudo systemctl enable --now msm-check-patches.timer
 sudo systemctl enable --now msm-check-os-lifecycle.timer
 sudo systemctl enable --now msm-check-security.timer
+sudo systemctl enable --now msm-check-alerts.timer
 ```
 
 Verifier :
@@ -238,6 +278,7 @@ journalctl -u msm-check-servers.service -n 50
 journalctl -u msm-check-patches.service -n 50
 journalctl -u msm-check-os-lifecycle.service -n 50
 journalctl -u msm-check-security.service -n 50
+journalctl -u msm-check-alerts.service -n 50
 ```
 
 Sur RHEL/Rocky/AlmaLinux/Fedora, remplacer souvent `www-data` par `apache`.
@@ -253,7 +294,7 @@ Sur RHEL/Rocky/AlmaLinux/Fedora, remplacer souvent `www-data` par `apache`.
 2. Lancer une supervision manuelle :
 
    ```bash
-   php scripts/check-servers.php
+   php scripts/check-servers.php --force
    ```
 
 3. Lancer un premier Patch Management force :
@@ -274,9 +315,15 @@ Sur RHEL/Rocky/AlmaLinux/Fedora, remplacer souvent `www-data` par `apache`.
    php scripts/check-security.php --force
    ```
 
-6. Configurer cron ou systemd timer.
+6. Evaluer les alertes :
 
-7. Verifier `/metrics.php` et la page Diagnostic.
+   ```bash
+   php scripts/check-alerts.php --force
+   ```
+
+7. Configurer cron ou systemd timer.
+
+8. Verifier `/metrics.php`, le Mur d'alertes et la page Diagnostic.
 
 ## Points d'attention
 

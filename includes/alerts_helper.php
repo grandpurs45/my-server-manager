@@ -1,5 +1,14 @@
 <?php
 
+use MSM\AlertRepository;
+
+function msm_get_active_alerts(PDO $pdo): array
+{
+    $repository = new AlertRepository($pdo);
+
+    return $repository->getActiveAlerts();
+}
+
 function msm_build_supervision_alerts(array $servers): array
 {
     $alerts = [];

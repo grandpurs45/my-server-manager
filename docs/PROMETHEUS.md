@@ -23,6 +23,7 @@ Certaines familles ajoutent des labels specialises :
 - Patch Management : `update_type`, `collector`, `status` ;
 - Cycle de vie OS : `os_family`, `os_version`, `support_status`.
 - Securite : `status`.
+- Alerting : `rule`, `severity`.
 
 ```text
 msm_server_up{server="server-01",hostname="server-01.example.local",type="linux"} 1
@@ -46,6 +47,8 @@ msm_security_open_ports{server="server-01",hostname="server-01.example.local",ty
 msm_security_exposed_ports{server="server-01",hostname="server-01.example.local",type="linux"} 2
 msm_security_firewall_enabled{server="server-01",hostname="server-01.example.local",type="linux"} 1
 msm_security_last_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux"} 1780000000
+msm_alerts_active{severity="critical"} 1
+msm_alert_active{server="server-01",hostname="server-01.example.local",type="linux",rule="server_down",severity="critical"} 1
 ```
 
 ## Exemple prometheus.yml
@@ -152,6 +155,12 @@ Firewall inactif ou non detecte :
 msm_security_firewall_enabled == 0
 ```
 
+Alertes actives critiques :
+
+```promql
+msm_alerts_active{severity="critical"} > 0
+```
+
 ## Dashboard Grafana minimal
 
 Panneaux recommandes :
@@ -164,6 +173,7 @@ Panneaux recommandes :
 - Table : patch management avec `msm_updates_available`, `msm_reboot_required` et `msm_patch_check_status`.
 - Table : cycle de vie OS avec `msm_os_support_status`, `msm_os_upgrade_available` et `msm_os_support_end_timestamp`.
 - Table : securite avec `msm_security_check_status`, `msm_security_exposed_ports` et `msm_security_firewall_enabled`.
+- Table : alerting avec `msm_alert_active` et `msm_alerts_active`.
 
 ## Points d'attention
 

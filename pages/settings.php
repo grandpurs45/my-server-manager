@@ -8,7 +8,7 @@ use MSM\SettingsManager;
 
 $settingsManager = new SettingsManager($pdo);
 
-$categories = ['reseau', 'supervision', 'inventaire', 'patch_management', 'os_lifecycle', 'security', 'bdd', 'msm'];
+$categories = ['reseau', 'supervision', 'inventaire', 'patch_management', 'os_lifecycle', 'security', 'alerting', 'bdd', 'msm'];
 $labels = [
     'reseau' => 'Reseau',
     'supervision' => 'Supervision',
@@ -16,6 +16,7 @@ $labels = [
     'patch_management' => 'Patch Management',
     'os_lifecycle' => 'Cycle de vie OS',
     'security' => 'Securite',
+    'alerting' => 'Alerting',
     'bdd' => 'Base de donnees',
     'msm' => 'MSM',
 ];

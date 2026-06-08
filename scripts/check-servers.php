@@ -14,6 +14,7 @@ use MSM\SettingsManager;
 
 // --- 1) Gestion de la fréquence via les paramètres MSM ---
 
+$force = in_array('--force', $argv ?? [], true);
 $settingsManager = new SettingsManager($pdo);
 
 // Fréquence en minutes (paramètre : supervision / check_interval_minutes)
@@ -26,7 +27,7 @@ if ($intervalMinutes < 1) {
 $now = new \DateTimeImmutable('now');
 $lastRunRaw = $settingsManager->get('supervision', 'check_last_run_at');
 
-if ($lastRunRaw !== null) {
+if (!$force && $lastRunRaw !== null) {
     try {
         $lastRun = new \DateTimeImmutable($lastRunRaw);
         $diffSeconds = $now->getTimestamp() - $lastRun->getTimestamp();

@@ -55,7 +55,7 @@ if (ob_get_level() > 0) {
                 <i data-lucide="activity" class="w-5 h-5 mr-2"></i>
                 Supervision
             </a>
-            <a href="<?= $baseUrl ?>pages/alerts-wall.php" class="flex items-center hover:text-gray-200">
+            <a href="<?= $baseUrl ?>pages/alerts.php" class="flex items-center hover:text-gray-200">
                 <i data-lucide="bell" class="w-5 h-5 mr-2"></i>
                 Alertes
             </a>

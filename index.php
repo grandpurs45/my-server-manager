@@ -3,6 +3,7 @@ require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/bootstrap.php';
 
 use MSM\PatchStatusRepository;
+use MSM\AlertRepository;
 use MSM\SecurityStatusRepository;
 use MSM\SettingsManager;
 
@@ -11,6 +12,8 @@ $patchRepository = new PatchStatusRepository($pdo);
 $patchTargets = $patchRepository->getOverview();
 $securityRepository = new SecurityStatusRepository($pdo);
 $securityTargets = $securityRepository->getOverview();
+$alertRepository = new AlertRepository($pdo);
+$alertCounts = $alertRepository->getActiveAlertCounts();
 
 $serverStats = $pdo->query("
     SELECT
@@ -35,6 +38,8 @@ $summary = [
     'security_risks' => count(array_filter($securityTargets, fn (array $target): bool => in_array($target['security_status'] ?? null, ['warning', 'error'], true))),
     'security_exposed_ports' => array_sum(array_map(fn (array $target): int => (int) ($target['exposed_ports_count'] ?? 0), $securityTargets)),
     'security_firewall_warnings' => count(array_filter($securityTargets, fn (array $target): bool => in_array($target['firewall_status'] ?? null, ['inactif', 'not_installed', null], true))),
+    'active_alerts' => (int) ($alertCounts['total'] ?? 0),
+    'critical_alerts' => (int) ($alertCounts['critical'] ?? 0),
 ];
 
 $priorities = [];
@@ -269,6 +274,17 @@ $freshness = [
                 <i data-lucide="server-off" class="h-5 w-5 text-red-500"></i>
             </div>
             <div class="mt-2 text-3xl font-bold text-red-700"><?= $summary['servers_down'] ?></div>
+        </a>
+
+        <a href="<?= $baseUrl ?>pages/alerts.php" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold uppercase text-slate-500">Alertes actives</div>
+                <i data-lucide="bell-ring" class="h-5 w-5 text-red-500"></i>
+            </div>
+            <div class="mt-2 text-3xl font-bold text-red-700"><?= $summary['active_alerts'] ?></div>
+            <div class="mt-1 text-xs text-slate-500">
+                <?= $summary['critical_alerts'] ?> critique(s)
+            </div>
         </a>
 
         <a href="<?= $baseUrl ?>pages/supervision.php" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">

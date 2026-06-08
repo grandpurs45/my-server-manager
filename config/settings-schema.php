@@ -57,5 +57,12 @@ return [
             'label' => 'Intervalle des checks securite (heures)',
             'default' => '24'
         ]
+    ],
+    'alerting' => [
+        'check_interval_minutes' => [
+            'type' => 'number',
+            'label' => 'Intervalle evaluation alerting (minutes)',
+            'default' => '5'
+        ]
     ]
 ];

@@ -16,6 +16,7 @@ class SecurityStatusRepository
                 s.id,
                 s.name,
                 s.hostname,
+                s.target_type,
                 s.os,
                 s.status AS server_status,
                 s.ssh_status,

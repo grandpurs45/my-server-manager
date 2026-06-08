@@ -19,6 +19,7 @@ La v1 sera atteinte quand MSM permettra de :
 - exposer des metriques Prometheus stables ;
 - connaitre les mises a jour disponibles sur les cibles principales ;
 - identifier les signaux de securite operationnelle simples ;
+- transformer les signaux critiques en alertes actives exploitables ;
 - s'installer et se mettre a jour proprement.
 
 ## Phase 0 - Stabilisation du Socle
@@ -217,7 +218,48 @@ Objectif : rendre MSM utilisable au quotidien.
 - Historique minimal des checks.
 - Boutons de refresh cibles.
 
-## Phase 6 - Release v1
+## Phase 6 - Alerting v1
+
+Objectif : transformer les derniers resultats connus en alertes exploitables dans MSM, sans remplacer les alertes visuelles Grafana.
+
+Principes :
+
+- le moteur d'alerting lit uniquement les donnees stockees en base ;
+- aucun ping, SSH, apt, scan ou appel distant pendant l'evaluation ;
+- les alertes sont ouvertes, mises a jour ou resolues par un script planifie ;
+- l'interface lit les alertes courantes et leur historique.
+
+Sources d'alerte v1 :
+
+- [x] Serveur down.
+- [x] SSH KO.
+- [x] Dernier check trop ancien.
+- [x] Mises a jour de securite disponibles.
+- [x] Reboot requis.
+- [x] OS obsolete ou fin de support proche.
+- [x] Ports exposes.
+- [x] Firewall inactif ou non detecte.
+
+Socle technique :
+
+- [x] Creer les tables `alert_rules`, `alerts` et `alert_events`.
+- [x] Ajouter un script `scripts/check-alerts.php`.
+- [x] Ajouter une page Mur d'alertes lisant uniquement la base.
+- [x] Ajouter une vue backoffice des alertes.
+- [x] Ajouter les alertes actives au dashboard.
+- [x] Exposer des metriques Prometheus :
+  - `msm_alerts_active` ;
+  - `msm_alert_active`.
+
+Report post-v1 :
+
+- [ ] Parametrage avance des regles d'alerting.
+- [ ] Desactivation d'une alerte par hote, module ou item precis.
+- [ ] Notifications email, webhook, Discord ou autre canal externe.
+- [ ] Escalade et acquittement avances.
+- [ ] Fenetres de maintenance.
+
+## Phase 7 - Release v1
 
 Objectif : livrer une version installee, documentee et maintenable.
 
@@ -249,10 +291,56 @@ Docker :
 - [ ] Detecter prudemment les images obsoletes ou mises a jour disponibles.
 - [ ] Exposer les metriques Prometheus Docker utiles.
 
+Alerting avance :
+
+- [ ] Rendre les regles d'alerting administrables depuis l'interface :
+  - activation ou desactivation globale ;
+  - severite ;
+  - seuils ;
+  - delai avant ouverture ;
+  - delai avant resolution.
+- [ ] Permettre de desactiver la supervision ou l'alerting pour un hote complet.
+- [ ] Permettre de desactiver une alerte pour un module precis d'une cible :
+  - supervision ;
+  - SSH ;
+  - patch management ;
+  - cycle de vie OS ;
+  - securite.
+- [ ] Permettre de desactiver une alerte pour un item precis, par exemple :
+  - un port expose attendu ;
+  - un firewall non gere par UFW ;
+  - un reboot accepte temporairement ;
+  - une mise a jour ignoree ;
+  - un OS volontairement conserve.
+- [ ] Ajouter une notion de silence ou maintenance temporaire avec date de fin.
+- [ ] Tracer les desactivations et silences dans l'historique.
+
+Notifications v1.x :
+
+- [ ] Ajouter un moteur de notifications base sur les alertes actives :
+  - envoi a l'ouverture ;
+  - rappel tant que l'alerte reste active ;
+  - notification de resolution.
+- [ ] Ajouter des canaux configurables :
+  - email ;
+  - webhook generique ;
+  - Discord ;
+  - autre canal externe si besoin.
+- [ ] Permettre d'activer ou desactiver les notifications par regle.
+- [ ] Permettre d'activer ou desactiver les notifications par cible.
+- [ ] Eviter le spam avec un delai minimal entre deux notifications pour la meme alerte.
+- [ ] Tracer les tentatives de notification et leur statut.
+
 Autres extensions v1.x :
 
 - [ ] Ajouter Synology.
 - [ ] Ajouter Windows.
+- [ ] Ajouter une authentification applicative :
+  - page de connexion ;
+  - session utilisateur ;
+  - protection des pages backoffice ;
+  - gestion minimale d'un compte administrateur ;
+  - preparation d'une future gestion multi-utilisateurs.
 - [ ] Ajouter l'historique minimal des changements d'inventaire.
 - [ ] Rendre le referentiel de cycle de vie OS administrable depuis les parametres.
 - [ ] Ajouter une synchronisation optionnelle du referentiel OS Lifecycle depuis `endoflife.date` :
@@ -273,7 +361,7 @@ Autres extensions v1.x :
 - Remplacer Grafana.
 - Remplacer Prometheus.
 - Supervision temps reel avancee.
-- Systeme d'alerting complet.
+- Systeme d'alerting complet avec notifications et escalades avancees.
 - Gestion multi-utilisateurs avancee.
 - Orchestration automatique de patchs sans validation humaine.
 - Interface plus moderne.

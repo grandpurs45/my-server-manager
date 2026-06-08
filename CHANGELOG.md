@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout du socle alerting avec stockage en base, script planifie et mur d'alertes base sur les alertes actives
+* ajout d'une vue backoffice des alertes avec filtres simples
+* ajout des metriques Prometheus `msm_alerts_active` et `msm_alert_active`
+* ajout de l'option `--force` au script de supervision `check-servers.php`
+
 ## [0.24.0](https://github.com/grandpurs45/my-server-manager/compare/v0.23.0...v0.24.0) (2026-06-08)
 
 

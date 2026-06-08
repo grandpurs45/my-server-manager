@@ -634,7 +634,7 @@ Elle couvre :
 Verification minimale de supervision :
 
 ```bash
-php scripts/check-servers.php
+php scripts/check-servers.php --force
 ```
 
 Les pages MSM et l'endpoint Prometheus lisent ensuite les derniers resultats connus en base.
