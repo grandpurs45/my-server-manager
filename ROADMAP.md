@@ -207,7 +207,7 @@ Objectif : rendre MSM utilisable au quotidien.
 
 - [x] Dashboard d'accueil utile.
 - [x] Signaux securite visibles dans le dashboard.
-- Page supervision fiable.
+- [x] Page supervision fiable.
 - Page patch management.
 - Page securite.
 - Page details cible.

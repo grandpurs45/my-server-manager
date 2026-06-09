@@ -6,8 +6,8 @@ use MSM\ServerChecker;
 
 msmRequireValidCsrf('supervision.php');
 
-$checker = new ServerChecker($pdo, withMetrics: false);
-$checker->run(); // avec métriques
+$checker = new ServerChecker($pdo, withMetrics: true);
+$checker->run();
 
 header('Location: supervision.php?checked=1');
 exit;
