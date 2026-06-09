@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* refonte de la page securite operationnelle pour la v1
+* nettoyage de la fiche detail securite autour des ports ouverts, de l'exposition reseau et du pare-feu
+
 ## [0.31.0](https://github.com/grandpurs45/my-server-manager/compare/v0.30.0...v0.31.0) (2026-06-09)
 
 
