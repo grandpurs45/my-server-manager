@@ -211,7 +211,7 @@ Objectif : rendre MSM utilisable au quotidien.
 - Page patch management.
 - Page securite.
 - Page details cible.
-- Etats homogenes :
+- [x] Etats homogenes :
   - OK ;
   - warning ;
   - critical ;
@@ -363,6 +363,14 @@ Autres extensions v1.x :
   - test SSH phpseclib avec les identifiants MSM ;
   - comparaison ping systeme / statut MSM ;
   - affichage des causes probables sans exposer les secrets.
+- [ ] Ajouter une navigation par onglets dans la fiche cible pour limiter le scroll :
+  - resume ;
+  - inventaire ;
+  - supervision ;
+  - patch management ;
+  - cycle de vie OS ;
+  - securite ;
+  - historique.
 - [ ] Ajouter l'historique minimal des changements d'inventaire.
 - [ ] Rendre le referentiel de cycle de vie OS administrable depuis les parametres.
 - [ ] Ajouter une synchronisation optionnelle du referentiel OS Lifecycle depuis `endoflife.date` :

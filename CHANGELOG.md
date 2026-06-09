@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout d'un helper commun pour les badges de statut operationnels
+* harmonisation des statuts Patch Management, cycle de vie OS et securite
+
 ## [0.30.0](https://github.com/grandpurs45/my-server-manager/compare/v0.29.0...v0.30.0) (2026-06-09)
 
 

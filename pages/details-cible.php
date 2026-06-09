@@ -105,14 +105,7 @@ function msmDetailMetricValue(array $metrics, string $type): ?string
 
 function msmDetailPatchStatusBadge(?string $status): string
 {
-    return match ($status) {
-        'ok' => '<span class="inline-flex rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">OK</span>',
-        'warning' => '<span class="inline-flex rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700">Updates</span>',
-        'critical' => '<span class="inline-flex rounded bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Critique</span>',
-        'error' => '<span class="inline-flex rounded bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Erreur</span>',
-        'unsupported' => '<span class="inline-flex rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">Non supporte</span>',
-        default => '<span class="inline-flex rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Jamais verifie</span>',
-    };
+    return msmStatusBadge(msmStatusStateFromPatch($status), msmStatusLabelFromPatch($status));
 }
 
 function msmDetailPatchCollectorBadge(?string $collector): string
@@ -128,12 +121,7 @@ function msmDetailPatchCollectorBadge(?string $collector): string
 
 function msmDetailOsLifecycleBadge(?string $status): string
 {
-    return match ($status) {
-        'supported' => '<span class="inline-flex rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">Support actif</span>',
-        'eol_soon' => '<span class="inline-flex rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700">Fin proche</span>',
-        'eol' => '<span class="inline-flex rounded bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Obsolete</span>',
-        default => '<span class="inline-flex rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Inconnu</span>',
-    };
+    return msmStatusBadge(msmStatusStateFromOsLifecycle($status), msmStatusLabelFromOsLifecycle($status));
 }
 
 function msmDetailCheckEventBadge(?string $eventType): string

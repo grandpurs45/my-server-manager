@@ -47,12 +47,7 @@ $ports = $latestSecurityCheck ? $repository->getPortsForCheck((int) $latestSecur
 
 function msmSecurityDetailStatusBadge(?string $status): string
 {
-    return match ($status) {
-        'ok' => '<span class="inline-flex rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">OK</span>',
-        'warning' => '<span class="inline-flex rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700">A verifier</span>',
-        'error' => '<span class="inline-flex rounded bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Erreur</span>',
-        default => '<span class="inline-flex rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Jamais verifie</span>',
-    };
+    return msmStatusBadge(msmStatusStateFromSecurity($status), msmStatusLabelFromSecurity($status));
 }
 
 function msmSecurityDetailFirewallBadge(?string $status): string
