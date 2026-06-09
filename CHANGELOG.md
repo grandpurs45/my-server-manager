@@ -2,12 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.28.0](https://github.com/grandpurs45/my-server-manager/compare/v0.27.0...v0.28.0) (2026-06-09)
+
 
 ### Features
 
+* improve alerting freshness diagnostics ([0a4b619](https://github.com/grandpurs45/my-server-manager/commit/0a4b6197f102fe329a2758b11b356102a5dd90f7))
 * ajout de la fraicheur du check Alerting sur le dashboard d'exploitation
 * enrichissement du diagnostic SSH avec le ping exact utilise par MSM
+
 
 ### Documentation
 
