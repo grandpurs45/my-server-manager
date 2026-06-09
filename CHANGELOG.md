@@ -2,12 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.32.0](https://github.com/grandpurs45/my-server-manager/compare/v0.31.0...v0.32.0) (2026-06-09)
+
 
 ### Features
 
+* clean up security pages for v1 ([5f1c4e3](https://github.com/grandpurs45/my-server-manager/commit/5f1c4e3d10cd1a18a72ea289c4d856220117b10a))
 * refonte de la page securite operationnelle pour la v1
 * nettoyage de la fiche detail securite autour des ports ouverts, de l'exposition reseau et du pare-feu
+
+
+### Documentation
+
+* mise a jour du README et de la roadmap pour la page securite v1
 
 ## [0.31.0](https://github.com/grandpurs45/my-server-manager/compare/v0.30.0...v0.31.0) (2026-06-09)
 
