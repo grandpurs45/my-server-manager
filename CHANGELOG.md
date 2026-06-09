@@ -2,12 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.31.0](https://github.com/grandpurs45/my-server-manager/compare/v0.30.0...v0.31.0) (2026-06-09)
+
 
 ### Features
 
+* harmonize operational status badges ([33932c3](https://github.com/grandpurs45/my-server-manager/commit/33932c3cbbf4e2e2efe45e4606379da5eb5be240))
 * ajout d'un helper commun pour les badges de statut operationnels
 * harmonisation des statuts Patch Management, cycle de vie OS et securite
+
+
+### Documentation
+
+* mise a jour du README et de la roadmap pour les etats homogenes
 
 ## [0.30.0](https://github.com/grandpurs45/my-server-manager/compare/v0.29.0...v0.30.0) (2026-06-09)
 
