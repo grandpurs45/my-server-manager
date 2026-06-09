@@ -216,7 +216,7 @@ Objectif : rendre MSM utilisable au quotidien.
   - warning ;
   - critical ;
   - unknown.
-- Historique minimal des checks.
+- [x] Historique minimal des checks.
 - Boutons de refresh cibles.
 
 ## Phase 6 - Alerting v1

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout d'un historique minimal des changements de statut ping et SSH
+* affichage des derniers changements supervision dans la fiche cible
+
 ## [0.29.0](https://github.com/grandpurs45/my-server-manager/compare/v0.28.0...v0.29.0) (2026-06-09)
 
 
