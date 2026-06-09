@@ -69,6 +69,32 @@ Si MSM est installe a la racine du vhost, utiliser :
 metrics_path: /metrics.php
 ```
 
+## Validation
+
+Depuis le serveur Prometheus ou une machine qui a le meme acces reseau :
+
+```bash
+curl -s http://msm.example.local/msm/metrics.php | head -40
+```
+
+La sortie doit contenir les lignes `# HELP`, `# TYPE` et des metriques `msm_*`.
+
+Verifier que les checks MSM alimentent bien la base avant le scrape :
+
+```bash
+php scripts/check-servers.php --force
+php scripts/check-patches.php --force
+php scripts/check-os-lifecycle.php --force
+php scripts/check-security.php --force
+php scripts/check-alerts.php --force
+```
+
+Si Prometheus scrape MSM, la requete suivante doit retourner au moins une serie :
+
+```promql
+msm_server_up
+```
+
 ## Requetes PromQL utiles
 
 Serveurs down :

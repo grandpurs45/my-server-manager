@@ -1,6 +1,19 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file.
+
+## [0.34.0](https://github.com/grandpurs45/my-server-manager/compare/v0.33.0...v0.34.0) (2026-06-09)
+
+### Documentation
+
+* clarification du README pour le perimetre v1
+* ajout des notes de release v1
+* ajout d'une section de validation Prometheus
+
+### Security
+
+* mise a jour de `phpseclib/phpseclib` de `3.0.44` vers `3.0.53`
+* retrait de l'outillage npm `standard-version` et de son lockfile, uniquement utilises pour la release locale
 
 ## [0.33.0](https://github.com/grandpurs45/my-server-manager/compare/v0.32.0...v0.33.0) (2026-06-09)
 

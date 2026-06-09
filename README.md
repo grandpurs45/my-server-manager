@@ -17,13 +17,21 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Export Prometheus pour Grafana.
 - Guide d'installation et de mise a jour documente.
 
+## Perimetre v1
+
+La v1 cible un usage homelab / petite infrastructure avec un support principal Linux et Proxmox.
+
+- Linux / Proxmox : supervision, SSH, patch management, cycle de vie OS, securite operationnelle et metriques Prometheus.
+- Windows / Synology : inventaire et supervision de base, support avance reporte en v1.x.
+- Docker : hors v1, prevu en v1.x.
+
+Le detail du support et des limites est documente dans [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+
 ## Installation
 
 Pour une installation complete sur un environnement vierge, suivre [docs/INSTALL.md](docs/INSTALL.md).
 
 Pour mettre a jour une installation existante, suivre [docs/UPDATE.md](docs/UPDATE.md).
-
-Le perimetre supporte et les limites de la v1 sont documentes dans [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 Verifier les prerequis depuis la racine du projet :
 
@@ -237,6 +245,10 @@ Voir [docs/SCHEDULING.md](docs/SCHEDULING.md) pour les exemples cron et systemd 
 ## Roadmap
 
 Voir [ROADMAP.md](ROADMAP.md).
+
+## Release v1
+
+Les notes de release v1 sont preparees dans [docs/RELEASE_NOTES_V1.md](docs/RELEASE_NOTES_V1.md).
 
 ## Technologies
 

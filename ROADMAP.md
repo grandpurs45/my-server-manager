@@ -51,7 +51,7 @@ Objectif : rendre l'application fiable avant d'ajouter de nouveaux modules.
 
 Ces points ne bloquent pas la phase 1, mais doivent etre traites avant une v1.
 
-- Traiter les alertes Dependabot GitHub.
+- [x] Traiter les alertes Dependabot GitHub connues avant v1.
 - Verifier les warnings confort `php-zip` / `unzip` sur installation fraiche.
 - Rejouer une installation vierge complete depuis la documentation sans intervention improvisee.
 
@@ -269,7 +269,7 @@ Objectif : livrer une version installee, documentee et maintenable.
 - Guide d'installation.
 - [x] Guide de mise a jour.
 - [x] Exemple cron ou systemd timer.
-- Exemple configuration Prometheus.
+- [x] Exemple configuration Prometheus.
 - [x] Notes de compatibilite.
 - Changelog propre.
 - Tag `v1.0.0`.
