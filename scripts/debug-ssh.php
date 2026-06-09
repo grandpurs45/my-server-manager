@@ -6,6 +6,7 @@ chdir(__DIR__ . '/..');
 
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/crypto.php';
+require_once __DIR__ . '/../includes/network.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use phpseclib3\Net\SSH2;
@@ -62,6 +63,20 @@ if ($hostname === '' || $port < 1 || $user === '' || $encryptedPassword === '') 
 
 $resolvedIp = gethostbyname($hostname);
 echo '[INFO] DNS/IP        : ' . ($resolvedIp !== $hostname ? $resolvedIp : 'resolution non confirmee') . "\n";
+
+$pingCommand = msmBuildPingCommand($hostname, 1);
+if ($pingCommand === null) {
+    echo "[FAIL] MSM ping      : hostname invalide pour MSM\n";
+} else {
+    $pingOutput = [];
+    $pingResultCode = 1;
+    exec($pingCommand, $pingOutput, $pingResultCode);
+    echo '[INFO] MSM ping cmd  : ' . $pingCommand . "\n";
+    echo '[INFO] MSM ping code : ' . $pingResultCode . "\n";
+    foreach ($pingOutput as $line) {
+        echo '  ' . $line . "\n";
+    }
+}
 
 $socketErrorNumber = 0;
 $socketError = '';

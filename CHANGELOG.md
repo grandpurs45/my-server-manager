@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* ajout de la fraicheur du check Alerting sur le dashboard d'exploitation
+* enrichissement du diagnostic SSH avec le ping exact utilise par MSM
+
+### Documentation
+
+* documentation du diagnostic SSH et ajout d'un outil de diagnostic avance dans la roadmap v1.x
+
 ## [0.27.0](https://github.com/grandpurs45/my-server-manager/compare/v0.26.0...v0.27.0) (2026-06-09)
 
 

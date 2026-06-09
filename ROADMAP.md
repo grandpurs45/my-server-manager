@@ -357,6 +357,12 @@ Autres extensions v1.x :
   - protection des pages backoffice ;
   - gestion minimale d'un compte administrateur ;
   - preparation d'une future gestion multi-utilisateurs.
+- [ ] Ajouter un outil de diagnostic par cible pour expliquer les ecarts entre supervision et collecteurs :
+  - resolution DNS vue par PHP et par le systeme ;
+  - test TCP sur le port cible ;
+  - test SSH phpseclib avec les identifiants MSM ;
+  - comparaison ping systeme / statut MSM ;
+  - affichage des causes probables sans exposer les secrets.
 - [ ] Ajouter l'historique minimal des changements d'inventaire.
 - [ ] Rendre le referentiel de cycle de vie OS administrable depuis les parametres.
 - [ ] Ajouter une synchronisation optionnelle du referentiel OS Lifecycle depuis `endoflife.date` :

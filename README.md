@@ -199,6 +199,20 @@ Evaluer les alertes actives :
 php scripts/check-alerts.php
 ```
 
+Forcer l'evaluation des alertes sans attendre l'intervalle interne :
+
+```bash
+php scripts/check-alerts.php --force
+```
+
+Diagnostiquer une connexion SSH telle qu'elle est vue par MSM :
+
+```bash
+php scripts/debug-ssh.php "nom-ou-hostname"
+```
+
+Ce diagnostic verifie la cible stockee en base, la resolution DNS PHP, le ping utilise par MSM, le port TCP, le dechiffrement du secret et l'authentification `phpseclib`, sans afficher le mot de passe.
+
 ## Alerting
 
 MSM dispose d'un moteur d'alerting interne base sur les derniers resultats stockes en base.

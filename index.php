@@ -229,6 +229,13 @@ if ($securityInterval < 1) {
     $securityInterval = 24;
 }
 
+$alertingInterval = (int) ($settingsManager->get('alerting', 'check_interval_minutes') ?? 5);
+if ($alertingInterval < 1) {
+    $alertingInterval = 5;
+}
+
+$latestAlertingCheck = $settingsManager->get('alerting', 'check_last_run_at');
+
 $freshness = [
     [
         'name' => 'Supervision',
@@ -257,6 +264,13 @@ $freshness = [
         'interval' => $securityInterval . ' h',
         'state' => msmDashboardFreshness($latestSecurityCheck, max(86400, $securityInterval * 3600 * 2)),
         'href' => $baseUrl . 'pages/securite-serveurs.php',
+    ],
+    [
+        'name' => 'Alerting',
+        'date' => $latestAlertingCheck,
+        'interval' => $alertingInterval . ' min',
+        'state' => msmDashboardFreshness($latestAlertingCheck, max(900, $alertingInterval * 60 * 3)),
+        'href' => $baseUrl . 'pages/alerts.php',
     ],
 ];
 ?>
