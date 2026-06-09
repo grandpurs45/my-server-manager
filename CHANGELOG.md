@@ -2,12 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.30.0](https://github.com/grandpurs45/my-server-manager/compare/v0.29.0...v0.30.0) (2026-06-09)
+
 
 ### Features
 
+* add minimal check history ([fdfc742](https://github.com/grandpurs45/my-server-manager/commit/fdfc74276684dfaeb452f69b01308ac1c0909bf2))
 * ajout d'un historique minimal des changements de statut ping et SSH
 * affichage des derniers changements supervision dans la fiche cible
+
+
+### Documentation
+
+* mise a jour du README et de la roadmap pour l'historique minimal des checks
 
 ## [0.29.0](https://github.com/grandpurs45/my-server-manager/compare/v0.28.0...v0.29.0) (2026-06-09)
 
