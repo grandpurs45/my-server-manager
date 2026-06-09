@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Documentation
+
+* ajout des notes de compatibilite v1
+* clarification de la roadmap v1.x pour le setup assiste et les refresh cibles
+
+### Chores
+
+* suppression de fichiers de test et d'une ancienne API non utilisee
+
 ## [0.32.0](https://github.com/grandpurs45/my-server-manager/compare/v0.31.0...v0.32.0) (2026-06-09)
 
 

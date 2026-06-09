@@ -217,7 +217,7 @@ Objectif : rendre MSM utilisable au quotidien.
   - critical ;
   - unknown.
 - [x] Historique minimal des checks.
-- Boutons de refresh cibles.
+- Boutons de refresh cibles reportes en v1.x.
 
 ## Phase 6 - Alerting v1
 
@@ -270,10 +270,10 @@ Objectif : livrer une version installee, documentee et maintenable.
 - [x] Guide de mise a jour.
 - [x] Exemple cron ou systemd timer.
 - Exemple configuration Prometheus.
-- Notes de compatibilite.
+- [x] Notes de compatibilite.
 - Changelog propre.
 - Tag `v1.0.0`.
-- Verification sur installation fraiche.
+- Verification sur installation fraiche reportee avec le setup assiste v1.x.
 
 ## Roadmap v1.x
 
@@ -351,6 +351,18 @@ Autres extensions v1.x :
   - verification adaptee au mode choisi ;
   - creation des logs et permissions necessaires ;
   - confirmation utilisateur avant modification de cron ou systemd.
+- [ ] Ajouter un script ou assistant d'installation / mise a jour :
+  - verification interactive des prerequis ;
+  - creation guidee du `.env` ;
+  - aide a la creation de la base ;
+  - lancement des migrations ;
+  - validation installation fraiche ;
+  - validation mise a jour depuis une ancienne version.
+- [ ] Ajouter des boutons de refresh cibles :
+  - supervision d'une cible ;
+  - patch management d'une cible ;
+  - cycle de vie OS d'une cible ;
+  - securite d'une cible.
 - [ ] Ajouter une authentification applicative :
   - page de connexion ;
   - session utilisateur ;

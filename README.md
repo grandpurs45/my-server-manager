@@ -23,6 +23,8 @@ Pour une installation complete sur un environnement vierge, suivre [docs/INSTALL
 
 Pour mettre a jour une installation existante, suivre [docs/UPDATE.md](docs/UPDATE.md).
 
+Le perimetre supporte et les limites de la v1 sont documentes dans [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+
 Verifier les prerequis depuis la racine du projet :
 
 ```bash
