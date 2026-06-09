@@ -2,12 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.29.0](https://github.com/grandpurs45/my-server-manager/compare/v0.28.0...v0.29.0) (2026-06-09)
+
 
 ### Features
 
+* improve supervision reliability ([3eca00e](https://github.com/grandpurs45/my-server-manager/commit/3eca00eb2b74a3edb1c4d2141e00f30879d6d1fb))
 * refonte de la page supervision avec statuts ping, SSH, modules actifs et fraicheur explicite
 * correction du refresh manuel de supervision pour retester aussi SSH
+
+
+### Documentation
+
+* mise a jour du README et de la roadmap pour la supervision fiable
 
 ## [0.28.0](https://github.com/grandpurs45/my-server-manager/compare/v0.27.0...v0.28.0) (2026-06-09)
 
