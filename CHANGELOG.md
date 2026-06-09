@@ -2,12 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.33.0](https://github.com/grandpurs45/my-server-manager/compare/v0.32.0...v0.33.0) (2026-06-09)
 
 ### Documentation
 
 * ajout des notes de compatibilite v1
 * clarification de la roadmap v1.x pour le setup assiste et les refresh cibles
+
 
 ### Chores
 
