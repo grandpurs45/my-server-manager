@@ -52,7 +52,7 @@ Objectif : rendre l'application fiable avant d'ajouter de nouveaux modules.
 Ces points ne bloquent pas la phase 1, mais doivent etre traites avant une v1.
 
 - [x] Traiter les alertes Dependabot GitHub connues avant v1.
-- Verifier les warnings confort `php-zip` / `unzip` sur installation fraiche.
+- [x] Verifier les warnings confort `php-zip` / `unzip`.
 - Rejouer une installation vierge complete depuis la documentation sans intervention improvisee.
 
 ## Phase 1 - Observabilite Grafana-Proof
@@ -265,14 +265,14 @@ Report post-v1 :
 
 Objectif : livrer une version installee, documentee et maintenable.
 
-- README complet.
-- Guide d'installation.
+- [x] README complet.
+- [x] Guide d'installation.
 - [x] Guide de mise a jour.
 - [x] Exemple cron ou systemd timer.
 - [x] Exemple configuration Prometheus.
 - [x] Notes de compatibilite.
-- Changelog propre.
-- Tag `v1.0.0`.
+- [x] Changelog propre.
+- [x] Tag `v1.0.0`.
 - Verification sur installation fraiche reportee avec le setup assiste v1.x.
 
 ## Roadmap v1.x

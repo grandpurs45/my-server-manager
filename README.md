@@ -248,7 +248,7 @@ Voir [ROADMAP.md](ROADMAP.md).
 
 ## Release v1
 
-Les notes de release v1 sont preparees dans [docs/RELEASE_NOTES_V1.md](docs/RELEASE_NOTES_V1.md).
+Les notes de release v1 sont disponibles dans [docs/RELEASE_NOTES_V1.md](docs/RELEASE_NOTES_V1.md).
 
 ## Technologies
 

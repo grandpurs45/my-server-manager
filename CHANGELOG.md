@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0](https://github.com/grandpurs45/my-server-manager/compare/v0.34.0...v1.0.0) (2026-06-10)
+
+### Release
+
+* publication du premier socle stable MSM pour homelab et petite infrastructure
+* stabilisation du perimetre v1 : Linux, Proxmox, inventaire, supervision, patch management, securite, alerting interne et export Prometheus
+* finalisation de la documentation v1, des notes de release et de la roadmap v1.x
+
 ## [0.34.0](https://github.com/grandpurs45/my-server-manager/compare/v0.33.0...v0.34.0) (2026-06-09)
 
 ### Documentation
