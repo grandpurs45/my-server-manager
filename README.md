@@ -17,6 +17,19 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Export Prometheus pour Grafana.
 - Guide d'installation et de mise a jour documente.
 
+## Dashboard et fraicheur des checks
+
+Le dashboard affiche une synthese des derniers resultats connus et ne lance aucun check lourd.
+
+La carte `Fraicheur des checks` distingue :
+
+- la derniere execution du script planifie ;
+- le dernier resultat stocke en base ;
+- le statut du script : termine, saute, en cours ou en erreur ;
+- le dernier message court du script.
+
+Cette distinction permet de voir si un cron tourne correctement mais saute un check a cause de l'intervalle interne, ou si le script echoue avant de produire un nouveau resultat.
+
 ## Perimetre v1
 
 La v1 cible un usage homelab / petite infrastructure avec un support principal Linux et Proxmox.

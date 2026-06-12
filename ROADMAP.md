@@ -329,6 +329,10 @@ Objectif : ajouter une authentification securisee basee sur la base MSM locale, 
   - echec de connexion ;
   - changement de mot de passe ;
   - creation / modification / desactivation d'un utilisateur.
+- [x] Patch v1.1.1 :
+  - [x] rendre le bandeau de changement de mot de passe obligatoire plus visible ;
+  - [x] tracer les executions des scripts planifies dans la fraicheur des checks ;
+  - [x] distinguer derniere execution de script et dernier resultat stocke.
 
 Hors v1.1, a reporter dans une roadmap future :
 

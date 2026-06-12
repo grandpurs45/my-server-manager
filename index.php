@@ -28,6 +28,17 @@ $latestPatchCheck = $pdo->query("SELECT MAX(checked_at) FROM patch_checks")->fet
 $latestOsLifecycleCheck = $pdo->query("SELECT MAX(checked_at) FROM os_lifecycle_checks")->fetchColumn() ?: null;
 $latestSecurityCheck = $pdo->query("SELECT MAX(checked_at) FROM security_checks")->fetchColumn() ?: null;
 
+function msmDashboardCheckRuntime(SettingsManager $settingsManager, string $category): array
+{
+    return [
+        'attempt' => $settingsManager->get($category, 'check_last_attempt_at'),
+        'run' => $settingsManager->get($category, 'check_last_run_at'),
+        'finished' => $settingsManager->get($category, 'check_last_finished_at'),
+        'status' => $settingsManager->get($category, 'check_last_status'),
+        'message' => $settingsManager->get($category, 'check_last_message'),
+    ];
+}
+
 $summary = [
     'servers_down' => (int) ($serverStats['down_count'] ?? 0),
     'ssh_errors' => (int) ($serverStats['ssh_error_count'] ?? 0),
@@ -189,8 +200,16 @@ function msmDashboardDate(?string $date): string
     return $date ? htmlspecialchars($date) : 'Jamais';
 }
 
-function msmDashboardFreshness(?string $date, int $maxAgeSeconds): array
+function msmDashboardFreshness(?string $date, int $maxAgeSeconds, ?string $status = null): array
 {
+    if ($status === 'error') {
+        return ['label' => 'Erreur', 'class' => 'text-red-700 bg-red-50 border-red-200'];
+    }
+
+    if ($status === 'running') {
+        return ['label' => 'En cours', 'class' => 'text-blue-700 bg-blue-50 border-blue-200'];
+    }
+
     if (!$date) {
         return ['label' => 'Jamais', 'class' => 'text-red-700 bg-red-50 border-red-200'];
     }
@@ -207,6 +226,17 @@ function msmDashboardFreshness(?string $date, int $maxAgeSeconds): array
     }
 
     return ['label' => 'Ancien', 'class' => 'text-yellow-800 bg-yellow-50 border-yellow-200'];
+}
+
+function msmDashboardStatusLabel(?string $status): string
+{
+    return match ($status) {
+        'success' => 'termine',
+        'skipped' => 'saute',
+        'running' => 'en cours',
+        'error' => 'en erreur',
+        default => $status ?: '-',
+    };
 }
 
 $supervisionInterval = (int) ($settingsManager->get('supervision', 'check_interval_minutes') ?? 10);
@@ -236,40 +266,61 @@ if ($alertingInterval < 1) {
 
 $latestAlertingCheck = $settingsManager->get('alerting', 'check_last_run_at');
 
+$supervisionRuntime = msmDashboardCheckRuntime($settingsManager, 'supervision');
+$patchRuntime = msmDashboardCheckRuntime($settingsManager, 'patch_management');
+$osLifecycleRuntime = msmDashboardCheckRuntime($settingsManager, 'os_lifecycle');
+$securityRuntime = msmDashboardCheckRuntime($settingsManager, 'security');
+$alertingRuntime = msmDashboardCheckRuntime($settingsManager, 'alerting');
+
 $freshness = [
     [
         'name' => 'Supervision',
-        'date' => $serverStats['last_supervision_check'] ?? null,
+        'execution_date' => $supervisionRuntime['attempt'] ?: ($supervisionRuntime['run'] ?: ($serverStats['last_supervision_check'] ?? null)),
+        'result_date' => $serverStats['last_supervision_check'] ?? null,
         'interval' => $supervisionInterval . ' min',
-        'state' => msmDashboardFreshness($serverStats['last_supervision_check'] ?? null, max(900, $supervisionInterval * 60 * 3)),
+        'state' => msmDashboardFreshness($supervisionRuntime['attempt'] ?: ($supervisionRuntime['run'] ?: ($serverStats['last_supervision_check'] ?? null)), max(900, $supervisionInterval * 60 * 3), $supervisionRuntime['status']),
+        'status' => $supervisionRuntime['status'],
+        'message' => $supervisionRuntime['message'],
         'href' => $baseUrl . 'pages/supervision.php',
     ],
     [
         'name' => 'Patch Management',
-        'date' => $latestPatchCheck,
+        'execution_date' => $patchRuntime['attempt'] ?: ($patchRuntime['run'] ?: $latestPatchCheck),
+        'result_date' => $latestPatchCheck,
         'interval' => $patchInterval . ' h',
-        'state' => msmDashboardFreshness($latestPatchCheck, max(86400, $patchInterval * 3600 * 2)),
+        'state' => msmDashboardFreshness($patchRuntime['attempt'] ?: ($patchRuntime['run'] ?: $latestPatchCheck), max(86400, $patchInterval * 3600 * 2), $patchRuntime['status']),
+        'status' => $patchRuntime['status'],
+        'message' => $patchRuntime['message'],
         'href' => $baseUrl . 'pages/patch-management.php',
     ],
     [
         'name' => 'Cycle de vie OS',
-        'date' => $latestOsLifecycleCheck,
+        'execution_date' => $osLifecycleRuntime['attempt'] ?: ($osLifecycleRuntime['run'] ?: $latestOsLifecycleCheck),
+        'result_date' => $latestOsLifecycleCheck,
         'interval' => $osLifecycleInterval . ' h',
-        'state' => msmDashboardFreshness($latestOsLifecycleCheck, max(604800, $osLifecycleInterval * 3600 * 2)),
+        'state' => msmDashboardFreshness($osLifecycleRuntime['attempt'] ?: ($osLifecycleRuntime['run'] ?: $latestOsLifecycleCheck), max(604800, $osLifecycleInterval * 3600 * 2), $osLifecycleRuntime['status']),
+        'status' => $osLifecycleRuntime['status'],
+        'message' => $osLifecycleRuntime['message'],
         'href' => $baseUrl . 'pages/patch-management.php?action=os_upgrade',
     ],
     [
         'name' => 'Securite',
-        'date' => $latestSecurityCheck,
+        'execution_date' => $securityRuntime['attempt'] ?: ($securityRuntime['run'] ?: $latestSecurityCheck),
+        'result_date' => $latestSecurityCheck,
         'interval' => $securityInterval . ' h',
-        'state' => msmDashboardFreshness($latestSecurityCheck, max(86400, $securityInterval * 3600 * 2)),
+        'state' => msmDashboardFreshness($securityRuntime['attempt'] ?: ($securityRuntime['run'] ?: $latestSecurityCheck), max(86400, $securityInterval * 3600 * 2), $securityRuntime['status']),
+        'status' => $securityRuntime['status'],
+        'message' => $securityRuntime['message'],
         'href' => $baseUrl . 'pages/securite-serveurs.php',
     ],
     [
         'name' => 'Alerting',
-        'date' => $latestAlertingCheck,
+        'execution_date' => $alertingRuntime['attempt'] ?: ($alertingRuntime['run'] ?: $latestAlertingCheck),
+        'result_date' => $latestAlertingCheck,
         'interval' => $alertingInterval . ' min',
-        'state' => msmDashboardFreshness($latestAlertingCheck, max(900, $alertingInterval * 60 * 3)),
+        'state' => msmDashboardFreshness($alertingRuntime['attempt'] ?: ($alertingRuntime['run'] ?: $latestAlertingCheck), max(900, $alertingInterval * 60 * 3), $alertingRuntime['status']),
+        'status' => $alertingRuntime['status'],
+        'message' => $alertingRuntime['message'],
         'href' => $baseUrl . 'pages/alerts.php',
     ],
 ];
@@ -397,11 +448,26 @@ $freshness = [
                             </span>
                         </div>
                         <div class="mt-2 text-xs text-slate-500">
-                            Dernier : <?= msmDashboardDate($item['date']) ?>
+                            Derniere execution : <?= msmDashboardDate($item['execution_date']) ?>
                         </div>
+                        <?php if (!empty($item['result_date'])): ?>
+                            <div class="text-xs text-slate-500">
+                                Dernier resultat : <?= msmDashboardDate($item['result_date']) ?>
+                            </div>
+                        <?php endif; ?>
                         <div class="text-xs text-slate-500">
                             Intervalle : <?= htmlspecialchars($item['interval']) ?>
                         </div>
+                        <?php if (!empty($item['status']) || !empty($item['message'])): ?>
+                            <div class="mt-2 rounded bg-slate-50 px-2 py-1 text-xs text-slate-600">
+                                <?php if (!empty($item['status'])): ?>
+                                    <span class="font-semibold">Script <?= htmlspecialchars(msmDashboardStatusLabel($item['status'])) ?></span>
+                                <?php endif; ?>
+                                <?php if (!empty($item['message'])): ?>
+                                    <span><?= !empty($item['status']) ? ' - ' : '' ?><?= htmlspecialchars($item['message']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
                     </a>
                 <?php endforeach; ?>
             </div>

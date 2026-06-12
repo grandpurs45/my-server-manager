@@ -8,6 +8,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../autoloader.php';
 
+use MSM\CheckRunTracker;
 use MSM\OsLifecycleManager;
 use MSM\SettingsManager;
 
@@ -15,6 +16,9 @@ $now = new DateTimeImmutable('now');
 $force = in_array('--force', $argv ?? [], true);
 
 $settingsManager = new SettingsManager($pdo);
+$tracker = new CheckRunTracker($settingsManager, 'os_lifecycle');
+$tracker->start();
+
 $intervalHours = (int) ($settingsManager->get('os_lifecycle', 'check_interval_hours') ?? 168);
 if ($intervalHours < 1) {
     $intervalHours = 1;
@@ -28,7 +32,9 @@ if (!$force && $lastRunRaw !== null) {
 
         if ($diffSeconds < $intervalHours * 3600) {
             $elapsedMinutes = (int) floor($diffSeconds / 60);
-            echo '[' . $now->format('Y-m-d H:i:s') . "] Verification cycle de vie OS sautee ({$elapsedMinutes} min ecoulees, intervalle {$intervalHours} h).\n";
+            $message = "Verification cycle de vie OS sautee ({$elapsedMinutes} min ecoulees, intervalle {$intervalHours} h).";
+            $tracker->skip($message);
+            echo '[' . $now->format('Y-m-d H:i:s') . "] {$message}\n";
             exit(0);
         }
     } catch (Exception) {
@@ -36,9 +42,13 @@ if (!$force && $lastRunRaw !== null) {
     }
 }
 
-$manager = new OsLifecycleManager($pdo);
-$manager->run();
-
-$settingsManager->set('os_lifecycle', 'check_last_run_at', $now->format('Y-m-d H:i:s'));
-
-echo '[' . $now->format('Y-m-d H:i:s') . "] Verification cycle de vie OS terminee.\n";
+try {
+    $manager = new OsLifecycleManager($pdo);
+    $manager->run();
+    $tracker->success('Verification cycle de vie OS terminee.');
+    echo '[' . $now->format('Y-m-d H:i:s') . "] Verification cycle de vie OS terminee.\n";
+} catch (Throwable $e) {
+    $tracker->failure($e);
+    fwrite(STDERR, '[' . $now->format('Y-m-d H:i:s') . '] Erreur cycle de vie OS : ' . $e->getMessage() . "\n");
+    exit(1);
+}

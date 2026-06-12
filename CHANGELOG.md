@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1](https://github.com/grandpurs45/my-server-manager/compare/v1.1.0...v1.1.1) (2026-06-12)
+
+### Bug Fixes
+
+* mise en evidence du bandeau de changement de mot de passe obligatoire
+* ajout du suivi d'execution des scripts planifies dans la fraicheur des checks
+
 ## [1.1.0](https://github.com/grandpurs45/my-server-manager/compare/v1.0.0...v1.1.0) (2026-06-12)
 
 ### Features

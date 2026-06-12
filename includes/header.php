@@ -125,7 +125,21 @@ if (ob_get_level() > 0) {
             <?php endif; ?>
         </header>
         <?php if (!empty($currentUser) && (int) ($currentUser['password_must_change'] ?? 0) === 1): ?>
-            <div class="mb-5 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                Le mot de passe de ce compte est encore le mot de passe initial ou doit etre remplace. Allez dans Parametres > Utilisateurs pour le changer.
+            <div class="mb-6 flex items-start gap-4 rounded-lg border-2 border-amber-400 bg-amber-100 px-5 py-4 text-amber-950 shadow-sm">
+                <div class="mt-0.5 rounded-full bg-amber-500 p-2 text-white">
+                    <i data-lucide="triangle-alert" class="h-5 w-5"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-base font-bold">Action requise : mot de passe initial a remplacer</div>
+                    <p class="mt-1 text-sm">
+                        Ce compte utilise encore le mot de passe initial ou un changement obligatoire est demande.
+                        Modifiez-le depuis la gestion des utilisateurs.
+                    </p>
+                </div>
+                <?php if ($authManager->userCan('settings')): ?>
+                    <a href="<?= $baseUrl ?>pages/users.php" class="shrink-0 rounded bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800">
+                        Changer maintenant
+                    </a>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
