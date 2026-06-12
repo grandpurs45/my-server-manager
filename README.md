@@ -234,6 +234,26 @@ MSM dispose d'un moteur d'alerting interne base sur les derniers resultats stock
 
 La v1 couvre les regles globales, la severite et les seuils simples. Les notifications sortantes, les silences et les desactivations par hote ou par item sont prevus pour la roadmap v1.x.
 
+## Authentification locale
+
+MSM dispose d'une authentification locale stockee en base.
+
+- Les pages backoffice sont protegees par session.
+- Les mots de passe sont hashes avec les fonctions natives PHP.
+- Les droits peuvent etre attribues par module.
+- Les parametres permettent de regler la complexite minimale des mots de passe.
+- La duree d'expiration de session est configurable en minutes, avec `0` pour desactiver l'expiration.
+- L'interface `Parametres > Utilisateurs` permet de creer et administrer les comptes, avec recherche et tri sur la liste.
+
+Apres application des migrations, le compte initial est :
+
+```text
+Utilisateur : admin
+Mot de passe : admin
+```
+
+Ce mot de passe doit etre change apres la premiere connexion. La personnalisation du compte initial pendant l'installation est prevue dans une version v1.x avec assistant d'installation.
+
 Planifier les checks en production :
 
 ```text

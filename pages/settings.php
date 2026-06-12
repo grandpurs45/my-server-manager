@@ -1,6 +1,4 @@
 <?php
-session_start();
-
 require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/csrf.php';
 
@@ -8,7 +6,7 @@ use MSM\SettingsManager;
 
 $settingsManager = new SettingsManager($pdo);
 
-$categories = ['reseau', 'supervision', 'inventaire', 'patch_management', 'os_lifecycle', 'security', 'alerting', 'bdd', 'msm'];
+$categories = ['reseau', 'supervision', 'inventaire', 'patch_management', 'os_lifecycle', 'security', 'alerting', 'auth', 'bdd', 'msm'];
 $labels = [
     'reseau' => 'Reseau',
     'supervision' => 'Supervision',
@@ -17,6 +15,7 @@ $labels = [
     'os_lifecycle' => 'Cycle de vie OS',
     'security' => 'Securite',
     'alerting' => 'Alerting',
+    'auth' => 'Authentification',
     'bdd' => 'Base de donnees',
     'msm' => 'MSM',
 ];
@@ -83,6 +82,16 @@ require_once __DIR__ . '/../includes/header.php';
                     : array_keys($settings);
             ?>
             <div class="tab-content <?php echo $index === 0 ? '' : 'hidden'; ?>" data-tab-content="<?php echo $category; ?>">
+                <?php if ($category === 'auth'): ?>
+                    <div class="mb-5 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <span>Les comptes et droits se gerent depuis l'interface dediee.</span>
+                            <a href="users.php" class="inline-flex items-center rounded bg-blue-600 px-3 py-2 font-semibold text-white hover:bg-blue-700">
+                                Gerer les utilisateurs
+                            </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
                 <form method="POST" class="space-y-5 max-w-4xl">
                     <?php echo msmCsrfField(); ?>
                     <input type="hidden" name="category" value="<?php echo $category; ?>">

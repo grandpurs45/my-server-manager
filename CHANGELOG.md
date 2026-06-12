@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0](https://github.com/grandpurs45/my-server-manager/compare/v1.0.0...v1.1.0) (2026-06-12)
+
+### Features
+
+* ajout d'une authentification locale en base avec compte administrateur initial
+* ajout de la gestion des utilisateurs, droits modulaires et politique de mots de passe
+* ajout d'un parametre de duree de session avec `0` pour desactiver l'expiration
+* ajout d'une recherche et du tri dans la liste des utilisateurs
+
+### Bug Fixes
+
+* suppression automatique de l'avertissement de mot de passe initial apres changement du mot de passe courant
+
+### Changed
+
+* interface utilisateurs compactee avec formulaire de creation replie et gestion par ligne
+
 ## [1.0.0](https://github.com/grandpurs45/my-server-manager/compare/v0.34.0...v1.0.0) (2026-06-10)
 
 ### Release

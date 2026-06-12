@@ -279,6 +279,69 @@ Objectif : livrer une version installee, documentee et maintenable.
 
 Objectif : etendre MSM apres une v1.0 stable, sans alourdir le socle initial.
 
+## v1.1 - Authentification locale
+
+Objectif : ajouter une authentification securisee basee sur la base MSM locale, sans dependance externe.
+
+- [x] Ajouter une authentification locale securisee :
+  - [x] mots de passe hashes avec `password_hash()` ;
+  - [x] verification avec `password_verify()` ;
+  - [x] sessions PHP durcies ;
+  - [x] expiration configurable des sessions inactives ;
+  - [x] protection CSRF sur les formulaires d'authentification et d'administration ;
+  - [x] protection des pages backoffice.
+- [x] Ajouter un compte administrateur local par defaut.
+- [x] Prevoir la personnalisation du compte administrateur par defaut lors d'une future installation assistee :
+  - nom utilisateur ;
+  - mot de passe.
+- [x] Ajouter une interface de gestion des utilisateurs dans les parametres :
+  - [x] liste des utilisateurs ;
+  - [x] creation d'un utilisateur ;
+  - [x] modification d'un utilisateur ;
+  - [x] activation / desactivation ;
+  - [x] changement de mot de passe ;
+  - [x] suppression ou verrouillage selon le niveau de risque.
+- [x] Ajouter une gestion des droits par modules :
+  - dashboard ;
+  - serveurs ;
+  - supervision ;
+  - alertes ;
+  - patch management ;
+  - securite ;
+  - diagnostic ;
+  - parametres ;
+  - export Prometheus si besoin.
+- [x] Ajouter une interface de gestion des droits :
+  - [x] droits par utilisateur ;
+  - [x] profil administrateur ;
+  - [x] profil lecture seule si utile ;
+  - [x] controles visibles dans l'UI selon les droits.
+- [x] Ajouter des parametres de complexite des mots de passe :
+  - [x] longueur minimale ;
+  - [x] majuscule ;
+  - [x] minuscule ;
+  - [x] chiffre ;
+  - [x] caractere special ;
+  - [x] refus du mot de passe identique au nom utilisateur.
+- [x] Ajouter un generateur de mot de passe optionnel dans l'interface de creation / modification utilisateur.
+- [x] Tracer les evenements d'authentification importants :
+  - connexion reussie ;
+  - echec de connexion ;
+  - changement de mot de passe ;
+  - creation / modification / desactivation d'un utilisateur.
+
+Hors v1.1, a reporter dans une roadmap future :
+
+- [ ] Connecteurs d'identite externes :
+  - Active Directory ;
+  - LDAP ;
+  - Keycloak ;
+  - OIDC / OAuth2 ;
+  - autre annuaire externe.
+- [ ] Analyse des mots de passe faibles ou deja compromis dans des fuites publiques.
+- [ ] Envoi d'un email a la creation d'un compte ou lors d'un changement de mot de passe.
+- [ ] Lien mot de passe perdu / reinitialisation autonome.
+
 Docker :
 
 - [ ] Ajouter un inventaire Docker via SSH sur l'hote Docker :
@@ -344,6 +407,17 @@ Autres extensions v1.x :
 
 - [ ] Ajouter Synology.
 - [ ] Ajouter Windows.
+- [ ] Permettre de personnaliser les colonnes visibles dans les listes d'administration :
+  - utilisateurs ;
+  - serveurs ;
+  - inventaire ;
+  - patch management si utile.
+- [ ] Ajouter une vue des evenements d'authentification :
+  - connexions reussies ;
+  - echecs de connexion ;
+  - changements de mot de passe ;
+  - creation / modification / suppression de comptes ;
+  - expiration de session.
 - [ ] Ajouter un setup d'installation assiste pour l'ordonnancement :
   - choix explicite entre cron et systemd timers ;
   - ne pas configurer les deux par defaut ;
@@ -363,12 +437,6 @@ Autres extensions v1.x :
   - patch management d'une cible ;
   - cycle de vie OS d'une cible ;
   - securite d'une cible.
-- [ ] Ajouter une authentification applicative :
-  - page de connexion ;
-  - session utilisateur ;
-  - protection des pages backoffice ;
-  - gestion minimale d'un compte administrateur ;
-  - preparation d'une future gestion multi-utilisateurs.
 - [ ] Ajouter un outil de diagnostic par cible pour expliquer les ecarts entre supervision et collecteurs :
   - resolution DNS vue par PHP et par le systeme ;
   - test TCP sur le port cible ;
@@ -391,12 +459,12 @@ Autres extensions v1.x :
   - aucune dependance API au chargement des pages ou de `/metrics.php` ;
   - conservation de la source et de la date de synchronisation.
 
-## Priorites Immediates
+## Priorites v1.1
 
-1. Stabiliser les checks Linux, Proxmox et cycle de vie OS.
-2. Ameliorer le dashboard v1.
-3. Finaliser la page securite operationnelle minimale.
-4. Preparer la release v1.0.0.
+1. Concevoir le modele de donnees utilisateurs / droits.
+2. Ajouter l'authentification locale securisee.
+3. Proteger les pages backoffice.
+4. Ajouter l'interface de gestion des utilisateurs et des droits.
 
 ## Hors Scope v1
 

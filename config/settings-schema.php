@@ -64,5 +64,42 @@ return [
             'label' => 'Intervalle evaluation alerting (minutes)',
             'default' => '5'
         ]
+    ],
+    'auth' => [
+        'session_timeout_minutes' => [
+            'type' => 'number',
+            'label' => 'Duree de session inactive (minutes, 0 = pas d\'expiration)',
+            'default' => '60'
+        ],
+        'password_min_length' => [
+            'type' => 'number',
+            'label' => 'Longueur minimale des mots de passe',
+            'default' => '12'
+        ],
+        'password_require_uppercase' => [
+            'type' => 'checkbox',
+            'label' => 'Exiger une majuscule',
+            'default' => 'true'
+        ],
+        'password_require_lowercase' => [
+            'type' => 'checkbox',
+            'label' => 'Exiger une minuscule',
+            'default' => 'true'
+        ],
+        'password_require_digit' => [
+            'type' => 'checkbox',
+            'label' => 'Exiger un chiffre',
+            'default' => 'true'
+        ],
+        'password_require_special' => [
+            'type' => 'checkbox',
+            'label' => 'Exiger un caractere special',
+            'default' => 'true'
+        ],
+        'password_generator_length' => [
+            'type' => 'number',
+            'label' => 'Longueur du generateur de mot de passe',
+            'default' => '18'
+        ]
     ]
 ];
