@@ -30,6 +30,13 @@ class AuthManager
             return;
         }
 
+        $timeoutMinutes = $this->sessionTimeoutMinutes();
+        $gcLifetime = $timeoutMinutes === 0
+            ? 315360000
+            : max(1440, $timeoutMinutes * 60);
+
+        ini_set('session.gc_maxlifetime', (string) $gcLifetime);
+
         $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
         session_set_cookie_params([
             'lifetime' => 0,
@@ -419,13 +426,18 @@ class AuthManager
 
     private function isSessionExpired(): bool
     {
-        $timeoutMinutes = max(0, (int) ($this->settingsManager->get('auth', 'session_timeout_minutes') ?? 60));
+        $timeoutMinutes = $this->sessionTimeoutMinutes();
         if ($timeoutMinutes === 0) {
             return false;
         }
 
         $lastActivity = (int) ($_SESSION['msm_last_activity'] ?? time());
         return (time() - $lastActivity) > ($timeoutMinutes * 60);
+    }
+
+    private function sessionTimeoutMinutes(): int
+    {
+        return max(0, (int) ($this->settingsManager->get('auth', 'session_timeout_minutes') ?? 60));
     }
 
     private function clearSessionIdentity(): void

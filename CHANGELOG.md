@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2](https://github.com/grandpurs45/my-server-manager/compare/v1.1.1...v1.1.2) (2026-06-16)
+
+### Bug Fixes
+
+* conservation correcte de la valeur `0` pour desactiver l'expiration de session
+* alignement de la conservation PHP des sessions sur la duree configuree dans MSM
+
+### Documentation
+
+* clarification des frequences cron, des intervalles internes et des permissions de logs
+
+### Security
+
+* mise a jour de `phpseclib/phpseclib` de `3.0.53` vers `3.0.55`
+
 ## [1.1.1](https://github.com/grandpurs45/my-server-manager/compare/v1.1.0...v1.1.1) (2026-06-12)
 
 ### Bug Fixes

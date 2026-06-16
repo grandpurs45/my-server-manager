@@ -44,9 +44,13 @@ Creer un dossier de logs accessible par l'utilisateur qui execute les scripts :
 
 ```bash
 mkdir -p /var/www/html/msm/logs
+touch /var/www/html/msm/logs/check-{servers,patches,os-lifecycle,security,alerts}.log
+chmod 775 /var/www/html/msm/logs
 ```
 
 Adapter le chemin au dossier reel d'installation.
+
+Ne pas rediriger les logs vers `/var/log` depuis une crontab utilisateur sans avoir cree les fichiers et configure leurs droits au prealable. La redirection est ouverte par le shell avant le lancement de PHP : si l'utilisateur cron ne peut pas creer le fichier, le script MSM ne demarre pas.
 
 Exemples de fichiers :
 
@@ -90,6 +94,16 @@ Recommandations :
 - lancer `check-security.php` au moins une fois par jour ou par heure, sans `--force`.
 - lancer `check-alerts.php` plus frequemment, car il lit uniquement la base.
 
+Avec l'exemple ci-dessus :
+
+- supervision : cron appelle le script chaque minute, MSM execute le check selon l'intervalle configure ;
+- patch management : cron appelle le script toutes les 10 minutes, MSM execute par defaut toutes les 6 heures ;
+- cycle de vie OS : cron appelle le script a la minute 15 de chaque heure, MSM execute par defaut toutes les 168 heures ;
+- securite : cron appelle le script a la minute 30 de chaque heure, MSM execute par defaut toutes les 24 heures ;
+- alerting : cron appelle le script toutes les 5 minutes, MSM execute selon son intervalle configure.
+
+Une ligne `Verification ... sautee` dans un log confirme que cron fonctionne : l'intervalle interne MSM n'etait simplement pas encore atteint.
+
 Verifier :
 
 ```bash
@@ -98,6 +112,18 @@ tail -n 50 /var/www/html/msm/logs/check-patches.log
 tail -n 50 /var/www/html/msm/logs/check-os-lifecycle.log
 tail -n 50 /var/www/html/msm/logs/check-security.log
 tail -n 50 /var/www/html/msm/logs/check-alerts.log
+```
+
+Verifier la crontab reellement chargee :
+
+```bash
+crontab -l | grep -v '^#' | grep -v '^$'
+```
+
+Sur Debian / Ubuntu, verifier aussi les executions cron :
+
+```bash
+sudo journalctl -u cron --since "15 minutes ago" --no-pager
 ```
 
 ## Option 2 - Systemd timers

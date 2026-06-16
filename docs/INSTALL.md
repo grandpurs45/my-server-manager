@@ -672,10 +672,13 @@ Creer le dossier `logs/` s'il n'existe pas et verifier les droits :
 
 ```bash
 mkdir -p /var/www/html/msm/logs
-touch /var/www/html/msm/logs/check-servers.log
+touch /var/www/html/msm/logs/check-{servers,patches,os-lifecycle,security,alerts}.log
+chmod 775 /var/www/html/msm/logs
 ```
 
 Si le cron est execute avec l'utilisateur courant, cet utilisateur doit pouvoir ecrire dans `logs/`. Si le cron est execute avec l'utilisateur Apache, adapter les droits comme indique dans l'etape 7.
+
+Eviter `/var/log` pour une crontab utilisateur, sauf si les fichiers ont ete crees avec les bons proprietaires et permissions. Une redirection impossible empeche le lancement du script PHP.
 
 ### Installer et activer cron si necessaire
 
@@ -701,13 +704,17 @@ Editer la crontab de l'utilisateur qui doit lancer les checks :
 crontab -e
 ```
 
-Ajouter une execution toutes les minutes :
+Ajouter les checks planifies :
 
 ```cron
 * * * * * /usr/bin/php /var/www/html/msm/scripts/check-servers.php >> /var/www/html/msm/logs/check-servers.log 2>&1
+*/10 * * * * /usr/bin/php /var/www/html/msm/scripts/check-patches.php >> /var/www/html/msm/logs/check-patches.log 2>&1
+15 * * * * /usr/bin/php /var/www/html/msm/scripts/check-os-lifecycle.php >> /var/www/html/msm/logs/check-os-lifecycle.log 2>&1
+30 * * * * /usr/bin/php /var/www/html/msm/scripts/check-security.php >> /var/www/html/msm/logs/check-security.log 2>&1
+*/5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-alerts.php >> /var/www/html/msm/logs/check-alerts.log 2>&1
 ```
 
-Le script respecte ensuite l'intervalle configure dans MSM, par exemple `check_interval_minutes`. Il est donc normal de lancer cron toutes les minutes meme si MSM ne fait un vrai check que toutes les 5 ou 10 minutes selon la configuration.
+Chaque script respecte ensuite l'intervalle configure dans MSM. Par exemple, le cron securite appelle le script toutes les heures a la minute 30, mais l'analyse complete n'est executee par defaut que toutes les 24 heures. Les appels intermediaires sont journalises comme `saute`.
 
 Adapter les chemins selon l'installation :
 

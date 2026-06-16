@@ -11,7 +11,9 @@ class SettingsManager {
     public function get(string $category, string $key): ?string {
         $stmt = $this->pdo->prepare("SELECT setting_value FROM settings WHERE category = ? AND setting_key = ?");
         $stmt->execute([$category, $key]);
-        return $stmt->fetchColumn() ?: null;
+        $value = $stmt->fetchColumn();
+
+        return $value === false ? null : (string) $value;
     }
 
     public function set(string $category, string $key, string $value): bool {

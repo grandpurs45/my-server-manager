@@ -258,6 +258,8 @@ MSM dispose d'une authentification locale stockee en base.
 - La duree d'expiration de session est configurable en minutes, avec `0` pour desactiver l'expiration.
 - L'interface `Parametres > Utilisateurs` permet de creer et administrer les comptes, avec recherche et tri sur la liste.
 
+La valeur `0` desactive l'expiration MSM pour inactivite. Le cookie reste lie a la session du navigateur : fermer completement le navigateur peut demander une nouvelle connexion.
+
 Apres application des migrations, le compte initial est :
 
 ```text
@@ -274,6 +276,8 @@ docs/SCHEDULING.md
 ```
 
 Voir [docs/SCHEDULING.md](docs/SCHEDULING.md) pour les exemples cron et systemd timers.
+
+Pour une crontab utilisateur, rediriger les sorties vers le dossier `logs/` de MSM plutot que vers `/var/log`, sauf si les fichiers systeme ont ete prepares avec les permissions adaptees.
 
 ## Roadmap
 
