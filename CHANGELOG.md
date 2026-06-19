@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.2](https://github.com/grandpurs45/my-server-manager/compare/v1.2.1...v1.2.2) (2026-06-19)
+
+### Bug Fixes
+
+* ajout de couleurs ANSI dans `scripts/setup.php` pour distinguer rapidement `OK`, `WARN`, `FAIL` et `INFO`
+
+### Documentation
+
+* suppression des verifications manuelles redondantes avant clone dans le guide d'installation
+* clarification de l'ordre d'installation pour placer `--db-sql` avant la verification complete `setup.php`
+* remplacement de l'exemple SQL statique par la generation assistee via `php scripts/setup.php --db-sql`
+
 ## [1.2.1](https://github.com/grandpurs45/my-server-manager/compare/v1.2.0...v1.2.1) (2026-06-19)
 
 ### Bug Fixes

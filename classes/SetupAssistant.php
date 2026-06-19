@@ -70,11 +70,13 @@ class SetupAssistant
     private int $errors = 0;
     private int $warnings = 0;
     private array $actions = [];
+    private bool $colorsEnabled;
 
     public function __construct(string $root)
     {
         $realRoot = realpath($root);
         $this->root = $realRoot !== false ? $realRoot : $root;
+        $this->colorsEnabled = $this->detectColorSupport();
     }
 
     public function runSetup(bool $cronOnly = false): int
@@ -948,7 +950,7 @@ class SetupAssistant
 
     private function status(string $status, string $label, string $detail = ''): void
     {
-        $line = '[' . $status . '] ' . $label;
+        $line = '[' . $this->colorizeStatus($status) . '] ' . $label;
         if ($detail !== '') {
             $line .= ' - ' . $detail;
         }
@@ -958,5 +960,42 @@ class SetupAssistant
     private function line(string $line): void
     {
         echo $line . PHP_EOL;
+    }
+
+    private function colorizeStatus(string $status): string
+    {
+        $colors = [
+            'OK' => '32',
+            'WARN' => '33',
+            'FAIL' => '31',
+            'INFO' => '36',
+        ];
+
+        if (!$this->colorsEnabled || !isset($colors[$status])) {
+            return $status;
+        }
+
+        return "\033[" . $colors[$status] . 'm' . $status . "\033[0m";
+    }
+
+    private function detectColorSupport(): bool
+    {
+        if (getenv('NO_COLOR') !== false) {
+            return false;
+        }
+
+        if (PHP_SAPI !== 'cli') {
+            return false;
+        }
+
+        if (PHP_OS_FAMILY === 'Windows' && function_exists('sapi_windows_vt100_support')) {
+            @sapi_windows_vt100_support(STDOUT, true);
+        }
+
+        if (function_exists('stream_isatty')) {
+            return @stream_isatty(STDOUT);
+        }
+
+        return PHP_OS_FAMILY === 'Windows';
     }
 }

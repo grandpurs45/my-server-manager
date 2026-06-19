@@ -79,40 +79,7 @@ rm composer-setup.php
 composer --version
 ```
 
-Verifier ensuite que PHP est en version 8.0 ou plus recente :
-
-```bash
-php -v
-```
-
 Ces commandes installent les dependances systeme. Les dependances PHP du projet sont ensuite installees avec `composer install` a l'etape 3.
-
-## Verification manuelle rapide avant clone
-
-Avant de recuperer le projet, une verification minimale peut aider a confirmer que PHP, Git et Composer sont disponibles :
-
-```bash
-php -v
-composer --version
-git --version
-```
-
-Sur Windows avec XAMPP/WAMP, utiliser aussi :
-
-```powershell
-php -v
-composer --version
-git --version
-```
-
-Apres le clone, utiliser plutot les scripts MSM :
-
-```bash
-php scripts/check-prerequisites.php
-php scripts/setup.php
-```
-
-Ces scripts remplacent les verifications manuelles detaillees et limitent les doublons.
 
 ## 1. Recuperer le projet
 
@@ -145,72 +112,7 @@ Depuis cette racine du projet, lancer :
 php scripts/check-prerequisites.php
 ```
 
-Pour une verification plus globale de l'installation, incluant `.env`, la base, les migrations, les logs et l'ordonnancement, lancer aussi :
-
-```bash
-php scripts/setup.php
-```
-
-Si `.env` n'existe pas encore, MSM peut le creer depuis `.env.example` avec une cle locale aleatoire :
-
-```bash
-php scripts/setup.php --init-env
-```
-
-Le fichier `.env` existe maintenant, mais les acces base ne sont pas encore definitifs.
-
-Generer ensuite les commandes SQL de creation de base et d'utilisateur :
-
-```bash
-php scripts/setup.php --db-sql
-```
-
-Le script affiche :
-
-- les commandes SQL a executer dans MariaDB/MySQL ;
-- les valeurs `MSM_DB_NAME`, `MSM_DB_USER` et `MSM_DB_PASS` a reporter dans `.env`.
-
-Si le mot de passe affiche est `CHANGE_ME_STRONG_PASSWORD`, remplacer cette valeur par un mot de passe fort de ton choix dans la commande SQL et dans `.env`.
-
-Pour preparer le dossier `logs/` et les fichiers de logs attendus :
-
-```bash
-php scripts/setup.php --init-logs
-```
-
-Se connecter ensuite a MariaDB/MySQL avec un compte administrateur :
-
-```bash
-mysql -u root -p
-```
-
-Executer les commandes SQL affichees par `--db-sql`, puis editer `.env` avec les valeurs indiquees.
-
-Une fois la base creee et `.env` renseigne, appliquer les migrations :
-
-```bash
-php scripts/setup.php --migrate
-```
-
-Pour afficher uniquement les lignes cron adaptees au chemin reel du projet :
-
-```bash
-php scripts/setup.php --cron
-```
-
-Pour afficher les fichiers `.service` et `.timer` systemd adaptes au chemin reel du projet :
-
-```bash
-php scripts/setup.php --systemd
-```
-
-Sur RHEL / Rocky Linux / AlmaLinux / Fedora, l'utilisateur Apache est souvent `apache` au lieu de `www-data` :
-
-```bash
-php scripts/setup.php --systemd --systemd-user=apache --systemd-group=apache
-```
-
-Choisir cron ou systemd timers, mais ne pas configurer les deux en meme temps.
+Un warning sur `.env` ou `logs/` est normal a cette etape si l'installation vient juste d'etre clonee. Le script affiche les actions recommandees a executer ensuite.
 
 Si le terminal est encore dans `/var/www/html`, utiliser plutot :
 
@@ -552,94 +454,58 @@ composer install --no-dev --optimize-autoloader
 
 Pour une installation de developpement locale, `composer install` suffit.
 
-## 4. Creer la base de donnees
+## 4. Creer la configuration locale et la base
 
-Verifier que MariaDB est demarre :
+Creer `.env` depuis le modele du projet :
 
 ```bash
-sudo systemctl status mariadb
+php scripts/setup.php --init-env
 ```
 
-Entrer dans le client MariaDB en administrateur :
+Generer ensuite les commandes SQL adaptees a MSM :
+
+```bash
+php scripts/setup.php --db-sql
+```
+
+Le script affiche :
+
+- les commandes SQL a executer dans MariaDB/MySQL ;
+- les valeurs `MSM_DB_NAME`, `MSM_DB_USER` et `MSM_DB_PASS` a reporter dans `.env`.
+
+Si le mot de passe affiche est `CHANGE_ME_STRONG_PASSWORD`, remplacer cette valeur par un mot de passe fort de ton choix dans la commande SQL et dans `.env`.
+
+Entrer ensuite dans MariaDB/MySQL avec un compte administrateur :
 
 ```bash
 sudo mariadb
 ```
 
-Le prompt change et affiche quelque chose comme :
+ou, selon la distribution :
 
-```text
-MariaDB [(none)]>
+```bash
+mysql -u root -p
 ```
 
-Executer ensuite les commandes SQL suivantes :
-
-```sql
-CREATE DATABASE msm CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'msm'@'localhost' IDENTIFIED BY 'change-me';
-GRANT ALL PRIVILEGES ON msm.* TO 'msm'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-Remplacer `change-me` par un mot de passe local solide.
-
-Quitter le client MariaDB :
+Executer les commandes SQL affichees par `--db-sql`, puis quitter le client SQL :
 
 ```sql
 EXIT;
 ```
 
-Tester la connexion avec l'utilisateur cree :
+Editer enfin `.env` et reporter les valeurs indiquees par `--db-sql`.
+
+Important : conserver `MSM_SECRET_KEY`. Elle sert au chiffrement des mots de passe SSH stockes en base.
+
+## 5. Appliquer les migrations
 
 ```bash
-mariadb -u msm -p msm
-```
-
-Entrer le mot de passe choisi. Si le prompt MariaDB s'ouvre, la base et l'utilisateur sont corrects.
-
-Quitter ensuite :
-
-```sql
-EXIT;
-```
-
-## 5. Creer la configuration locale
-
-```bash
-cp .env.example .env
-```
-
-Editer `.env` :
-
-```text
-MSM_DB_HOST=localhost
-MSM_DB_PORT=3306
-MSM_DB_NAME=msm
-MSM_DB_USER=msm
-MSM_DB_PASS=change-me
-MSM_DB_CHARSET=utf8mb4
-MSM_SECRET_KEY=replace-with-a-local-random-secret
-```
-
-Generer une cle locale :
-
-```bash
-php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
-```
-
-Copier la valeur generee dans `MSM_SECRET_KEY`.
-
-Important : conserver cette cle. Elle sert au chiffrement des mots de passe SSH stockes en base.
-
-## 6. Appliquer les migrations
-
-```bash
-php apply_migrations.php
+php scripts/setup.php --migrate
 ```
 
 Le script cree automatiquement la table `migrations_applied` si elle n'existe pas.
 
-## 7. Verifier les permissions
+## 6. Verifier les permissions
 
 Le serveur web doit pouvoir lire :
 
@@ -651,7 +517,13 @@ Le serveur web doit pouvoir ecrire dans :
 
 - `logs/`.
 
-Exemple :
+Creer le dossier et les fichiers de logs attendus :
+
+```bash
+php scripts/setup.php --init-logs
+```
+
+Exemple d'ajustement de permissions pour Debian / Ubuntu :
 
 ```bash
 sudo chown -R www-data:www-data logs
@@ -660,7 +532,7 @@ sudo chmod -R 750 logs
 
 Adapter l'utilisateur Apache selon la distribution.
 
-## 8. Configurer Apache
+## 7. Configurer Apache
 
 MSM peut fonctionner dans un sous-dossier, par exemple :
 
@@ -702,7 +574,7 @@ sudo ufw allow 443/tcp
 
 Si MSM doit tester des serveurs distants, verifier aussi que les flux sortants necessaires sont autorises depuis le serveur MSM, par exemple ICMP pour le ping et `22/tcp` pour SSH.
 
-## 9. Configurer le check planifie
+## 8. Configurer le check planifie
 
 MSM ne lance pas les checks lourds au chargement des pages. Les statuts doivent etre mis a jour par des scripts planifies.
 
@@ -821,7 +693,7 @@ Verifier aussi la page diagnostic MSM : elle doit afficher un dernier check cohe
 
 Pour une configuration complete, suivre [SCHEDULING.md](SCHEDULING.md).
 
-## 10. Verifications post-install
+## 9. Verifications post-install
 
 Verifier d'abord que le serveur contient bien la derniere version recuperee :
 
@@ -830,6 +702,14 @@ cd /var/www/html/msm
 git pull
 git rev-parse --short HEAD
 ```
+
+Verifier ensuite l'installation complete cote CLI :
+
+```bash
+php scripts/setup.php
+```
+
+Le resultat attendu est zero `FAIL`. Les eventuels `WARN` doivent etre compris et justifies par l'environnement.
 
 Ouvrir :
 
