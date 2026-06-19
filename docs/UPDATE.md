@@ -62,6 +62,12 @@ php apply_migrations.php
 
 Les migrations sont idempotentes : une migration deja appliquee doit apparaitre en `SKIP`.
 
+Equivalent via l'assistant setup :
+
+```bash
+php scripts/setup.php --migrate
+```
+
 ## 6. Verifier les prerequis
 
 ```bash
@@ -69,6 +75,14 @@ php scripts/check-prerequisites.php
 ```
 
 Les items `FAIL` doivent etre corriges avant de considerer la mise a jour terminee. Les items `WARN` peuvent etre acceptables selon l'environnement, mais doivent etre compris.
+
+Lancer ensuite le controle post-update MSM :
+
+```bash
+php scripts/update-check.php
+```
+
+Ce script verifie la version, les dependances, `.env`, la connexion base, les migrations, les logs et la presence des scripts dans la crontab quand elle est accessible.
 
 ## 7. Relancer les checks principaux
 
@@ -124,6 +138,30 @@ journalctl -u msm-check-alerts.service -n 50
 ```
 
 Voir [SCHEDULING.md](SCHEDULING.md) pour les exemples complets.
+
+Pour regenerer les lignes cron avec le chemin reel de l'installation :
+
+```bash
+php scripts/setup.php --cron
+```
+
+Pour regenerer les fichiers systemd avec le chemin reel de l'installation :
+
+```bash
+php scripts/setup.php --systemd
+```
+
+Si les fichiers de logs attendus sont absents apres une migration d'ordonnancement :
+
+```bash
+php scripts/setup.php --init-logs
+```
+
+Pour verifier ou regenerer les commandes SQL attendues a partir de `.env` :
+
+```bash
+php scripts/setup.php --db-sql
+```
 
 ## 10. Rollback minimal
 

@@ -16,6 +16,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Migrations SQL versionnees.
 - Export Prometheus pour Grafana.
 - Guide d'installation et de mise a jour documente.
+- Assistant CLI de setup / maintenance pour verifier l'installation, la base, les migrations, les logs et l'ordonnancement.
 
 ## Dashboard et fraicheur des checks
 
@@ -50,6 +51,24 @@ Verifier les prerequis depuis la racine du projet :
 
 ```bash
 php scripts/check-prerequisites.php
+```
+
+Verifier l'installation complete et generer les lignes cron adaptees au chemin reel du projet :
+
+```bash
+php scripts/setup.php
+php scripts/setup.php --cron
+php scripts/setup.php --systemd
+php scripts/setup.php --init-env
+php scripts/setup.php --init-logs
+php scripts/setup.php --db-sql
+php scripts/setup.php --migrate
+```
+
+Apres une mise a jour, lancer le controle post-update :
+
+```bash
+php scripts/update-check.php
 ```
 
 Resume rapide :

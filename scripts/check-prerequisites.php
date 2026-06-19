@@ -9,7 +9,7 @@ $requiredExtensions = ['pdo_mysql', 'openssl', 'mbstring'];
 $recommendedExtensions = ['zip'];
 $requiredCommands = ['git', 'composer', 'ping'];
 $recommendedCommands = ['unzip', 'ssh'];
-$recommendedMemoryMb = 1024;
+$recommendedMemoryMb = 900;
 $recommendedDiskMb = 5120;
 
 $hasErrors = false;

@@ -423,19 +423,24 @@ Autres extensions v1.x :
   - creation / modification / suppression de comptes ;
   - expiration de session.
 - [ ] Ajouter un setup d'installation assiste pour l'ordonnancement :
-  - choix explicite entre cron et systemd timers ;
-  - ne pas configurer les deux par defaut ;
-  - generation des commandes selon le dossier reel d'installation ;
-  - verification adaptee au mode choisi ;
-  - creation des logs et permissions necessaires ;
-  - confirmation utilisateur avant modification de cron ou systemd.
+  - [x] choix explicite entre cron et systemd timers ;
+  - [x] ne pas configurer cron et systemd en double par defaut ;
+  - [x] generation des commandes cron selon le dossier reel d'installation ;
+  - [x] generation des fichiers systemd `.service` et `.timer` selon le dossier reel d'installation ;
+  - [x] verification de la crontab utilisateur quand elle est disponible ;
+  - [x] verification des timers systemd MSM quand `systemctl` est disponible ;
+  - [x] detection des redirections cron vers `/var/log/msm-check-*` ;
+  - [x] verification des fichiers de logs attendus dans `logs/` ;
+  - [x] creation guidee du dossier `logs/` et des fichiers de logs attendus ;
+  - permissions avancees a documenter selon l'utilisateur cron ou web ;
+  - [x] aucune modification automatique de cron ou systemd sans action manuelle explicite.
 - [ ] Ajouter un script ou assistant d'installation / mise a jour :
-  - verification interactive des prerequis ;
-  - creation guidee du `.env` ;
-  - aide a la creation de la base ;
-  - lancement des migrations ;
-  - validation installation fraiche ;
-  - validation mise a jour depuis une ancienne version.
+  - [x] verification CLI des prerequis, du projet et des logs ;
+  - [x] creation guidee du `.env` depuis `.env.example` avec cle locale aleatoire ;
+  - [x] aide a la creation de la base avec generation SQL non destructive ;
+  - [x] lancement assiste des migrations via option explicite ;
+  - [x] validation installation fraiche par `scripts/setup.php` ;
+  - [x] validation mise a jour par `scripts/update-check.php`.
 - [ ] Ajouter des boutons de refresh cibles :
   - supervision d'une cible ;
   - patch management d'une cible ;
@@ -462,6 +467,13 @@ Autres extensions v1.x :
   - cache local en base ;
   - aucune dependance API au chargement des pages ou de `/metrics.php` ;
   - conservation de la source et de la date de synchronisation.
+
+## Priorites v1.2
+
+1. Finaliser l'assistant setup / maintenance sans modification automatique du systeme.
+2. Ajouter une aide guidee pour `.env`, base et migrations.
+3. Ajouter une validation d'installation fraiche reproductible.
+4. Clarifier le choix entre cron et systemd timers.
 
 ## Priorites v1.1
 

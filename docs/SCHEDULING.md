@@ -50,6 +50,12 @@ chmod 775 /var/www/html/msm/logs
 
 Adapter le chemin au dossier reel d'installation.
 
+MSM peut aussi preparer ces fichiers automatiquement dans le dossier du projet :
+
+```bash
+php scripts/setup.php --init-logs
+```
+
 Ne pas rediriger les logs vers `/var/log` depuis une crontab utilisateur sans avoir cree les fichiers et configure leurs droits au prealable. La redirection est ouverte par le shell avant le lancement de PHP : si l'utilisateur cron ne peut pas creer le fichier, le script MSM ne demarre pas.
 
 Exemples de fichiers :
@@ -69,6 +75,14 @@ Verifier le chemin de PHP :
 ```bash
 which php
 ```
+
+MSM peut generer le bloc cron adapte au chemin reel du projet :
+
+```bash
+php scripts/setup.php --cron
+```
+
+Ce script ne modifie pas la crontab. Il affiche les lignes a copier dans `crontab -e` et recommande le dossier `logs/` du projet pour eviter les problemes de droits avec `/var/log`.
 
 Editer la crontab :
 
@@ -120,6 +134,12 @@ Verifier la crontab reellement chargee :
 crontab -l | grep -v '^#' | grep -v '^$'
 ```
 
+Verifier l'ensemble setup + ordonnancement :
+
+```bash
+php scripts/setup.php
+```
+
 Sur Debian / Ubuntu, verifier aussi les executions cron :
 
 ```bash
@@ -128,162 +148,21 @@ sudo journalctl -u cron --since "15 minutes ago" --no-pager
 
 ## Option 2 - Systemd timers
 
-Systemd donne des logs centralises avec `journalctl` et evite certains pieges cron. Les exemples ci-dessous utilisent `/var/www/html/msm` et `/usr/bin/php`.
+Systemd donne des logs centralises avec `journalctl` et evite certains pieges cron.
 
-### Supervision
+Generer les fichiers `.service` et `.timer` adaptes au chemin reel du projet :
 
-`/etc/systemd/system/msm-check-servers.service`
-
-```ini
-[Unit]
-Description=MSM server supervision check
-
-[Service]
-Type=oneshot
-WorkingDirectory=/var/www/html/msm
-ExecStart=/usr/bin/php /var/www/html/msm/scripts/check-servers.php
-User=www-data
-Group=www-data
+```bash
+php scripts/setup.php --systemd
 ```
 
-`/etc/systemd/system/msm-check-servers.timer`
+Sur RHEL/Rocky/AlmaLinux/Fedora, l'utilisateur Apache est souvent `apache` :
 
-```ini
-[Unit]
-Description=Run MSM server supervision check every minute
-
-[Timer]
-OnBootSec=1min
-OnUnitActiveSec=1min
-Unit=msm-check-servers.service
-
-[Install]
-WantedBy=timers.target
+```bash
+php scripts/setup.php --systemd --systemd-user=apache --systemd-group=apache
 ```
 
-### Patch Management
-
-`/etc/systemd/system/msm-check-patches.service`
-
-```ini
-[Unit]
-Description=MSM patch management check
-
-[Service]
-Type=oneshot
-WorkingDirectory=/var/www/html/msm
-ExecStart=/usr/bin/php /var/www/html/msm/scripts/check-patches.php
-User=www-data
-Group=www-data
-```
-
-`/etc/systemd/system/msm-check-patches.timer`
-
-```ini
-[Unit]
-Description=Run MSM patch management check every 10 minutes
-
-[Timer]
-OnBootSec=5min
-OnUnitActiveSec=10min
-Unit=msm-check-patches.service
-
-[Install]
-WantedBy=timers.target
-```
-
-### Cycle de vie OS
-
-`/etc/systemd/system/msm-check-os-lifecycle.service`
-
-```ini
-[Unit]
-Description=MSM OS lifecycle check
-
-[Service]
-Type=oneshot
-WorkingDirectory=/var/www/html/msm
-ExecStart=/usr/bin/php /var/www/html/msm/scripts/check-os-lifecycle.php
-User=www-data
-Group=www-data
-```
-
-`/etc/systemd/system/msm-check-os-lifecycle.timer`
-
-```ini
-[Unit]
-Description=Run MSM OS lifecycle check hourly
-
-[Timer]
-OnBootSec=10min
-OnUnitActiveSec=1h
-Unit=msm-check-os-lifecycle.service
-
-[Install]
-WantedBy=timers.target
-```
-
-### Securite
-
-`/etc/systemd/system/msm-check-security.service`
-
-```ini
-[Unit]
-Description=MSM security check
-
-[Service]
-Type=oneshot
-WorkingDirectory=/var/www/html/msm
-ExecStart=/usr/bin/php /var/www/html/msm/scripts/check-security.php
-User=www-data
-Group=www-data
-```
-
-`/etc/systemd/system/msm-check-security.timer`
-
-```ini
-[Unit]
-Description=Run MSM security check hourly
-
-[Timer]
-OnBootSec=15min
-OnUnitActiveSec=1h
-Unit=msm-check-security.service
-
-[Install]
-WantedBy=timers.target
-```
-
-### Alerting
-
-`/etc/systemd/system/msm-check-alerts.service`
-
-```ini
-[Unit]
-Description=MSM alerting evaluation
-
-[Service]
-Type=oneshot
-WorkingDirectory=/var/www/html/msm
-ExecStart=/usr/bin/php /var/www/html/msm/scripts/check-alerts.php
-User=www-data
-Group=www-data
-```
-
-`/etc/systemd/system/msm-check-alerts.timer`
-
-```ini
-[Unit]
-Description=Run MSM alerting evaluation every 5 minutes
-
-[Timer]
-OnBootSec=2min
-OnUnitActiveSec=5min
-Unit=msm-check-alerts.service
-
-[Install]
-WantedBy=timers.target
-```
+Copier ensuite les blocs generes dans les fichiers indiques sous `/etc/systemd/system/`.
 
 ### Activer les timers
 
@@ -307,7 +186,7 @@ journalctl -u msm-check-security.service -n 50
 journalctl -u msm-check-alerts.service -n 50
 ```
 
-Sur RHEL/Rocky/AlmaLinux/Fedora, remplacer souvent `www-data` par `apache`.
+Sur RHEL/Rocky/AlmaLinux/Fedora, generer les fichiers avec `--systemd-user=apache --systemd-group=apache`.
 
 ## Ordre recommande apres installation
 

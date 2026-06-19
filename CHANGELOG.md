@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0](https://github.com/grandpurs45/my-server-manager/compare/v1.1.2...v1.2.0) (2026-06-19)
+
+### Features
+
+* ajout de `scripts/setup.php` pour diagnostiquer l'installation, la base, les migrations, les logs et l'ordonnancement
+* ajout de `scripts/update-check.php` pour valider une instance apres mise a jour
+* generation d'un bloc cron adapte au chemin reel du projet et detection des anciennes redirections vers `/var/log`
+* ajout des options `--init-env` et `--init-logs` pour preparer explicitement la configuration locale et les fichiers de logs
+* ajout de l'option `--db-sql` pour generer les commandes SQL de creation de base et d'utilisateur
+* ajout de l'option `--migrate` pour lancer explicitement les migrations depuis l'assistant setup
+* ajout de l'option `--systemd` pour generer les fichiers `.service` et `.timer` systemd
+
+### Bug Fixes
+
+* abaissement du seuil memoire du script de prerequis pour accepter les VM 1 Go qui remontent environ 960 Mio utilisables
+
+### Documentation
+
+* ajout des assistants setup / maintenance dans le README, le guide d'installation, le guide de mise a jour et la documentation d'ordonnancement
+* clarification du prerequis disque comme espace libre restant sur la partition MSM
+* simplification des verifications manuelles au profit des scripts `check-prerequisites.php` et `setup.php`
+
 ## [1.1.2](https://github.com/grandpurs45/my-server-manager/compare/v1.1.1...v1.1.2) (2026-06-16)
 
 ### Bug Fixes

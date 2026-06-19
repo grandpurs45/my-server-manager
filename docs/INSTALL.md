@@ -19,8 +19,8 @@ La procedure ci-dessous decrit principalement une installation native sur serveu
 Configuration minimale pour un petit homelab :
 
 - 1 vCPU.
-- 1 Go de RAM.
-- 5 Go d'espace disque disponible.
+- 1 Go de RAM installee. Le script accepte environ 900 Mio detectes, car une VM 1 Go remonte souvent moins de 1024 Mio utilisables.
+- 5 Go d'espace disque libre sur la partition qui heberge MSM, apres installation de l'OS et des dependances.
 - Acces reseau vers les serveurs a superviser.
 
 Configuration recommandee :
@@ -87,29 +87,32 @@ php -v
 
 Ces commandes installent les dependances systeme. Les dependances PHP du projet sont ensuite installees avec `composer install` a l'etape 3.
 
-## Verification manuelle rapide
+## Verification manuelle rapide avant clone
 
-Avant de recuperer le projet, verifier rapidement les outils de base avec :
+Avant de recuperer le projet, une verification minimale peut aider a confirmer que PHP, Git et Composer sont disponibles :
 
 ```bash
 php -v
-php -m
 composer --version
 git --version
-mysql --version
-apache2 -v
-df -h .
-free -h
 ```
 
 Sur Windows avec XAMPP/WAMP, utiliser aussi :
 
 ```powershell
 php -v
-php -m
 composer --version
 git --version
 ```
+
+Apres le clone, utiliser plutot les scripts MSM :
+
+```bash
+php scripts/check-prerequisites.php
+php scripts/setup.php
+```
+
+Ces scripts remplacent les verifications manuelles detaillees et limitent les doublons.
 
 ## 1. Recuperer le projet
 
@@ -142,6 +145,58 @@ Depuis cette racine du projet, lancer :
 php scripts/check-prerequisites.php
 ```
 
+Pour une verification plus globale de l'installation, incluant `.env`, la base, les migrations, les logs et l'ordonnancement, lancer aussi :
+
+```bash
+php scripts/setup.php
+```
+
+Si `.env` n'existe pas encore, MSM peut le creer depuis `.env.example` avec une cle locale aleatoire :
+
+```bash
+php scripts/setup.php --init-env
+```
+
+Il reste ensuite obligatoire d'editer `.env` pour renseigner les acces MariaDB/MySQL.
+
+Pour preparer le dossier `logs/` et les fichiers de logs attendus :
+
+```bash
+php scripts/setup.php --init-logs
+```
+
+Pour generer un exemple de commandes SQL de creation de base et d'utilisateur a partir de `.env` :
+
+```bash
+php scripts/setup.php --db-sql
+```
+
+Une fois la base creee et `.env` renseigne, appliquer les migrations :
+
+```bash
+php scripts/setup.php --migrate
+```
+
+Pour afficher uniquement les lignes cron adaptees au chemin reel du projet :
+
+```bash
+php scripts/setup.php --cron
+```
+
+Pour afficher les fichiers `.service` et `.timer` systemd adaptes au chemin reel du projet :
+
+```bash
+php scripts/setup.php --systemd
+```
+
+Sur RHEL / Rocky Linux / AlmaLinux / Fedora, l'utilisateur Apache est souvent `apache` au lieu de `www-data` :
+
+```bash
+php scripts/setup.php --systemd --systemd-user=apache --systemd-group=apache
+```
+
+Choisir cron ou systemd timers, mais ne pas configurer les deux en meme temps.
+
 Si le terminal est encore dans `/var/www/html`, utiliser plutot :
 
 ```bash
@@ -165,6 +220,24 @@ Le script verifie :
 - la presence de `.env` ;
 - les permissions de `logs/` ;
 - l'acces au dossier `migrations/`.
+
+`scripts/setup.php` complete ce controle avec :
+
+- la detection du chemin reel du projet ;
+- la generation du bloc cron recommande ;
+- la verification de la crontab chargee quand `crontab` est disponible ;
+- la detection d'anciennes redirections vers `/var/log/msm-check-*` ;
+- la verification des fichiers de logs attendus dans `logs/` ;
+- la connexion base et le nombre de migrations appliquees.
+
+Options utiles :
+
+- `--init-env` : cree `.env` depuis `.env.example` si le fichier est absent ;
+- `--init-logs` : cree `logs/` et les fichiers `check-*.log` attendus ;
+- `--db-sql` : affiche les commandes SQL de creation de base et d'utilisateur ;
+- `--migrate` : lance explicitement `apply_migrations.php` ;
+- `--cron` : affiche uniquement le bloc cron recommande.
+- `--systemd` : affiche les fichiers `.service` et `.timer` systemd recommandes.
 
 Les statuts possibles sont :
 
