@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1](https://github.com/grandpurs45/my-server-manager/compare/v1.2.0...v1.2.1) (2026-06-19)
+
+### Bug Fixes
+
+* ajout d'actions recommandees dans `scripts/check-prerequisites.php` et `scripts/setup.php` pour guider les corrections apres WARN/FAIL
+
+### Documentation
+
+* simplification du prerequis RAM sans exposer le seuil interne du script
+* clarification de l'etape `.env` / creation base pour guider l'utilisateur avant qu'il connaisse les identifiants MariaDB
+
 ## [1.2.0](https://github.com/grandpurs45/my-server-manager/compare/v1.1.2...v1.2.0) (2026-06-19)
 
 ### Features

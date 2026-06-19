@@ -69,6 +69,7 @@ class SetupAssistant
     private string $root;
     private int $errors = 0;
     private int $warnings = 0;
+    private array $actions = [];
 
     public function __construct(string $root)
     {
@@ -121,6 +122,7 @@ class SetupAssistant
 
         if (is_file($target)) {
             $this->warn('Local config .env', 'deja present; aucune modification');
+            $this->addAction('Editer .env si les acces base doivent etre ajustes.');
             return $this->printSummary();
         }
 
@@ -148,7 +150,8 @@ class SetupAssistant
         }
 
         $this->ok('Creation .env', 'fichier cree avec une cle locale aleatoire');
-        $this->warn('Configuration DB', 'renseigner MSM_DB_* avant de lancer les migrations');
+        $this->warn('Configuration DB', 'generer les commandes SQL puis reporter les valeurs dans .env');
+        $this->addAction('Lancer `php scripts/setup.php --db-sql` pour obtenir les commandes SQL.');
 
         return $this->printSummary();
     }
@@ -193,7 +196,7 @@ class SetupAssistant
 
         $env = $this->readEnv();
         if ($env === []) {
-            $this->warn('Local config .env', 'absent; utilisation de .env.example pour generer un exemple');
+            $this->info('Local config .env', 'absent; utilisation de .env.example pour generer un exemple');
             $env = $this->readEnv('.env.example');
         } else {
             $this->ok('Local config .env', 'utilise pour generer les commandes');
@@ -238,8 +241,11 @@ class SetupAssistant
         $this->line('MSM_DB_USER=' . $user);
         $this->line('MSM_DB_PASS=' . $pass);
         $this->line('');
+        $this->line('Si .env n existe pas encore : php scripts/setup.php --init-env');
+        $this->line('Puis editer .env et remplacer les valeurs MSM_DB_* avec celles ci-dessus.');
+        $this->line('');
         $this->line('Puis appliquer les migrations depuis la racine MSM :');
-        $this->line('php apply_migrations.php');
+        $this->line('php scripts/setup.php --migrate');
 
         return $this->printSummary();
     }
@@ -500,6 +506,7 @@ class SetupAssistant
             $this->ok('Local config .env', 'present');
         } else {
             $this->fail('Local config .env', 'absent; copier .env.example vers .env');
+            $this->addAction('Creer .env avec `php scripts/setup.php --init-env`.');
             return;
         }
 
@@ -510,6 +517,7 @@ class SetupAssistant
                 $this->ok('.env value ' . $key);
             } else {
                 $this->fail('.env value ' . $key, 'missing');
+                $this->addAction('Completer la valeur `' . $key . '` dans .env.');
             }
         }
     }
@@ -520,6 +528,7 @@ class SetupAssistant
 
         if (!is_dir($logs)) {
             $this->fail('logs directory', 'absent; creer le dossier logs/');
+            $this->addAction('Creer les logs avec `php scripts/setup.php --init-logs`.');
             return;
         }
 
@@ -527,6 +536,7 @@ class SetupAssistant
             $this->ok('logs directory', 'writable');
         } else {
             $this->fail('logs directory', 'not writable by current user');
+            $this->addAction('Corriger les permissions de `logs/` pour l utilisateur qui lance les checks.');
         }
     }
 
@@ -535,6 +545,7 @@ class SetupAssistant
         foreach (['MSM_DB_HOST', 'MSM_DB_NAME', 'MSM_DB_USER'] as $key) {
             if (empty($env[$key])) {
                 $this->fail('Database connection', 'configuration incomplete');
+                $this->addAction('Generer les commandes SQL avec `php scripts/setup.php --db-sql`, puis renseigner .env.');
                 return null;
             }
         }
@@ -565,6 +576,7 @@ class SetupAssistant
             return $pdo;
         } catch (Throwable $e) {
             $this->fail('Database connection', $e->getMessage());
+            $this->addAction('Verifier que MariaDB/MySQL est demarre, que la base existe et que les valeurs MSM_DB_* de .env sont correctes.');
             return null;
         }
     }
@@ -578,6 +590,7 @@ class SetupAssistant
 
         if ($pdo === null) {
             $this->warn('Migrations appliquees', 'verification impossible sans base');
+            $this->addAction('Une fois la base joignable, lancer `php scripts/setup.php --migrate`.');
             return;
         }
 
@@ -587,6 +600,7 @@ class SetupAssistant
 
             if (!$exists) {
                 $this->warn('Migrations appliquees', 'table migrations_applied absente; lancer php apply_migrations.php');
+                $this->addAction('Appliquer les migrations avec `php scripts/setup.php --migrate`.');
                 return;
             }
 
@@ -595,6 +609,7 @@ class SetupAssistant
                 $this->ok('Migrations appliquees', $applied . '/' . $total);
             } else {
                 $this->warn('Migrations appliquees', $applied . '/' . $total . '; lancer php apply_migrations.php');
+                $this->addAction('Appliquer les migrations restantes avec `php scripts/setup.php --migrate`.');
             }
         } catch (Throwable $e) {
             $this->warn('Migrations appliquees', $e->getMessage());
@@ -690,6 +705,7 @@ class SetupAssistant
             $path = $logs . DIRECTORY_SEPARATOR . $check['log'];
             if (!is_file($path)) {
                 $this->warn($check['name'] . ' log', 'absent: logs/' . $check['log']);
+                $this->addAction('Creer les fichiers de logs avec `php scripts/setup.php --init-logs`.');
                 continue;
             }
 
@@ -854,6 +870,8 @@ class SetupAssistant
 
     private function printSummary(): int
     {
+        $this->printRecommendedActions();
+
         if ($this->errors > 0) {
             $this->line('Result: setup has ' . $this->errors . ' FAIL item(s). Corriger avant production.');
             return 1;
@@ -866,6 +884,30 @@ class SetupAssistant
 
         $this->line('Result: setup looks ready.');
         return 0;
+    }
+
+    private function addAction(string $action): void
+    {
+        if (!in_array($action, $this->actions, true)) {
+            $this->actions[] = $action;
+        }
+    }
+
+    private function printRecommendedActions(): void
+    {
+        if ($this->actions === []) {
+            return;
+        }
+
+        $this->line('');
+        $this->line('Actions recommandees');
+        $this->line('--------------------');
+
+        foreach ($this->actions as $index => $action) {
+            $this->line(($index + 1) . '. ' . $action);
+        }
+
+        $this->line('');
     }
 
     private function header(string $title): void

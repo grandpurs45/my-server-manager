@@ -436,6 +436,7 @@ Autres extensions v1.x :
   - [x] aucune modification automatique de cron ou systemd sans action manuelle explicite.
 - [ ] Ajouter un script ou assistant d'installation / mise a jour :
   - [x] verification CLI des prerequis, du projet et des logs ;
+  - [ ] installation assistee des dependances systeme avec confirmation explicite avant `apt` ou `dnf` ;
   - [x] creation guidee du `.env` depuis `.env.example` avec cle locale aleatoire ;
   - [x] aide a la creation de la base avec generation SQL non destructive ;
   - [x] lancement assiste des migrations via option explicite ;

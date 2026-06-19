@@ -19,7 +19,7 @@ La procedure ci-dessous decrit principalement une installation native sur serveu
 Configuration minimale pour un petit homelab :
 
 - 1 vCPU.
-- 1 Go de RAM installee. Le script accepte environ 900 Mio detectes, car une VM 1 Go remonte souvent moins de 1024 Mio utilisables.
+- 1 Go de RAM.
 - 5 Go d'espace disque libre sur la partition qui heberge MSM, apres installation de l'OS et des dependances.
 - Acces reseau vers les serveurs a superviser.
 
@@ -157,7 +157,20 @@ Si `.env` n'existe pas encore, MSM peut le creer depuis `.env.example` avec une 
 php scripts/setup.php --init-env
 ```
 
-Il reste ensuite obligatoire d'editer `.env` pour renseigner les acces MariaDB/MySQL.
+Le fichier `.env` existe maintenant, mais les acces base ne sont pas encore definitifs.
+
+Generer ensuite les commandes SQL de creation de base et d'utilisateur :
+
+```bash
+php scripts/setup.php --db-sql
+```
+
+Le script affiche :
+
+- les commandes SQL a executer dans MariaDB/MySQL ;
+- les valeurs `MSM_DB_NAME`, `MSM_DB_USER` et `MSM_DB_PASS` a reporter dans `.env`.
+
+Si le mot de passe affiche est `CHANGE_ME_STRONG_PASSWORD`, remplacer cette valeur par un mot de passe fort de ton choix dans la commande SQL et dans `.env`.
 
 Pour preparer le dossier `logs/` et les fichiers de logs attendus :
 
@@ -165,11 +178,13 @@ Pour preparer le dossier `logs/` et les fichiers de logs attendus :
 php scripts/setup.php --init-logs
 ```
 
-Pour generer un exemple de commandes SQL de creation de base et d'utilisateur a partir de `.env` :
+Se connecter ensuite a MariaDB/MySQL avec un compte administrateur :
 
 ```bash
-php scripts/setup.php --db-sql
+mysql -u root -p
 ```
+
+Executer les commandes SQL affichees par `--db-sql`, puis editer `.env` avec les valeurs indiquees.
 
 Une fois la base creee et `.env` renseigne, appliquer les migrations :
 

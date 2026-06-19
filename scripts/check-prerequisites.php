@@ -14,6 +14,7 @@ $recommendedDiskMb = 5120;
 
 $hasErrors = false;
 $hasWarnings = false;
+$recommendedActions = [];
 
 function printResult(string $status, string $label, string $detail = ''): void
 {
@@ -36,6 +37,15 @@ function markWarning(string $label, string $detail = ''): void
     global $hasWarnings;
     $hasWarnings = true;
     printResult('WARN', $label, $detail);
+}
+
+function addRecommendedAction(string $action): void
+{
+    global $recommendedActions;
+
+    if (!in_array($action, $recommendedActions, true)) {
+        $recommendedActions[] = $action;
+    }
 }
 
 function markOk(string $label, string $detail = ''): void
@@ -198,10 +208,13 @@ if (is_file('.env')) {
             markOk('.env value ' . $key);
         } else {
             markWarning('.env value ' . $key, 'missing or empty');
+            addRecommendedAction('Completer `' . $key . '` dans .env.');
         }
     }
 } else {
     markWarning('Local config .env', 'missing; copy .env.example to .env before running MSM');
+    addRecommendedAction('Creer .env avec `php scripts/setup.php --init-env`.');
+    addRecommendedAction('Generer les commandes SQL avec `php scripts/setup.php --db-sql`, puis reporter les valeurs MSM_DB_* dans .env.');
 }
 
 if (is_dir('logs')) {
@@ -209,9 +222,11 @@ if (is_dir('logs')) {
         markOk('logs directory', 'writable');
     } else {
         markWarning('logs directory', 'exists but is not writable by the current user');
+        addRecommendedAction('Corriger les permissions de `logs/` pour l utilisateur qui lance les checks.');
     }
 } else {
     markWarning('logs directory', 'missing; create it before configuring scheduled checks');
+    addRecommendedAction('Creer les fichiers de logs avec `php scripts/setup.php --init-logs`.');
 }
 
 if (is_dir('migrations') && is_readable('migrations')) {
@@ -221,6 +236,15 @@ if (is_dir('migrations') && is_readable('migrations')) {
 }
 
 echo PHP_EOL;
+if ($recommendedActions !== []) {
+    echo 'Recommended actions' . PHP_EOL;
+    echo '===================' . PHP_EOL;
+    foreach ($recommendedActions as $index => $action) {
+        echo ($index + 1) . '. ' . $action . PHP_EOL;
+    }
+    echo PHP_EOL;
+}
+
 if ($hasErrors) {
     echo 'Result: prerequisites are not satisfied. Fix FAIL items before installing MSM.' . PHP_EOL;
     exit(1);
