@@ -75,25 +75,57 @@ php scripts/update-check.php
 
 Resume rapide :
 
-1. Cloner le depot :
+1. Installer le minimum pour cloner le depot :
+
+   Debian / Ubuntu :
 
    ```bash
-   git clone https://github.com/grandpurs45/my-server-manager.git
+   sudo apt update
+   sudo apt install -y php-cli git
    ```
 
-2. Installer les dependances PHP :
+   RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+   ```bash
+   sudo dnf install -y php-cli git
+   ```
+
+2. Cloner le depot et entrer dans le projet :
+
+   ```bash
+   git clone https://github.com/grandpurs45/my-server-manager.git msm
+   cd msm
+   ```
+
+3. Installer les dependances systeme MSM :
+
+   ```bash
+   php scripts/setup.php --install-deps
+   ```
+
+   Ajouter `--yes` uniquement apres verification des commandes affichees.
+
+4. Installer les dependances PHP :
 
    ```bash
    php scripts/setup.php --composer-install
    ```
 
-3. Preparer la configuration locale :
+5. Preparer la configuration locale :
 
    ```bash
-   cp .env.example .env
+   php scripts/setup.php --init-env
    ```
 
-4. Editer `.env` avec les acces MariaDB et une cle locale :
+6. Generer les commandes SQL, creer la base, puis editer `.env` :
+
+   ```bash
+   php scripts/setup.php --db-sql
+   ```
+
+   Remplacer `CHANGE_ME_STRONG_PASSWORD` par un mot de passe fort dans SQL et dans `.env`.
+
+   Exemple de configuration `.env` :
 
    ```text
    MSM_DB_HOST=localhost
@@ -111,13 +143,13 @@ Resume rapide :
    php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
    ```
 
-5. Configurer la base MariaDB, puis appliquer les migrations :
+7. Appliquer les migrations :
 
    ```bash
-   php apply_migrations.php
+   php scripts/setup.php --migrate
    ```
 
-6. Lancer avec XAMPP ou Apache/PHP, puis acceder a l'application :
+8. Lancer avec XAMPP ou Apache/PHP, puis acceder a l'application :
 
    ```text
    http://localhost/msm/

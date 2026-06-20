@@ -435,6 +435,7 @@ Autres extensions v1.x :
   - permissions avancees a documenter selon l'utilisateur cron ou web ;
   - [x] aucune modification automatique de cron ou systemd sans action manuelle explicite.
 - [ ] Ajouter un script ou assistant d'installation / mise a jour :
+  - [ ] ajouter un bootstrap d'installation avant clone, par exemple script telechargeable, capable d'installer PHP/Git puis de cloner MSM ;
   - [x] verification CLI des prerequis, du projet et des logs ;
   - [x] installation assistee des dependances systeme avec confirmation explicite avant `apt` ou `dnf` ;
   - [x] creation guidee du `.env` depuis `.env.example` avec cle locale aleatoire ;

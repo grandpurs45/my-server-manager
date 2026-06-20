@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Documentation
+
+* correction de l'ordre du guide d'installation vierge pour ne plus appeler `scripts/setup.php` avant le clone du projet
+* alignement du resume rapide README avec le flux bootstrap minimal, clone, setup MSM
+* ajout du bootstrap pre-clone a la roadmap v1.x
+
 ## [1.2.3](https://github.com/grandpurs45/my-server-manager/compare/v1.2.2...v1.2.3) (2026-06-20)
 
 ### Features

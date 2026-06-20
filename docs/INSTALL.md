@@ -48,9 +48,11 @@ La consommation depend surtout du nombre de serveurs supervises, de la frequence
 - `unzip` recommande pour Composer.
 - `ssh` recommande pour certains diagnostics et tests manuels.
 
-## Installation des dependances systeme
+## 0. Installer le bootstrap minimal
 
-Sur une installation Linux vierge, installer d'abord le minimum necessaire pour recuperer le projet et lancer le script setup.
+Sur une installation Linux vierge, installer d'abord uniquement le minimum necessaire pour recuperer le projet.
+
+Cette etape ne lance pas encore l'assistant MSM : le fichier `scripts/setup.php` n'existe pas tant que le projet n'a pas ete clone.
 
 Debian / Ubuntu :
 
@@ -65,7 +67,19 @@ RHEL / Rocky Linux / AlmaLinux / Fedora :
 sudo dnf install -y php-cli git
 ```
 
-Une fois le projet clone, MSM peut afficher les commandes adaptees a la distribution pour installer le reste des dependances :
+## 1. Recuperer le projet
+
+```bash
+cd /var/www/html
+git clone https://github.com/grandpurs45/my-server-manager.git msm
+cd msm
+```
+
+A partir de cette etape, les scripts MSM sont disponibles.
+
+## 2. Installer les dependances systeme MSM
+
+Depuis la racine du projet clone, MSM peut afficher les commandes adaptees a la distribution pour installer Apache, MariaDB, Composer, les extensions PHP et les outils systeme necessaires :
 
 ```bash
 php scripts/setup.php --install-deps
@@ -79,7 +93,7 @@ php scripts/setup.php --install-deps --yes
 
 Sans `--yes`, aucune commande systeme n'est executee.
 
-Installation manuelle equivalente :
+Installation manuelle equivalente si vous preferez ne pas utiliser `--yes` :
 
 Debian / Ubuntu :
 
@@ -108,17 +122,9 @@ rm composer-setup.php
 composer --version
 ```
 
-Ces commandes installent les dependances systeme. Les dependances PHP du projet sont ensuite installees a l'etape 3.
+Ces commandes installent les dependances systeme. Les dependances PHP du projet sont ensuite installees a l'etape 4.
 
-## 1. Recuperer le projet
-
-```bash
-cd /var/www/html
-git clone https://github.com/grandpurs45/my-server-manager.git msm
-cd msm
-```
-
-## 2. Verifier automatiquement les prerequis
+## 3. Verifier automatiquement les prerequis
 
 Une fois le projet clone, le script de verification est disponible dans `scripts/check-prerequisites.php`.
 
@@ -466,7 +472,7 @@ Le code applicatif ne doit pas etre donne en ecriture a l'utilisateur Apache. Se
 
 </details>
 
-## 3. Installer les dependances PHP du projet
+## 4. Installer les dependances PHP du projet
 
 Si le projet est clone dans `/var/www/html`, verifier que l'utilisateur courant peut ecrire dans le dossier projet avant de lancer Composer :
 
@@ -511,7 +517,7 @@ composer install --no-dev --optimize-autoloader
 
 Pour une installation de developpement locale, `composer install` suffit.
 
-## 4. Creer la configuration locale et la base
+## 5. Creer la configuration locale et la base
 
 Creer `.env` depuis le modele du projet :
 
@@ -555,7 +561,7 @@ Editer enfin `.env` et reporter les valeurs indiquees par `--db-sql`.
 
 Important : conserver `MSM_SECRET_KEY`. Elle sert au chiffrement des mots de passe SSH stockes en base.
 
-## 5. Appliquer les migrations
+## 6. Appliquer les migrations
 
 ```bash
 php scripts/setup.php --migrate
@@ -563,7 +569,7 @@ php scripts/setup.php --migrate
 
 Le script cree automatiquement la table `migrations_applied` si elle n'existe pas.
 
-## 6. Verifier les permissions
+## 7. Verifier les permissions
 
 Le serveur web doit pouvoir lire :
 
@@ -590,7 +596,7 @@ sudo chmod -R 750 logs
 
 Adapter l'utilisateur Apache selon la distribution.
 
-## 7. Configurer Apache
+## 8. Configurer Apache
 
 MSM peut fonctionner dans un sous-dossier, par exemple :
 
@@ -632,7 +638,7 @@ sudo ufw allow 443/tcp
 
 Si MSM doit tester des serveurs distants, verifier aussi que les flux sortants necessaires sont autorises depuis le serveur MSM, par exemple ICMP pour le ping et `22/tcp` pour SSH.
 
-## 8. Configurer le check planifie
+## 9. Configurer le check planifie
 
 MSM ne lance pas les checks lourds au chargement des pages. Les statuts doivent etre mis a jour par des scripts planifies.
 
@@ -751,7 +757,7 @@ Verifier aussi la page diagnostic MSM : elle doit afficher un dernier check cohe
 
 Pour une configuration complete, suivre [SCHEDULING.md](SCHEDULING.md).
 
-## 9. Verifications post-install
+## 10. Verifications post-install
 
 Verifier d'abord que le serveur contient bien la derniere version recuperee :
 
