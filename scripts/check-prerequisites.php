@@ -10,7 +10,7 @@ $recommendedExtensions = ['zip'];
 $requiredCommands = ['git', 'composer', 'ping'];
 $recommendedCommands = ['unzip', 'ssh'];
 $recommendedMemoryMb = 900;
-$recommendedDiskMb = 5120;
+$recommendedDiskMb = 10240;
 
 $hasErrors = false;
 $hasWarnings = false;
@@ -223,6 +223,7 @@ if ($diskFreeMb >= $recommendedDiskMb) {
     markOk('Available disk space', $diskFreeMb . ' MB');
 } else {
     markWarning('Available disk space', $diskFreeMb . ' MB available, ' . $recommendedDiskMb . ' MB recommended');
+    addRecommendedAction('Liberer de l espace disque ou agrandir la partition qui heberge MSM. Une racine Linux pleine bloque apt, Composer, MariaDB et les logs.');
 }
 
 $memoryTotalMb = getMemoryTotalMb();

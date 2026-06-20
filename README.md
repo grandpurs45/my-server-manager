@@ -80,8 +80,8 @@ Resume rapide :
    Debian / Ubuntu :
 
    ```bash
-   sudo apt update
-   sudo apt install -y php-cli git
+   sudo apt-get update
+   sudo apt-get install -y php-cli git
    ```
 
    RHEL / Rocky Linux / AlmaLinux / Fedora :

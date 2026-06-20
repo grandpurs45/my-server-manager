@@ -18,5 +18,12 @@ try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
     error_log('MSM database connection failed: ' . $e->getMessage());
-    die("Erreur de connexion a la base de donnees.");
+    if (PHP_SAPI === 'cli') {
+        fwrite(STDERR, "Erreur de connexion a la base de donnees.\n");
+        exit(1);
+    }
+
+    http_response_code(500);
+    echo "Erreur de connexion a la base de donnees.";
+    exit;
 }

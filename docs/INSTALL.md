@@ -20,14 +20,14 @@ Configuration minimale pour un petit homelab :
 
 - 1 vCPU.
 - 1 Go de RAM.
-- 5 Go d'espace disque libre sur la partition qui heberge MSM, apres installation de l'OS et des dependances.
+- 10 Go d'espace disque libre sur la partition qui heberge MSM, apres installation de l'OS et des dependances.
 - Acces reseau vers les serveurs a superviser.
 
 Configuration recommandee :
 
 - 2 vCPU.
 - 2 Go de RAM ou plus.
-- 10 Go d'espace disque ou plus.
+- 20 Go d'espace disque ou plus.
 - Stockage persistant pour la base de donnees, le fichier `.env` et les logs.
 
 La consommation depend surtout du nombre de serveurs supervises, de la frequence des checks, du volume de logs conserve et des futurs modules actifs.
@@ -57,8 +57,8 @@ Cette etape ne lance pas encore l'assistant MSM : le fichier `scripts/setup.php`
 Debian / Ubuntu :
 
 ```bash
-sudo apt update
-sudo apt install -y php-cli git
+sudo apt-get update
+sudo apt-get install -y php-cli git
 ```
 
 RHEL / Rocky Linux / AlmaLinux / Fedora :
@@ -98,8 +98,8 @@ Installation manuelle equivalente si vous preferez ne pas utiliser `--yes` :
 Debian / Ubuntu :
 
 ```bash
-sudo apt update
-sudo apt install -y apache2 mariadb-server mariadb-client php php-cli php-mysql php-mbstring php-xml php-curl php-zip unzip git composer
+sudo apt-get update
+sudo apt-get install -y apache2 mariadb-server mariadb-client php php-cli php-mysql php-mbstring php-xml php-curl php-zip unzip git composer
 sudo systemctl enable --now apache2 mariadb
 ```
 
@@ -213,8 +213,8 @@ MSM utilise MariaDB/MySQL via PDO. Installer l'extension PHP MySQL, puis redemar
 Debian / Ubuntu :
 
 ```bash
-sudo apt update
-sudo apt install php-mysql
+sudo apt-get update
+sudo apt-get install php-mysql
 sudo systemctl restart apache2
 ```
 
@@ -250,7 +250,7 @@ MSM utilise `ping` pour determiner si un serveur est joignable.
 Debian / Ubuntu :
 
 ```bash
-sudo apt install iputils-ping
+sudo apt-get install iputils-ping
 ```
 
 RHEL / Rocky Linux / AlmaLinux / Fedora :
@@ -272,8 +272,8 @@ Composer est necessaire pour installer les dependances PHP.
 Debian / Ubuntu :
 
 ```bash
-sudo apt update
-sudo apt install composer
+sudo apt-get update
+sudo apt-get install composer
 ```
 
 RHEL / Rocky Linux / AlmaLinux / Fedora :
@@ -292,6 +292,31 @@ Verifier ensuite :
 composer --version
 ```
 
+#### `E: Dependances non satisfaites` ou `apt-get install` termine avec le code 100
+
+Ce probleme vient de l'etat du gestionnaire de paquets de l'OS, pas de MSM. Il peut arriver sur une VM fraiche si des mises a jour systeme sont en attente ou si des dependances Linux headers sont cassees.
+
+Commencer par reparer APT :
+
+```bash
+sudo apt-get --fix-broken install
+sudo apt-get update
+```
+
+Si `apt-get update` affiche des erreurs `GPG`, `InRelease` ou `Splitting up ... failed`, verifier aussi l'espace disque :
+
+```bash
+df -h
+```
+
+Si la partition racine `/` est a `100%`, agrandir le disque ou liberer de l'espace avant de continuer. Une racine pleine empeche APT d'ecrire ses index et peut provoquer des erreurs de signature ou de dependances sans rapport direct avec MSM.
+
+Relancer ensuite :
+
+```bash
+php scripts/setup.php --install-deps --yes
+```
+
 #### `The zip extension and unzip/7z commands are both missing`
 
 Composer peut continuer en clonant les dependances depuis les sources, mais l'installation est plus lente et plus verbeuse. Installer `php-zip` et `unzip`.
@@ -299,7 +324,7 @@ Composer peut continuer en clonant les dependances depuis les sources, mais l'in
 Debian / Ubuntu :
 
 ```bash
-sudo apt install php-zip unzip
+sudo apt-get install php-zip unzip
 sudo systemctl restart apache2
 ```
 
@@ -348,7 +373,7 @@ Ce warning indique que la commande `mysql` ou `mariadb` n'est pas disponible dan
 Debian / Ubuntu :
 
 ```bash
-sudo apt install mariadb-client
+sudo apt-get install mariadb-client
 ```
 
 RHEL / Rocky Linux / AlmaLinux / Fedora :
@@ -450,12 +475,14 @@ git config --global --add safe.directory /var/www/html/msm
 
 Composer ne peut pas creer le dossier `vendor/` car l'utilisateur qui lance Composer n'a pas les droits d'ecriture sur le dossier projet.
 
-Ne pas utiliser `"$USER"` si le shell est connecte directement en `root` : dans ce cas, `$USER` vaut `root` et la commande ne change rien. Choisir explicitement l'utilisateur qui gere le deploiement et le groupe du serveur web.
+Ne pas utiliser `"$USER"` si le shell est connecte directement en `root` : dans ce cas, `$USER` vaut `root` et la commande ne change rien.
+
+Si vous etes connecte avec l'utilisateur qui gerera MSM, detecter cet utilisateur avec `whoami`.
 
 Debian / Ubuntu :
 
 ```bash
-APP_OWNER=<utilisateur_deploiement>
+APP_OWNER=$(whoami)
 WEB_GROUP=www-data
 sudo chown -R "$APP_OWNER":"$WEB_GROUP" /var/www/html/msm
 ```
@@ -463,12 +490,18 @@ sudo chown -R "$APP_OWNER":"$WEB_GROUP" /var/www/html/msm
 RHEL / Rocky Linux / AlmaLinux / Fedora :
 
 ```bash
-APP_OWNER=<utilisateur_deploiement>
+APP_OWNER=$(whoami)
 WEB_GROUP=apache
 sudo chown -R "$APP_OWNER":"$WEB_GROUP" /var/www/html/msm
 ```
 
-Le code applicatif ne doit pas etre donne en ecriture a l'utilisateur Apache. Seul `logs/` doit etre inscriptible par l'utilisateur qui execute les checks ou par le serveur web.
+Exemple si votre utilisateur Linux est `msm-admin` sur Debian / Ubuntu :
+
+```bash
+sudo chown -R msm-admin:www-data /var/www/html/msm
+```
+
+Le code applicatif appartient alors a l'utilisateur de deploiement, et le groupe du serveur web peut lire les fichiers. Le code applicatif ne doit pas etre donne en ecriture a l'utilisateur Apache. Seul `logs/` doit etre inscriptible par l'utilisateur qui execute les checks ou par le serveur web.
 
 </details>
 
@@ -481,12 +514,12 @@ pwd
 ls -ld .
 ```
 
-Si le dossier appartient a `root`, a `apache` ou a un autre utilisateur, corriger les droits avec un proprietaire applicatif explicite.
+Si le dossier appartient a `root`, a `apache` ou a un autre utilisateur, corriger les droits avec l'utilisateur Linux qui gere le deploiement MSM.
 
 Debian / Ubuntu :
 
 ```bash
-APP_OWNER=<utilisateur_deploiement>
+APP_OWNER=$(whoami)
 WEB_GROUP=www-data
 sudo chown -R "$APP_OWNER":"$WEB_GROUP" /var/www/html/msm
 git config --global --add safe.directory /var/www/html/msm
@@ -495,13 +528,20 @@ git config --global --add safe.directory /var/www/html/msm
 RHEL / Rocky Linux / AlmaLinux / Fedora :
 
 ```bash
-APP_OWNER=<utilisateur_deploiement>
+APP_OWNER=$(whoami)
 WEB_GROUP=apache
 sudo chown -R "$APP_OWNER":"$WEB_GROUP" /var/www/html/msm
 git config --global --add safe.directory /var/www/html/msm
 ```
 
-Cette commande permet a Composer de creer le dossier `vendor/` et evite l'erreur Git `detected dubious ownership`. Remplacer `<utilisateur_deploiement>` par un vrai utilisateur Linux, par exemple l'utilisateur avec lequel vous administrez la machine. Ne pas mettre `apache` ou `www-data` comme proprietaire du code applicatif.
+Exemple Debian / Ubuntu si votre utilisateur Linux est `msm-admin` :
+
+```bash
+sudo chown -R msm-admin:www-data /var/www/html/msm
+git config --global --add safe.directory /var/www/html/msm
+```
+
+Cette commande permet a Composer de creer le dossier `vendor/` et evite l'erreur Git `detected dubious ownership`. Ne pas mettre `apache` ou `www-data` comme proprietaire du code applicatif.
 
 Installer ensuite les dependances PHP du projet :
 
@@ -537,9 +577,18 @@ Le script affiche :
 - les valeurs `MSM_DB_NAME`, `MSM_DB_USER` et `MSM_DB_PASS` a reporter dans `.env`.
 
 > [!WARNING]
-> **ATTENTION : si le mot de passe affiche est `CHANGE_ME_STRONG_PASSWORD`, remplacer cette valeur par un mot de passe fort dans la commande SQL ET dans `.env`.**
+> **ATTENTION : ne pas garder `CHANGE_ME_STRONG_PASSWORD`.**
+>
+> Si cette valeur apparait dans la sortie de `--db-sql`, choisir un mot de passe fort et l'utiliser exactement au meme endroit :
+>
+> - dans la commande SQL `CREATE USER ... IDENTIFIED BY '...'` ;
+> - dans `.env` avec `MSM_DB_PASS=...`.
+>
+> Si les deux valeurs ne sont pas identiques, MSM ne pourra pas se connecter a la base.
 
-Entrer ensuite dans MariaDB/MySQL avec un compte administrateur :
+### 5.1 Ouvrir MariaDB/MySQL
+
+Entrer dans MariaDB/MySQL avec un compte administrateur :
 
 ```bash
 sudo mariadb
@@ -551,13 +600,53 @@ ou, selon la distribution :
 mysql -u root -p
 ```
 
-Executer les commandes SQL affichees par `--db-sql`, puis quitter le client SQL :
+Le prompt doit devenir un prompt SQL, par exemple :
+
+```text
+MariaDB [(none)]>
+```
+
+### 5.2 Executer les commandes SQL une par une
+
+Copier les commandes affichees par `php scripts/setup.php --db-sql` dans le client SQL.
+
+Exemple avec le mot de passe personnalise `MOT_DE_PASSE_FORT_A_REMPLACER` :
+
+```sql
+CREATE DATABASE IF NOT EXISTS `msm` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+```sql
+CREATE USER IF NOT EXISTS 'msm_user'@'localhost' IDENTIFIED BY 'MOT_DE_PASSE_FORT_A_REMPLACER';
+```
+
+```sql
+GRANT ALL PRIVILEGES ON `msm`.* TO 'msm_user'@'localhost';
+```
+
+```sql
+FLUSH PRIVILEGES;
+```
+
+Puis quitter le client SQL :
 
 ```sql
 EXIT;
 ```
 
+### 5.3 Reporter les valeurs dans `.env`
+
 Editer enfin `.env` et reporter les valeurs indiquees par `--db-sql`.
+
+Exemple :
+
+```text
+MSM_DB_NAME=msm
+MSM_DB_USER=msm_user
+MSM_DB_PASS=MOT_DE_PASSE_FORT_A_REMPLACER
+```
+
+Le mot de passe `MSM_DB_PASS` doit etre exactement le meme que celui utilise dans la commande SQL `CREATE USER`.
 
 Important : conserver `MSM_SECRET_KEY`. Elle sert au chiffrement des mots de passe SSH stockes en base.
 
@@ -709,7 +798,7 @@ Eviter `/var/log` pour une crontab utilisateur, sauf si les fichiers ont ete cre
 Debian / Ubuntu :
 
 ```bash
-sudo apt install -y cron
+sudo apt-get install -y cron
 sudo systemctl enable --now cron
 ```
 

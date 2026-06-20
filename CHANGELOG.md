@@ -2,13 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [1.2.4](https://github.com/grandpurs45/my-server-manager/compare/v1.2.3...v1.2.4) (2026-06-20)
 
 ### Documentation
 
 * correction de l'ordre du guide d'installation vierge pour ne plus appeler `scripts/setup.php` avant le clone du projet
 * alignement du resume rapide README avec le flux bootstrap minimal, clone, setup MSM
+* remplacement des exemples `apt` par `apt-get` pour les commandes scriptables
+* ajout du cas APT `Dependances non satisfaites` / code 100 dans les erreurs frequentes
+* separation des commandes MariaDB de creation de base et rappel explicite de personnalisation du mot de passe
 * ajout du bootstrap pre-clone a la roadmap v1.x
+
+### Bug Fixes
+
+* ajout d'actions recommandees quand `php scripts/setup.php --install-deps --yes` echoue sur un etat APT casse
+* correction du code retour CLI quand la connexion base ou les migrations echouent
 
 ## [1.2.3](https://github.com/grandpurs45/my-server-manager/compare/v1.2.2...v1.2.3) (2026-06-20)
 

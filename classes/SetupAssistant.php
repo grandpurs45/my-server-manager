@@ -262,7 +262,7 @@ class SetupAssistant
 
         $commands = $this->detectDependencyInstallCommands();
         if ($commands === []) {
-            $this->fail('Distribution supportee', 'impossible de detecter apt, dnf ou yum');
+            $this->fail('Distribution supportee', 'impossible de detecter apt-get, dnf ou yum');
             $this->addAction('Installer manuellement Apache, MariaDB/MySQL, PHP, les extensions PHP requises, Git, Composer et unzip.');
             return $this->printSummary();
         }
@@ -289,6 +289,7 @@ class SetupAssistant
             passthru($command, $code);
             if ($code !== 0) {
                 $this->fail('Commande systeme', 'code ' . $code . ' pour: ' . $command);
+                $this->addSystemDependencyFailureActions($command, $code);
                 return $this->printSummary();
             }
         }
@@ -946,10 +947,10 @@ class SetupAssistant
 
         $sudo = $this->isRootUser() ? '' : 'sudo ';
 
-        if ($this->commandExists('apt')) {
+        if ($this->commandExists('apt-get')) {
             return [
-                $sudo . 'apt update',
-                $sudo . 'apt install -y apache2 mariadb-server mariadb-client php php-cli php-mysql php-mbstring php-xml php-curl php-zip unzip git composer',
+                $sudo . 'apt-get update',
+                $sudo . 'apt-get install -y apache2 mariadb-server mariadb-client php php-cli php-mysql php-mbstring php-xml php-curl php-zip unzip git composer',
                 $sudo . 'systemctl enable --now apache2 mariadb',
             ];
         }
@@ -971,6 +972,23 @@ class SetupAssistant
         }
 
         return [];
+    }
+
+    private function addSystemDependencyFailureActions(string $command, int $code): void
+    {
+        if (str_contains($command, 'apt-get ') || str_contains($command, 'apt ')) {
+            $sudo = $this->isRootUser() ? '' : 'sudo ';
+
+            if ($code === 100 || str_contains($command, ' install ')) {
+                $this->addAction('Le gestionnaire de paquets APT semble avoir des dependances cassees. Lancer `' . $sudo . 'apt-get --fix-broken install` puis relancer `php scripts/setup.php --install-deps --yes`.');
+            }
+
+            if (str_contains($command, 'update')) {
+                $this->addAction('Si `apt-get update` signale des erreurs GPG ou InRelease, verifier aussi l espace disque avec `df -h` puis nettoyer les index APT si necessaire.');
+            }
+
+            $this->addAction('Tester ensuite manuellement `' . $sudo . 'apt-get update` puis `' . $sudo . 'apt-get install -y apache2 mariadb-server mariadb-client php php-cli php-mysql php-mbstring php-xml php-curl php-zip unzip git composer`.');
+        }
     }
 
     private function isRootUser(): bool

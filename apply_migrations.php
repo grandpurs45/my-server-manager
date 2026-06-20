@@ -16,11 +16,13 @@ try {
     $stmt = $pdo->query("SELECT filename FROM migrations_applied");
     $applied = $stmt->fetchAll(PDO::FETCH_COLUMN);
 } catch (PDOException $e) {
-    exit("Erreur lors de l'initialisation des migrations : " . $e->getMessage());
+    fwrite(STDERR, "Erreur lors de l'initialisation des migrations : " . $e->getMessage() . PHP_EOL);
+    exit(1);
 }
 
 $files = glob($migrationsDir . '/*.sql');
 sort($files);
+$hasErrors = false;
 
 foreach ($files as $filePath) {
     $file = basename($filePath);
@@ -31,6 +33,11 @@ foreach ($files as $filePath) {
     }
 
     $sql = file_get_contents($filePath);
+    if ($sql === false) {
+        echo "[ERREUR] $file : lecture impossible.\n";
+        $hasErrors = true;
+        continue;
+    }
 
     try {
         $pdo->exec($sql);
@@ -39,5 +46,10 @@ foreach ($files as $filePath) {
         echo "[OK]   $file applique avec succes.\n";
     } catch (PDOException $e) {
         echo "[ERREUR] $file : " . $e->getMessage() . "\n";
+        $hasErrors = true;
     }
+}
+
+if ($hasErrors) {
+    exit(1);
 }
