@@ -15,14 +15,49 @@ $recommendedDiskMb = 5120;
 $hasErrors = false;
 $hasWarnings = false;
 $recommendedActions = [];
+$colorsEnabled = detectColorSupport();
 
 function printResult(string $status, string $label, string $detail = ''): void
 {
-    $line = sprintf('[%s] %s', $status, $label);
+    $line = sprintf('[%s] %s', colorizeStatus($status), $label);
     if ($detail !== '') {
         $line .= ' - ' . $detail;
     }
     echo $line . PHP_EOL;
+}
+
+function colorizeStatus(string $status): string
+{
+    global $colorsEnabled;
+
+    $colors = [
+        'OK' => '32',
+        'WARN' => '33',
+        'FAIL' => '31',
+    ];
+
+    if (!$colorsEnabled || !isset($colors[$status])) {
+        return $status;
+    }
+
+    return "\033[" . $colors[$status] . 'm' . $status . "\033[0m";
+}
+
+function detectColorSupport(): bool
+{
+    if (getenv('NO_COLOR') !== false || PHP_SAPI !== 'cli') {
+        return false;
+    }
+
+    if (PHP_OS_FAMILY === 'Windows' && function_exists('sapi_windows_vt100_support')) {
+        @sapi_windows_vt100_support(STDOUT, true);
+    }
+
+    if (function_exists('stream_isatty')) {
+        return @stream_isatty(STDOUT);
+    }
+
+    return PHP_OS_FAMILY === 'Windows';
 }
 
 function markError(string $label, string $detail = ''): void

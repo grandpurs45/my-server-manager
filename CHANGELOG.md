@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.3](https://github.com/grandpurs45/my-server-manager/compare/v1.2.2...v1.2.3) (2026-06-20)
+
+### Features
+
+* ajout de `php scripts/setup.php --install-deps` pour afficher ou executer avec `--yes` l'installation des dependances systeme
+* ajout de `php scripts/setup.php --composer-install` pour installer les dependances PHP du projet
+* ajout des couleurs ANSI dans `scripts/check-prerequisites.php`
+
+### Documentation
+
+* suppression de l'etape inutile si le terminal n'est pas dans `/var/www/html/msm`
+* repli des erreurs frequentes dans le guide d'installation pour ne plus casser le deroule principal
+* remplacement des commandes `chown "$USER"` par des exemples avec proprietaire applicatif explicite
+* mise en evidence du remplacement obligatoire de `CHANGE_ME_STRONG_PASSWORD`
+
 ## [1.2.2](https://github.com/grandpurs45/my-server-manager/compare/v1.2.1...v1.2.2) (2026-06-19)
 
 ### Bug Fixes

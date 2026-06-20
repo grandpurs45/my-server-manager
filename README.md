@@ -57,6 +57,8 @@ Verifier l'installation complete et generer les lignes cron adaptees au chemin r
 
 ```bash
 php scripts/setup.php
+php scripts/setup.php --install-deps
+php scripts/setup.php --composer-install
 php scripts/setup.php --cron
 php scripts/setup.php --systemd
 php scripts/setup.php --init-env
@@ -82,7 +84,7 @@ Resume rapide :
 2. Installer les dependances PHP :
 
    ```bash
-   composer install
+   php scripts/setup.php --composer-install
    ```
 
 3. Preparer la configuration locale :

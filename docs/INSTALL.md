@@ -50,7 +50,36 @@ La consommation depend surtout du nombre de serveurs supervises, de la frequence
 
 ## Installation des dependances systeme
 
-Sur une installation Linux vierge, installer d'abord les paquets systeme.
+Sur une installation Linux vierge, installer d'abord le minimum necessaire pour recuperer le projet et lancer le script setup.
+
+Debian / Ubuntu :
+
+```bash
+sudo apt update
+sudo apt install -y php-cli git
+```
+
+RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+sudo dnf install -y php-cli git
+```
+
+Une fois le projet clone, MSM peut afficher les commandes adaptees a la distribution pour installer le reste des dependances :
+
+```bash
+php scripts/setup.php --install-deps
+```
+
+Pour les executer automatiquement apres verification :
+
+```bash
+php scripts/setup.php --install-deps --yes
+```
+
+Sans `--yes`, aucune commande systeme n'est executee.
+
+Installation manuelle equivalente :
 
 Debian / Ubuntu :
 
@@ -79,7 +108,7 @@ rm composer-setup.php
 composer --version
 ```
 
-Ces commandes installent les dependances systeme. Les dependances PHP du projet sont ensuite installees avec `composer install` a l'etape 3.
+Ces commandes installent les dependances systeme. Les dependances PHP du projet sont ensuite installees a l'etape 3.
 
 ## 1. Recuperer le projet
 
@@ -114,12 +143,6 @@ php scripts/check-prerequisites.php
 
 Un warning sur `.env` ou `logs/` est normal a cette etape si l'installation vient juste d'etre clonee. Le script affiche les actions recommandees a executer ensuite.
 
-Si le terminal est encore dans `/var/www/html`, utiliser plutot :
-
-```bash
-php msm/scripts/check-prerequisites.php
-```
-
 Le script verifie :
 
 - la version PHP ;
@@ -153,6 +176,8 @@ Options utiles :
 - `--init-logs` : cree `logs/` et les fichiers `check-*.log` attendus ;
 - `--db-sql` : affiche les commandes SQL de creation de base et d'utilisateur ;
 - `--migrate` : lance explicitement `apply_migrations.php` ;
+- `--install-deps` : affiche les commandes d'installation des dependances systeme ;
+- `--composer-install` : installe les dependances PHP du projet avec Composer ;
 - `--cron` : affiche uniquement le bloc cron recommande.
 - `--systemd` : affiche les fichiers `.service` et `.timer` systemd recommandes.
 
@@ -169,6 +194,9 @@ Exemple :
 [OK] PHP extension pdo_mysql
 [WARN] Local config .env - missing; copy .env.example to .env before running MSM
 ```
+
+<details>
+<summary>Erreurs frequentes du script de prerequis</summary>
 
 ### Erreurs frequentes du script de prerequis
 
@@ -414,19 +442,29 @@ git config --global --add safe.directory /var/www/html/msm
 
 #### `/var/www/html/msm/vendor does not exist and could not be created`
 
-Composer ne peut pas creer le dossier `vendor/` car l'utilisateur courant n'a pas les droits d'ecriture sur le dossier projet.
+Composer ne peut pas creer le dossier `vendor/` car l'utilisateur qui lance Composer n'a pas les droits d'ecriture sur le dossier projet.
 
-Pendant l'installation, donner le projet a l'utilisateur courant :
+Ne pas utiliser `"$USER"` si le shell est connecte directement en `root` : dans ce cas, `$USER` vaut `root` et la commande ne change rien. Choisir explicitement l'utilisateur qui gere le deploiement et le groupe du serveur web.
 
-```bash
-sudo chown -R "$USER":"$USER" /var/www/html/msm
-```
-
-Puis relancer :
+Debian / Ubuntu :
 
 ```bash
-composer install --no-dev --optimize-autoloader
+APP_OWNER=<utilisateur_deploiement>
+WEB_GROUP=www-data
+sudo chown -R "$APP_OWNER":"$WEB_GROUP" /var/www/html/msm
 ```
+
+RHEL / Rocky Linux / AlmaLinux / Fedora :
+
+```bash
+APP_OWNER=<utilisateur_deploiement>
+WEB_GROUP=apache
+sudo chown -R "$APP_OWNER":"$WEB_GROUP" /var/www/html/msm
+```
+
+Le code applicatif ne doit pas etre donne en ecriture a l'utilisateur Apache. Seul `logs/` doit etre inscriptible par l'utilisateur qui execute les checks ou par le serveur web.
+
+</details>
 
 ## 3. Installer les dependances PHP du projet
 
@@ -437,16 +475,35 @@ pwd
 ls -ld .
 ```
 
-Si le dossier appartient a `root`, a `apache` ou a un autre utilisateur, corriger temporairement les droits pour l'utilisateur qui fait l'installation :
+Si le dossier appartient a `root`, a `apache` ou a un autre utilisateur, corriger les droits avec un proprietaire applicatif explicite.
+
+Debian / Ubuntu :
 
 ```bash
-sudo chown -R "$USER":"$USER" /var/www/html/msm
+APP_OWNER=<utilisateur_deploiement>
+WEB_GROUP=www-data
+sudo chown -R "$APP_OWNER":"$WEB_GROUP" /var/www/html/msm
 git config --global --add safe.directory /var/www/html/msm
 ```
 
-Cette commande permet a Composer de creer le dossier `vendor/` et evite l'erreur Git `detected dubious ownership`.
+RHEL / Rocky Linux / AlmaLinux / Fedora :
 
-Installer ensuite les dependances PHP :
+```bash
+APP_OWNER=<utilisateur_deploiement>
+WEB_GROUP=apache
+sudo chown -R "$APP_OWNER":"$WEB_GROUP" /var/www/html/msm
+git config --global --add safe.directory /var/www/html/msm
+```
+
+Cette commande permet a Composer de creer le dossier `vendor/` et evite l'erreur Git `detected dubious ownership`. Remplacer `<utilisateur_deploiement>` par un vrai utilisateur Linux, par exemple l'utilisateur avec lequel vous administrez la machine. Ne pas mettre `apache` ou `www-data` comme proprietaire du code applicatif.
+
+Installer ensuite les dependances PHP du projet :
+
+```bash
+php scripts/setup.php --composer-install
+```
+
+Equivalent manuel :
 
 ```bash
 composer install --no-dev --optimize-autoloader
@@ -473,7 +530,8 @@ Le script affiche :
 - les commandes SQL a executer dans MariaDB/MySQL ;
 - les valeurs `MSM_DB_NAME`, `MSM_DB_USER` et `MSM_DB_PASS` a reporter dans `.env`.
 
-Si le mot de passe affiche est `CHANGE_ME_STRONG_PASSWORD`, remplacer cette valeur par un mot de passe fort de ton choix dans la commande SQL et dans `.env`.
+> [!WARNING]
+> **ATTENTION : si le mot de passe affiche est `CHANGE_ME_STRONG_PASSWORD`, remplacer cette valeur par un mot de passe fort dans la commande SQL ET dans `.env`.**
 
 Entrer ensuite dans MariaDB/MySQL avec un compte administrateur :
 

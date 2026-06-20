@@ -14,6 +14,9 @@ $initEnv = in_array('--init-env', $options, true);
 $initLogs = in_array('--init-logs', $options, true);
 $dbSql = in_array('--db-sql', $options, true);
 $migrate = in_array('--migrate', $options, true);
+$installDeps = in_array('--install-deps', $options, true);
+$composerInstall = in_array('--composer-install', $options, true);
+$yes = in_array('--yes', $options, true);
 $systemdUser = readOptionValue($options, '--systemd-user') ?? 'www-data';
 $systemdGroup = readOptionValue($options, '--systemd-group');
 
@@ -29,6 +32,9 @@ if (in_array('--help', $options, true) || in_array('-h', $options, true)) {
     echo "  --init-logs  Cree le dossier logs/ et les fichiers de logs attendus si absents.\n";
     echo "  --db-sql     Affiche les commandes SQL de creation de base/utilisateur.\n";
     echo "  --migrate    Lance explicitement apply_migrations.php.\n";
+    echo "  --install-deps Affiche les commandes d'installation des dependances systeme.\n";
+    echo "  --composer-install Lance composer install --no-dev --optimize-autoloader.\n";
+    echo "  --yes        Execute les commandes systeme avec --install-deps.\n";
     echo "  --help       Affiche cette aide.\n";
     exit(0);
 }
@@ -38,6 +44,14 @@ $assistant = new SetupAssistant(__DIR__ . '/..');
 if ($systemdOnly) {
     $assistant->printSystemdInstructions($systemdUser, $systemdGroup);
     exit(0);
+}
+
+if ($installDeps) {
+    exit($assistant->installSystemDependencies($yes));
+}
+
+if ($composerInstall) {
+    exit($assistant->installComposerDependencies());
 }
 
 if ($initEnv) {

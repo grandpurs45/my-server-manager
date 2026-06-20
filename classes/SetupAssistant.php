@@ -242,12 +242,80 @@ class SetupAssistant
         $this->line('MSM_DB_NAME=' . $db);
         $this->line('MSM_DB_USER=' . $user);
         $this->line('MSM_DB_PASS=' . $pass);
+        if ($pass === 'CHANGE_ME_STRONG_PASSWORD') {
+            $this->line('');
+            $this->line($this->colorText('ATTENTION : remplacer CHANGE_ME_STRONG_PASSWORD par un mot de passe fort dans la commande SQL ET dans .env.', '31'));
+        }
         $this->line('');
         $this->line('Si .env n existe pas encore : php scripts/setup.php --init-env');
         $this->line('Puis editer .env et remplacer les valeurs MSM_DB_* avec celles ci-dessus.');
         $this->line('');
         $this->line('Puis appliquer les migrations depuis la racine MSM :');
         $this->line('php scripts/setup.php --migrate');
+
+        return $this->printSummary();
+    }
+
+    public function installSystemDependencies(bool $execute = false): int
+    {
+        $this->header('MSM system dependencies');
+
+        $commands = $this->detectDependencyInstallCommands();
+        if ($commands === []) {
+            $this->fail('Distribution supportee', 'impossible de detecter apt, dnf ou yum');
+            $this->addAction('Installer manuellement Apache, MariaDB/MySQL, PHP, les extensions PHP requises, Git, Composer et unzip.');
+            return $this->printSummary();
+        }
+
+        $this->line('Commandes detectees pour installer les dependances systeme :');
+        $this->line('');
+        foreach ($commands as $command) {
+            $this->line($command);
+        }
+
+        if (!$execute) {
+            $this->line('');
+            $this->warn('Mode simulation', 'aucune commande systeme executee');
+            $this->addAction('Relancer avec `php scripts/setup.php --install-deps --yes` pour executer ces commandes.');
+            $this->addAction('Relire les commandes avant execution, surtout sur une machine non dediee.');
+            return $this->printSummary();
+        }
+
+        $this->line('');
+        $this->line($this->colorText('Execution demandee par --yes.', '33'));
+        foreach ($commands as $command) {
+            $this->line('');
+            $this->line('$ ' . $command);
+            passthru($command, $code);
+            if ($code !== 0) {
+                $this->fail('Commande systeme', 'code ' . $code . ' pour: ' . $command);
+                return $this->printSummary();
+            }
+        }
+
+        $this->ok('Dependances systeme', 'commandes terminees');
+        return $this->printSummary();
+    }
+
+    public function installComposerDependencies(): int
+    {
+        $this->header('MSM Composer dependencies');
+
+        if (!$this->commandExists('composer')) {
+            $this->fail('Command composer', 'not found in PATH');
+            $this->addAction('Installer Composer, puis relancer `php scripts/setup.php --composer-install`.');
+            return $this->printSummary();
+        }
+
+        $command = 'composer install --no-dev --optimize-autoloader';
+        $this->line('$ ' . $command);
+        passthru($command, $code);
+
+        if ($code === 0) {
+            $this->ok('Composer install', 'dependances installees');
+        } else {
+            $this->fail('Composer install', 'commande terminee avec code ' . $code);
+        }
 
         return $this->printSummary();
     }
@@ -870,6 +938,46 @@ class SetupAssistant
         return str_replace('\\', '/', $path);
     }
 
+    private function detectDependencyInstallCommands(): array
+    {
+        if (PHP_OS_FAMILY !== 'Linux') {
+            return [];
+        }
+
+        $sudo = $this->isRootUser() ? '' : 'sudo ';
+
+        if ($this->commandExists('apt')) {
+            return [
+                $sudo . 'apt update',
+                $sudo . 'apt install -y apache2 mariadb-server mariadb-client php php-cli php-mysql php-mbstring php-xml php-curl php-zip unzip git composer',
+                $sudo . 'systemctl enable --now apache2 mariadb',
+            ];
+        }
+
+        if ($this->commandExists('dnf')) {
+            return [
+                $sudo . 'dnf install -y httpd mariadb-server mariadb php php-cli php-mysqlnd php-mbstring php-xml php-curl php-zip unzip git',
+                $sudo . 'systemctl enable --now httpd mariadb',
+                'command -v composer >/dev/null 2>&1 || echo "Composer non detecte : installer Composer manuellement depuis https://getcomposer.org/download/"',
+            ];
+        }
+
+        if ($this->commandExists('yum')) {
+            return [
+                $sudo . 'yum install -y httpd mariadb-server mariadb php php-cli php-mysqlnd php-mbstring php-xml php-curl php-zip unzip git',
+                $sudo . 'systemctl enable --now httpd mariadb',
+                'command -v composer >/dev/null 2>&1 || echo "Composer non detecte : installer Composer manuellement depuis https://getcomposer.org/download/"',
+            ];
+        }
+
+        return [];
+    }
+
+    private function isRootUser(): bool
+    {
+        return function_exists('posix_geteuid') && posix_geteuid() === 0;
+    }
+
     private function printSummary(): int
     {
         $this->printRecommendedActions();
@@ -975,7 +1083,16 @@ class SetupAssistant
             return $status;
         }
 
-        return "\033[" . $colors[$status] . 'm' . $status . "\033[0m";
+        return $this->colorText($status, $colors[$status]);
+    }
+
+    private function colorText(string $text, string $color): string
+    {
+        if (!$this->colorsEnabled) {
+            return $text;
+        }
+
+        return "\033[" . $color . 'm' . $text . "\033[0m";
     }
 
     private function detectColorSupport(): bool
