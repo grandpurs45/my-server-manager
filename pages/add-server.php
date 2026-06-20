@@ -1,16 +1,15 @@
 <?php
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../autoloader.php';
-require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/crypto.php';
 require_once __DIR__ . '/../includes/csrf.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/inventory_options.php';
 
 use MSM\SSHUtils;
 use MSM\ServerChecker;
 use MSM\SettingsManager;
 
-msmRequireValidCsrf('../pages/serveurs.php');
+msmRequireValidCsrf('serveurs.php');
 
 $name = trim($_POST['name'] ?? '');
 $hostname = trim($_POST['hostname'] ?? '');
@@ -43,13 +42,13 @@ $collectionMethod = msmInventoryNormalizeSelected($collectionMethod, $collection
 
 if (!$name || !$hostname) {
     $_SESSION['error'] = 'Nom et adresse du serveur sont obligatoires.';
-    header('Location: ../pages/serveurs.php');
+    header('Location: serveurs.php');
     exit;
 }
 
 if ($sshEnabled && (!$sshUser || !$sshPasswordEncrypted || !$sshPort)) {
     $_SESSION['error'] = 'Tous les champs SSH sont obligatoires si la connexion SSH est activee.';
-    header('Location: ../pages/serveurs.php');
+    header('Location: serveurs.php');
     exit;
 }
 
@@ -112,5 +111,5 @@ try {
     $_SESSION['error'] = "Erreur lors de l'ajout : " . $e->getMessage();
 }
 
-header('Location: ../pages/serveurs.php');
+header('Location: serveurs.php');
 exit;

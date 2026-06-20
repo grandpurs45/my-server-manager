@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Bug Fixes
+
+* correction de l'ajout serveur qui utilisait une session CSRF differente de la session authentifiee
+
 ## [1.2.4](https://github.com/grandpurs45/my-server-manager/compare/v1.2.3...v1.2.4) (2026-06-20)
 
 ### Documentation
