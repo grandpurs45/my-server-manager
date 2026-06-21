@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0](https://github.com/grandpurs45/my-server-manager/compare/v1.2.5...v1.3.0) (2026-06-21)
+
+### Features
+
+* ajout d'un bandeau informant l'utilisateur quand une nouvelle release MSM est disponible
+
+### Bug Fixes
+
+* clarification du diagnostic des logs avec un statut WARN quand seuls les droits web sont limites
+
 ## [1.2.5](https://github.com/grandpurs45/my-server-manager/compare/v1.2.4...v1.2.5) (2026-06-20)
 
 ### Bug Fixes

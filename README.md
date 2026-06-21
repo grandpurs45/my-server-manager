@@ -12,6 +12,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Securite operationnelle : ports ouverts, exposition reseau, firewall, dernier controle et erreurs de collecte.
 - Alerting : regles globales, alertes actives, mur d'alertes et vue backoffice.
 - Etats operationnels homogenes : `OK`, `Warning`, `Critical`, `Unknown`.
+- Notification de nouvelle version disponible avec lien vers les notes de release et le guide de mise a jour.
 - Parametres dynamiques : debug, supervision, reseau.
 - Migrations SQL versionnees.
 - Export Prometheus pour Grafana.

@@ -4,14 +4,27 @@ require_once __DIR__ . '/../includes/version.php';
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/header.php';
 
-function diagnosticStatus(bool $ok): string {
-    $class = $ok ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100';
-    $text = $ok ? 'OK' : 'KO';
+function diagnosticStatus(bool|string $status): string {
+    if (is_bool($status)) {
+        $status = $status ? 'ok' : 'ko';
+    }
+
+    $status = strtolower($status);
+    $class = match ($status) {
+        'ok' => 'text-green-700 bg-green-100',
+        'warn' => 'text-amber-700 bg-amber-100',
+        default => 'text-red-700 bg-red-100',
+    };
+    $text = match ($status) {
+        'ok' => 'OK',
+        'warn' => 'WARN',
+        default => 'KO',
+    };
 
     return '<span class="inline-flex px-2 py-1 rounded text-xs font-semibold ' . $class . '">' . $text . '</span>';
 }
 
-function diagnosticRow(string $label, string $value, ?bool $ok = null): string {
+function diagnosticRow(string $label, string $value, bool|string|null $ok = null): string {
     $status = $ok === null ? '' : diagnosticStatus($ok);
 
     return '<tr class="border-t">'
@@ -45,6 +58,49 @@ $logsPath = $projectRoot . DIRECTORY_SEPARATOR . 'logs';
 $migrationsPath = $projectRoot . DIRECTORY_SEPARATOR . 'migrations';
 $legacyKeyPath = $projectRoot . DIRECTORY_SEPARATOR . 'msm_secret.key';
 $secretConfigured = !empty(msmEnv('MSM_SECRET_KEY')) || is_readable($legacyKeyPath);
+
+$expectedLogFiles = [
+    'check-servers.log',
+    'check-patches.log',
+    'check-os-lifecycle.log',
+    'check-security.log',
+    'check-alerts.log',
+];
+$logsDetails = [];
+$logsStatus = 'ko';
+
+if (!is_dir($logsPath)) {
+    $logsDetails[] = 'dossier absent';
+} else {
+    $logsDetails[] = 'dossier present';
+
+    if (is_readable($logsPath)) {
+        $logsDetails[] = 'lisible';
+    } else {
+        $logsDetails[] = 'non lisible';
+    }
+
+    if (is_writable($logsPath)) {
+        $logsDetails[] = 'inscriptible par le serveur web';
+    } else {
+        $logsDetails[] = 'non inscriptible par le serveur web';
+    }
+
+    $missingLogFiles = [];
+    foreach ($expectedLogFiles as $logFile) {
+        if (!is_file($logsPath . DIRECTORY_SEPARATOR . $logFile)) {
+            $missingLogFiles[] = $logFile;
+        }
+    }
+
+    if ($missingLogFiles === []) {
+        $logsDetails[] = 'fichiers check-*.log presents';
+        $logsStatus = is_writable($logsPath) ? 'ok' : 'warn';
+    } else {
+        $logsDetails[] = 'fichiers manquants: ' . implode(', ', $missingLogFiles);
+        $logsStatus = 'warn';
+    }
+}
 ?>
 
 <div class="p-6">
@@ -73,16 +129,13 @@ $secretConfigured = !empty(msmEnv('MSM_SECRET_KEY')) || is_readable($legacyKeyPa
                 echo diagnosticRow('Fichier .env', $envPath, is_readable($envPath));
                 echo diagnosticRow('Cle de chiffrement', $secretConfigured ? 'Configuree' : 'Manquante', $secretConfigured);
                 echo diagnosticRow('Autoload Composer', $vendorAutoloadPath, is_readable($vendorAutoloadPath));
-                echo diagnosticRow('Dossier logs', $logsPath, is_dir($logsPath) && is_writable($logsPath));
+                echo diagnosticRow('Dossier logs', $logsPath . ' (' . implode(' ; ', $logsDetails) . ')', $logsStatus);
                 echo diagnosticRow('Dossier migrations', $migrationsPath, is_dir($migrationsPath) && is_readable($migrationsPath));
                 ?>
             </tbody>
         </table>
     </div>
 
-    <p class="text-sm text-gray-500">
-        Cette page ne doit pas afficher de secret. Elle sert a diagnostiquer rapidement la configuration locale et les ecarts de temps entre PHP et MariaDB.
-    </p>
 </div>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

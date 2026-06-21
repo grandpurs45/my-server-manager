@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/version.php';
+
+use MSM\UpdateChecker;
 
 $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '/index.php');
 $scriptDirectory = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
@@ -10,6 +13,15 @@ if (basename($scriptDirectory) === 'pages') {
 }
 
 $baseUrl = ($scriptDirectory === '' || $scriptDirectory === '.') ? '/' : $scriptDirectory . '/';
+$updateStatus = null;
+
+if (!empty($currentUser)) {
+    try {
+        $updateStatus = (new UpdateChecker($settings))->status(getVersionFromPackageJson());
+    } catch (Throwable) {
+        $updateStatus = null;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -124,6 +136,21 @@ if (ob_get_level() > 0) {
                 </div>
             <?php endif; ?>
         </header>
+        <?php if (!empty($updateStatus['update_available'])): ?>
+            <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-blue-900 shadow-sm">
+                <div class="text-sm">
+                    My Server Manager v<?= htmlspecialchars($updateStatus['latest_version']) ?> est disponible.
+                    <?php if (!empty($updateStatus['release_url'])): ?>
+                        <a href="<?= htmlspecialchars($updateStatus['release_url']) ?>" target="_blank" rel="noopener" class="font-semibold underline">
+                            Voir les informations de release
+                        </a>.
+                    <?php endif; ?>
+                </div>
+                <a href="https://github.com/grandpurs45/my-server-manager/blob/main/docs/UPDATE.md" target="_blank" rel="noopener" class="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                    Guide de mise a jour
+                </a>
+            </div>
+        <?php endif; ?>
         <?php if (!empty($currentUser) && (int) ($currentUser['password_must_change'] ?? 0) === 1): ?>
             <div class="mb-6 flex items-start gap-4 rounded-lg border-2 border-amber-400 bg-amber-100 px-5 py-4 text-amber-950 shadow-sm">
                 <div class="mt-0.5 rounded-full bg-amber-500 p-2 text-white">
