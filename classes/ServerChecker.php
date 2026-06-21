@@ -1,5 +1,6 @@
 <?php
 namespace MSM;
+
 require_once __DIR__ . '/../includes/crypto.php';
 require_once __DIR__ . '/../includes/network.php';
 
@@ -25,57 +26,28 @@ class ServerChecker
         $now = date('Y-m-d H:i:s');
 
         foreach ($servers as $server) {
-            $ping = $this->getPingStats($server['hostname']);
-            $status = $ping['status'];
-            $latency = $ping['latency'];
-            $availability = ($status === 'up') ? 1 : 0;
-
-            $this->history->recordChange(
-                (int) $server['id'],
-                'ping_status',
-                $server['status'] ?? null,
-                $status,
-                'Statut ping passe de ' . ($server['status'] ?? 'inconnu') . ' a ' . $status . '.',
-                $now
-            );
-
-            $update = $this->pdo->prepare("UPDATE servers SET status = :status, last_check = :last_check, latency = :latency WHERE id = :id");
-            $update->execute([
-                ':status' => $status,
-                ':last_check' => $now,
-                ':latency' => $latency,
-                ':id' => $server['id']
-            ]);
-
-            if ($this->withMetrics) {
-                if ($latency !== null) {
-                    $this->insertMetric($server['id'], 'ping', $latency, $now);
-                }
-
-                $this->insertMetric($server['id'], 'availability', $availability, $now);
-
-                $diskUsage = $this->getDiskUsageViaSSH($server);
-                if ($diskUsage !== null) {
-                    $this->insertMetric($server['id'], 'disk', $diskUsage, $now);
-                }
-            }
-
-            echo "[{$server['hostname']}] status=$status latency=" . ($latency ?? '-') . "\n";
-            
-            if (isset($server['ssh_enabled']) && !$server['ssh_enabled']) {
-                echo "[{$server['hostname']}] SSH désactivé\n";
-
-                // Mise à jour SSH KO si jamais activé avant
-                $this->updateSshOk((int) $server['id'], false, $now);
-                continue;
-            }
-
+            $this->checkServer($server, $now);
         }
+    }
+
+    public function runForServerId(int $serverId): void
+    {
+        $stmt = $this->pdo->prepare("SELECT id, hostname, os, status, ssh_user, ssh_password, ssh_port, ssh_enabled, ssh_status FROM servers WHERE id = :id");
+        $stmt->execute([':id' => $serverId]);
+        $server = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$server) {
+            throw new \RuntimeException('Cible introuvable.');
+        }
+
+        $this->checkServer($server, date('Y-m-d H:i:s'));
     }
 
     public function getPingStats(string $ip): array
     {
-        if (!function_exists('exec')) return ['status' => 'down', 'latency' => null];
+        if (!function_exists('exec')) {
+            return ['status' => 'down', 'latency' => null];
+        }
 
         $pingCmd = \msmBuildPingCommand($ip, 1);
         if ($pingCmd === null) {
@@ -95,13 +67,60 @@ class ServerChecker
             if ($isWindows && preg_match('/temps[=<]?\s*(\d+)\s*ms/i', $line, $matches)) {
                 $latency = (int) $matches[1];
                 break;
-            } elseif (!$isWindows && preg_match('/(?:time|temps)[=<]?(\d+\.?\d*)\s*ms/i', $line, $matches)) {
+            }
+
+            if (!$isWindows && preg_match('/(?:time|temps)[=<]?(\d+\.?\d*)\s*ms/i', $line, $matches)) {
                 $latency = round((float) $matches[1]);
                 break;
             }
         }
 
         return ['status' => 'up', 'latency' => $latency];
+    }
+
+    private function checkServer(array $server, string $now): void
+    {
+        $ping = $this->getPingStats($server['hostname']);
+        $status = $ping['status'];
+        $latency = $ping['latency'];
+        $availability = ($status === 'up') ? 1 : 0;
+
+        $this->history->recordChange(
+            (int) $server['id'],
+            'ping_status',
+            $server['status'] ?? null,
+            $status,
+            'Statut ping passe de ' . ($server['status'] ?? 'inconnu') . ' a ' . $status . '.',
+            $now
+        );
+
+        $update = $this->pdo->prepare("UPDATE servers SET status = :status, last_check = :last_check, latency = :latency WHERE id = :id");
+        $update->execute([
+            ':status' => $status,
+            ':last_check' => $now,
+            ':latency' => $latency,
+            ':id' => $server['id'],
+        ]);
+
+        if ($this->withMetrics) {
+            if ($latency !== null) {
+                $this->insertMetric((int) $server['id'], 'ping', $latency, $now);
+            }
+
+            $this->insertMetric((int) $server['id'], 'availability', $availability, $now);
+
+            $diskUsage = $this->getDiskUsageViaSSH($server);
+            if ($diskUsage !== null) {
+                $this->insertMetric((int) $server['id'], 'disk', $diskUsage, $now);
+            }
+        }
+
+        echo "[{$server['hostname']}] status=$status latency=" . ($latency ?? '-') . "\n";
+
+        if (isset($server['ssh_enabled']) && !$server['ssh_enabled']) {
+            echo "[{$server['hostname']}] SSH desactive\n";
+            $this->updateSshOk((int) $server['id'], false, $now);
+        }
     }
 
     private function insertMetric(int $serverId, string $type, float $value, string $datetime): void
@@ -112,7 +131,7 @@ class ServerChecker
             ':server_id' => $serverId,
             ':type' => $type,
             ':value' => $value,
-            ':measured_at' => $datetime
+            ':measured_at' => $datetime,
         ]);
     }
 
@@ -124,7 +143,7 @@ class ServerChecker
 
         try {
             $server['ssh_password'] = decrypt($server['ssh_password']);
-            $ssh = new SSH2($server['hostname'], (int)$server['ssh_port']);
+            $ssh = new SSH2($server['hostname'], (int) $server['ssh_port']);
             if (!$ssh->login($server['ssh_user'], $server['ssh_password'])) {
                 $this->updateSshOk((int) $server['id'], false);
                 return null;
@@ -140,22 +159,26 @@ class ServerChecker
             if ($osForDisk && stripos($osForDisk, 'windows') !== false) {
                 $output = $ssh->exec("wmic logicaldisk where \"DeviceID='C:'\" get FreeSpace,Size /format:csv");
                 $lines = explode("\n", trim($output));
-                if (count($lines) < 2) return null;
+                if (count($lines) < 2) {
+                    return null;
+                }
+
                 $parts = str_getcsv($lines[1]);
                 $free = (float) $parts[1];
                 $total = (float) $parts[2];
             } else {
                 $output = $ssh->exec('df -P / | tail -1');
                 $cols = preg_split('/\s+/', trim($output));
-                $usedPercent = rtrim($cols[4], '%');
-                return (float) $usedPercent;
+                $usedPercent = rtrim($cols[4] ?? '', '%');
+
+                return is_numeric($usedPercent) ? (float) $usedPercent : null;
             }
 
             if ($total > 0) {
                 $used = 100 - (($free / $total) * 100);
                 return round($used, 1);
             }
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             $this->updateSshOk((int) $server['id'], false);
             return null;
         }
@@ -250,7 +273,7 @@ class ServerChecker
         $stmt = $this->pdo->prepare("UPDATE servers SET ssh_status = :status WHERE id = :id");
         $stmt->execute([
             ':status' => $newStatus,
-            ':id'     => $id
+            ':id' => $id,
         ]);
     }
 

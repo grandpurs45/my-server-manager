@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/bootstrap.php';
+require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../includes/inventory_options.php';
 
 use MSM\PatchStatusRepository;
@@ -187,6 +188,12 @@ $criticality = $server['criticality'] ?? 'medium';
 $collectionMethod = $server['collection_method'] ?? 'manual';
 $latency = $server['latency'] ?? null;
 $diskUsage = msmDetailMetricValue($metrics, 'disk');
+$canRefreshSupervision = $authManager->userCan('supervision');
+$canRefreshPatch = $authManager->userCan('patch_management') && !empty($server['patch_management_enabled']);
+$canRefreshOsLifecycle = $authManager->userCan('patch_management')
+    && !empty($server['ssh_enabled'])
+    && in_array($type, ['linux', 'proxmox'], true);
+$canRefreshSecurity = $authManager->userCan('securite') && !empty($server['security_enabled']) && !empty($server['ssh_enabled']);
 ?>
 
 <div class="p-6">
@@ -201,12 +208,78 @@ $diskUsage = msmDetailMetricValue($metrics, 'disk');
             <p class="text-sm text-slate-600"><?= htmlspecialchars($server['hostname'] ?? '') ?></p>
         </div>
 
-        <a href="<?= $baseUrl ?>pages/serveurs.php?edit=<?= (int) $server['id'] ?>"
-           class="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-            <i data-lucide="pencil" class="w-4 h-4"></i>
-            Modifier
-        </a>
+        <div class="flex flex-wrap justify-end gap-2">
+            <?php if ($canRefreshSupervision): ?>
+                <form method="post" action="<?= $baseUrl ?>pages/refresh-target.php">
+                    <?= msmCsrfField() ?>
+                    <input type="hidden" name="server_id" value="<?= (int) $server['id'] ?>">
+                    <input type="hidden" name="module" value="supervision">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                        <i data-lucide="activity" class="w-4 h-4"></i>
+                        Supervision
+                    </button>
+                </form>
+            <?php endif; ?>
+
+            <?php if ($canRefreshPatch): ?>
+                <form method="post" action="<?= $baseUrl ?>pages/refresh-target.php">
+                    <?= msmCsrfField() ?>
+                    <input type="hidden" name="server_id" value="<?= (int) $server['id'] ?>">
+                    <input type="hidden" name="module" value="patch_management">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                        <i data-lucide="package-check" class="w-4 h-4"></i>
+                        Patch
+                    </button>
+                </form>
+            <?php endif; ?>
+
+            <?php if ($canRefreshOsLifecycle): ?>
+                <form method="post" action="<?= $baseUrl ?>pages/refresh-target.php">
+                    <?= msmCsrfField() ?>
+                    <input type="hidden" name="server_id" value="<?= (int) $server['id'] ?>">
+                    <input type="hidden" name="module" value="os_lifecycle">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        Cycle OS
+                    </button>
+                </form>
+            <?php endif; ?>
+
+            <?php if ($canRefreshSecurity): ?>
+                <form method="post" action="<?= $baseUrl ?>pages/refresh-target.php">
+                    <?= msmCsrfField() ?>
+                    <input type="hidden" name="server_id" value="<?= (int) $server['id'] ?>">
+                    <input type="hidden" name="module" value="security">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        Securite
+                    </button>
+                </form>
+            <?php endif; ?>
+
+            <a href="<?= $baseUrl ?>pages/serveurs.php?edit=<?= (int) $server['id'] ?>"
+               class="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+                Modifier
+            </a>
+        </div>
     </div>
+
+    <?php if (!empty($_SESSION['error'])): ?>
+        <div class="mb-4 flex items-center rounded border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            <i data-lucide="alert-circle" class="mr-2 h-5 w-5"></i>
+            <?= htmlspecialchars($_SESSION['error']) ?>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
+    <?php if (!empty($_SESSION['success'])): ?>
+        <div class="mb-4 flex items-center rounded border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
+            <i data-lucide="check-circle" class="mr-2 h-5 w-5"></i>
+            <?= htmlspecialchars($_SESSION['success']) ?>
+        </div>
+        <?php unset($_SESSION['success']); ?>
+    <?php endif; ?>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">

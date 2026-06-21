@@ -9,6 +9,11 @@ return [
         ]
     ],
     'msm' => [
+        'browser_title' => [
+            'type' => 'text',
+            'label' => 'Titre onglet navigateur',
+            'default' => 'My Server Manager'
+        ],
         'debug_mode' => [
             'type' => 'checkbox',
             'label' => 'Mode debug',

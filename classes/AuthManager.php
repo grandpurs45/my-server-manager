@@ -381,7 +381,7 @@ class AuthManager
 
         return match ($base) {
             'index.php' => 'dashboard',
-            'serveurs.php', 'add-server.php', 'details-cible.php' => 'serveurs',
+            'serveurs.php', 'add-server.php', 'details-cible.php', 'refresh-target.php' => 'serveurs',
             'supervision.php', 'update-status.php' => 'supervision',
             'alerts.php', 'alerts-wall.php', 'alerts-wall-standalone.php', 'alert-rules.php' => 'alertes',
             'patch-management.php' => 'patch_management',

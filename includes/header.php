@@ -14,6 +14,10 @@ if (basename($scriptDirectory) === 'pages') {
 
 $baseUrl = ($scriptDirectory === '' || $scriptDirectory === '.') ? '/' : $scriptDirectory . '/';
 $updateStatus = null;
+$browserTitle = trim((string) ($settings->get('msm', 'browser_title') ?? ''));
+if ($browserTitle === '') {
+    $browserTitle = 'My Server Manager';
+}
 
 if (!empty($currentUser)) {
     try {
@@ -27,7 +31,7 @@ if (!empty($currentUser)) {
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>My Server Manager</title>
+    <title><?= htmlspecialchars($browserTitle) ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="icon" type="image/png" href="<?= $baseUrl ?>assets/favicon.png">

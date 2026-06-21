@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version de travail : `v1.2.x`.
+Version de travail : `v1.4.x`.
 
 Socle valide :
 
@@ -18,22 +18,26 @@ Socle valide :
 - guide d'installation, guide de mise a jour et assistant CLI disponibles ;
 - authentification locale avec utilisateurs, droits modules et politique de mots de passe ;
 - inventaire configurable des cibles ;
-- supervision ping / SSH / latence / disque ;
+- supervision ping / SSH / latence / disque avec refresh cible ;
 - patch management Linux, Proxmox, `apt` et `dnf` ;
 - cycle de vie OS avec support / obsolescence / upgrade connu ;
 - securite operationnelle de base ;
 - alerting interne avec regles globales, mur d'alertes et vue backoffice ;
-- export Prometheus stable.
+- export Prometheus stable ;
+- titre d'onglet navigateur personnalisable par environnement.
 
-## Priorite v1.3 - Notification de Nouvelle Version
+## Priorite v1.5 - Diagnostic par Cible
 
-Objectif : informer simplement l'utilisateur quand une nouvelle version MSM est disponible.
+Objectif : expliquer rapidement pourquoi un check echoue sur une cible precise.
 
-- Afficher dans l'interface qu'une nouvelle version est disponible.
-- Comparer la version locale a la derniere release connue.
-- Ne pas bloquer l'application si GitHub ou Internet est indisponible.
-- Mettre en cache le resultat pour eviter un appel distant a chaque page.
-- Prevoir un lien vers le guide de mise a jour.
+- Afficher un diagnostic depuis la fiche cible.
+- Tester la resolution DNS vue par PHP.
+- Tester le ping MSM.
+- Tester le port TCP SSH.
+- Tester le login SSH via phpseclib.
+- Lire l'OS distant si SSH fonctionne.
+- Afficher les derniers messages d'erreur patch, cycle OS et securite.
+- Garder cette page sans exposition de secrets.
 
 ## Backlog v1.x
 
@@ -56,7 +60,6 @@ Objectif : informer simplement l'utilisateur quand une nouvelle version MSM est 
 
 - Fiche cible par onglets : resume, inventaire, supervision, patch management, cycle de vie OS, securite, historique.
 - Diagnostic par cible : DNS, TCP, SSH, ping, causes probables sans exposer les secrets.
-- Refresh cible par module : supervision, patch management, cycle de vie OS, securite.
 - Retours d'action plus utiles : messages visibles, erreurs reformulees, liens vers diagnostic ou logs.
 - Historique des changements d'inventaire.
 - Colonnes personnalisables dans les listes.
@@ -90,6 +93,20 @@ Objectif : informer simplement l'utilisateur quand une nouvelle version MSM est 
 - Analyse de mots de passe faibles ou compromis.
 
 ## Realise
+
+### v1.4 - Refresh Cible et Personnalisation Environnement
+
+- Refresh cible par module depuis la fiche cible :
+  - supervision ;
+  - patch management ;
+  - cycle de vie OS ;
+  - securite.
+- Titre d'onglet navigateur personnalisable depuis les parametres MSM.
+
+### v1.3 - Notification de Nouvelle Version
+
+- Notification de nouvelle version disponible dans l'interface.
+- Cache local du resultat de verification de release GitHub.
 
 ### v1.2 - Setup et Maintenance
 
