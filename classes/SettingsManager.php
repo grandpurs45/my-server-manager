@@ -31,6 +31,11 @@ class SettingsManager {
         return $stmt->fetchAll(\PDO::FETCH_KEY_PAIR);
     }
 
+    public function deleteCategory(string $category): bool {
+        $stmt = $this->pdo->prepare("DELETE FROM settings WHERE category = ?");
+        return $stmt->execute([$category]);
+    }
+
     public function getAll(): array {
         $stmt = $this->pdo->query("SELECT category, setting_key, setting_value FROM settings ORDER BY category, setting_key");
         $settings = [];

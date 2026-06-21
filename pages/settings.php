@@ -22,6 +22,15 @@ $labels = [
 
 $settings_schema = require __DIR__ . '/../config/settings-schema.php';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'check_msm_update') {
+    msmRequireValidCsrf('settings.php');
+
+    $settingsManager->deleteCategory('msm_update');
+    $_SESSION['success'] = 'Cache de verification des mises a jour MSM vide. La prochaine page chargee relancera la verification.';
+    header('Location: settings.php');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['category'])) {
     msmRequireValidCsrf('settings.php');
 
@@ -89,6 +98,21 @@ require_once __DIR__ . '/../includes/header.php';
                             <a href="users.php" class="inline-flex items-center rounded bg-blue-600 px-3 py-2 font-semibold text-white hover:bg-blue-700">
                                 Gerer les utilisateurs
                             </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <?php if ($category === 'msm'): ?>
+                    <div class="mb-5 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <span>Force une nouvelle verification de version MSM au prochain chargement de page.</span>
+                            <form method="POST">
+                                <?php echo msmCsrfField(); ?>
+                                <input type="hidden" name="action" value="check_msm_update">
+                                <button type="submit" class="inline-flex items-center gap-2 rounded bg-blue-600 px-3 py-2 font-semibold text-white hover:bg-blue-700">
+                                    <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+                                    Verifier les mises a jour MSM
+                                </button>
+                            </form>
                         </div>
                     </div>
                 <?php endif; ?>
