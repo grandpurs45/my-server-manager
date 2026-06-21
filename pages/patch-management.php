@@ -19,6 +19,22 @@ $filters = [
     'type' => $_GET['type'] ?? '',
     'action' => $_GET['action'] ?? '',
 ];
+$allowedSorts = [
+    'target',
+    'type',
+    'environment',
+    'criticality',
+    'collector',
+    'patch_status',
+    'security',
+    'normal',
+    'reboot',
+    'os_lifecycle',
+    'priority',
+    'checked_at',
+];
+$sort = in_array($_GET['sort'] ?? '', $allowedSorts, true) ? (string) $_GET['sort'] : 'priority';
+$direction = ($_GET['dir'] ?? '') === 'desc' ? 'desc' : 'asc';
 
 function msmPatchNeedsAction(array $target): bool
 {
@@ -78,8 +94,55 @@ $targets = array_values(array_filter($targets, function (array $target) use ($fi
     };
 }));
 
-usort($targets, function (array $a, array $b): int {
-    return msmPatchPriority($a) <=> msmPatchPriority($b)
+function msmPatchSortValue(array $target, string $sort, array $targetTypes, array $environments, array $criticalities): int|string
+{
+    return match ($sort) {
+        'target' => strtolower((string) ($target['name'] ?? '')),
+        'type' => strtolower((string) ($targetTypes[$target['target_type'] ?? ''] ?? ($target['target_type'] ?? 'other'))),
+        'environment' => strtolower((string) ($environments[$target['environment'] ?? ''] ?? ($target['environment'] ?? 'other'))),
+        'criticality' => match ($target['criticality'] ?? 'medium') {
+            'critical' => 0,
+            'high' => 1,
+            'medium' => 2,
+            'low' => 3,
+            default => 4,
+        },
+        'collector' => strtolower((string) ($target['collector'] ?? '')),
+        'patch_status' => match ($target['patch_status'] ?? 'never') {
+            'error' => 0,
+            'critical' => 1,
+            'warning' => 2,
+            'ok' => 3,
+            'unsupported' => 4,
+            default => 5,
+        },
+        'security' => (int) ($target['security_updates_count'] ?? 0),
+        'normal' => (int) ($target['normal_updates_count'] ?? 0),
+        'reboot' => !empty($target['reboot_required']) ? 1 : 0,
+        'os_lifecycle' => match ($target['os_support_status'] ?? 'unknown') {
+            'eol' => 0,
+            'eol_soon' => 1,
+            'supported' => 2,
+            default => 3,
+        },
+        'checked_at' => !empty($target['checked_at']) ? strtotime((string) $target['checked_at']) ?: 0 : 0,
+        default => msmPatchPriority($target),
+    };
+}
+
+usort($targets, function (array $a, array $b) use ($sort, $direction, $targetTypes, $environments, $criticalities): int {
+    $valueA = msmPatchSortValue($a, $sort, $targetTypes, $environments, $criticalities);
+    $valueB = msmPatchSortValue($b, $sort, $targetTypes, $environments, $criticalities);
+    $compare = is_string($valueA) || is_string($valueB)
+        ? strcasecmp((string) $valueA, (string) $valueB)
+        : $valueA <=> $valueB;
+
+    if ($direction === 'desc') {
+        $compare *= -1;
+    }
+
+    return $compare
+        ?: msmPatchPriority($a) <=> msmPatchPriority($b)
         ?: strcasecmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
 });
 
@@ -155,6 +218,29 @@ function msmPatchActionBadges(array $target): string
     return '<div class="flex flex-wrap gap-1">' . implode('', $badges) . '</div>';
 }
 
+function msmPatchSortHeader(string $key, string $label, string $currentSort, string $currentDirection): string
+{
+    $params = $_GET;
+    $defaultDescSorts = ['security', 'normal', 'reboot', 'checked_at'];
+    $nextDirection = in_array($key, $defaultDescSorts, true) ? 'desc' : 'asc';
+    if ($currentSort === $key) {
+        $nextDirection = $currentDirection === 'asc' ? 'desc' : 'asc';
+    }
+    $params['sort'] = $key;
+    $params['dir'] = $nextDirection;
+    $href = 'patch-management.php?' . http_build_query($params);
+    $active = $currentSort === $key;
+    $icon = $active
+        ? ($currentDirection === 'asc' ? 'arrow-up' : 'arrow-down')
+        : 'chevrons-up-down';
+    $class = $active ? 'text-blue-700' : 'text-slate-700 hover:text-blue-700';
+
+    return '<a href="' . htmlspecialchars($href) . '" class="inline-flex items-center gap-1 ' . $class . '">'
+        . htmlspecialchars($label)
+        . '<i data-lucide="' . $icon . '" class="h-3.5 w-3.5"></i>'
+        . '</a>';
+}
+
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -193,6 +279,8 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 
     <form method="get" class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <input type="hidden" name="sort" value="<?= htmlspecialchars($sort) ?>">
+        <input type="hidden" name="dir" value="<?= htmlspecialchars($direction) ?>">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
             <label class="block">
                 <span class="mb-1 block text-xs font-semibold uppercase text-slate-500">Action</span>
@@ -245,7 +333,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
 
         <div class="mt-3 text-xs text-slate-500">
-            Cibles exclues du patch management : <?= $disabledCount ?>. Le tri affiche les erreurs, risques OS, updates securite et reboots en premier.
+            Cibles exclues du patch management : <?= $disabledCount ?>. Par defaut, le tri place les erreurs, risques OS, updates securite et reboots en premier.
         </div>
     </form>
 
@@ -292,18 +380,18 @@ require_once __DIR__ . '/../includes/header.php';
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-slate-100 text-left">
                 <tr>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Cible</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Type</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Env.</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Criticite</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Collecteur</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Statut patch</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Securite</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Normales</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Reboot</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Cycle OS</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Priorite</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-slate-700">Dernier check</th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('target', 'Cible', $sort, $direction) ?></th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('type', 'Type', $sort, $direction) ?></th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('environment', 'Env.', $sort, $direction) ?></th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('criticality', 'Criticite', $sort, $direction) ?></th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('collector', 'Collecteur', $sort, $direction) ?></th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('patch_status', 'Statut patch', $sort, $direction) ?></th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('security', 'Securite', $sort, $direction) ?></th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('normal', 'Normales', $sort, $direction) ?></th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('reboot', 'Reboot', $sort, $direction) ?></th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('os_lifecycle', 'Cycle OS', $sort, $direction) ?></th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('priority', 'Priorite', $sort, $direction) ?></th>
+                    <th class="px-4 py-3 text-sm font-semibold"><?= msmPatchSortHeader('checked_at', 'Dernier check', $sort, $direction) ?></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
