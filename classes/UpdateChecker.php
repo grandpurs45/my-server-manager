@@ -6,6 +6,8 @@ class UpdateChecker
     private const CATEGORY = 'msm_update';
     private const CACHE_TTL_SECONDS = 21600;
     private const RELEASE_API_URL = 'https://api.github.com/repos/grandpurs45/my-server-manager/releases/latest';
+    private const TAGS_API_URL = 'https://api.github.com/repos/grandpurs45/my-server-manager/tags';
+    private const TAG_RELEASE_URL_PREFIX = 'https://github.com/grandpurs45/my-server-manager/releases/tag/';
 
     public function __construct(private SettingsManager $settingsManager)
     {
@@ -20,15 +22,15 @@ class UpdateChecker
             return $cached;
         }
 
-        $latest = $this->fetchLatestRelease();
+        $latest = $this->fetchLatestVersion();
         if ($latest === null) {
-            $this->settingsManager->set(self::CATEGORY, 'last_error', 'Impossible de recuperer la derniere release.');
+            $this->settingsManager->set(self::CATEGORY, 'last_error', 'Impossible de recuperer la derniere version.');
             $this->settingsManager->set(self::CATEGORY, 'checked_at', date('c'));
             return $this->cachedStatus($currentVersion);
         }
 
-        $latestVersion = $this->normalizeVersion((string) ($latest['tag_name'] ?? ''));
-        $releaseUrl = (string) ($latest['html_url'] ?? '');
+        $latestVersion = $latest['version'];
+        $releaseUrl = $latest['url'];
 
         $this->settingsManager->set(self::CATEGORY, 'latest_version', $latestVersion);
         $this->settingsManager->set(self::CATEGORY, 'release_url', $releaseUrl);
@@ -84,6 +86,11 @@ class UpdateChecker
         return time() - $timestamp < self::CACHE_TTL_SECONDS;
     }
 
+    private function fetchLatestVersion(): ?array
+    {
+        return $this->fetchLatestRelease() ?? $this->fetchLatestTag();
+    }
+
     private function fetchLatestRelease(): ?array
     {
         $json = $this->fetchUrl(self::RELEASE_API_URL);
@@ -92,7 +99,56 @@ class UpdateChecker
         }
 
         $data = json_decode($json, true);
-        return is_array($data) ? $data : null;
+        if (!is_array($data) || empty($data['tag_name'])) {
+            return null;
+        }
+
+        return [
+            'version' => $this->normalizeVersion((string) $data['tag_name']),
+            'url' => (string) ($data['html_url'] ?? ''),
+        ];
+    }
+
+    private function fetchLatestTag(): ?array
+    {
+        $json = $this->fetchUrl(self::TAGS_API_URL);
+        if ($json === null) {
+            return null;
+        }
+
+        $tags = json_decode($json, true);
+        if (!is_array($tags)) {
+            return null;
+        }
+
+        $latestVersion = '';
+        $latestTagName = '';
+
+        foreach ($tags as $tag) {
+            if (!is_array($tag) || empty($tag['name'])) {
+                continue;
+            }
+
+            $tagName = (string) $tag['name'];
+            $version = $this->normalizeVersion($tagName);
+            if (!$this->looksLikeVersion($version)) {
+                continue;
+            }
+
+            if ($latestVersion === '' || version_compare($version, $latestVersion, '>')) {
+                $latestVersion = $version;
+                $latestTagName = $tagName;
+            }
+        }
+
+        if ($latestVersion === '') {
+            return null;
+        }
+
+        return [
+            'version' => $latestVersion,
+            'url' => self::TAG_RELEASE_URL_PREFIX . rawurlencode($latestTagName),
+        ];
     }
 
     private function fetchUrl(string $url): ?string
@@ -139,5 +195,10 @@ class UpdateChecker
         }
 
         return $version;
+    }
+
+    private function looksLikeVersion(string $version): bool
+    {
+        return preg_match('/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/', $version) === 1;
     }
 }
