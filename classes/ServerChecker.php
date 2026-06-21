@@ -131,8 +131,13 @@ class ServerChecker
             }
 
             $this->updateSshOk((int) $server['id'], true);
+            $detectedOs = $this->detectOsViaSSH($ssh);
+            if ($detectedOs !== null) {
+                $this->updateOsIfChanged((int) $server['id'], $server['os'] ?? null, $detectedOs);
+            }
 
-            if ($server['os'] && stripos($server['os'], 'windows') !== false) {
+            $osForDisk = $detectedOs ?? ($server['os'] ?? '');
+            if ($osForDisk && stripos($osForDisk, 'windows') !== false) {
                 $output = $ssh->exec("wmic logicaldisk where \"DeviceID='C:'\" get FreeSpace,Size /format:csv");
                 $lines = explode("\n", trim($output));
                 if (count($lines) < 2) return null;
@@ -156,6 +161,75 @@ class ServerChecker
         }
 
         return null;
+    }
+
+    private function detectOsViaSSH(SSH2 $ssh): ?string
+    {
+        $output = trim((string) $ssh->exec('cat /etc/os-release 2>/dev/null'));
+        if ($output !== '') {
+            $values = [];
+            foreach (preg_split('/\R/', $output) ?: [] as $line) {
+                if (!str_contains($line, '=')) {
+                    continue;
+                }
+
+                [$key, $value] = explode('=', $line, 2);
+                $values[$key] = trim($value, " \t\n\r\0\x0B\"'");
+            }
+
+            if (!empty($values['PRETTY_NAME'])) {
+                return $values['PRETTY_NAME'];
+            }
+
+            $fallback = trim(($values['NAME'] ?? '') . ' ' . ($values['VERSION'] ?? ''));
+            if ($fallback !== '') {
+                return $fallback;
+            }
+        }
+
+        $output = trim((string) $ssh->exec('powershell -Command "(Get-CimInstance Win32_OperatingSystem).Caption"'));
+        if ($output !== '' && !$this->looksLikeCommandError($output)) {
+            return $output;
+        }
+
+        $output = trim((string) $ssh->exec('ver'));
+        return $output !== '' && !$this->looksLikeCommandError($output) ? $output : null;
+    }
+
+    private function looksLikeCommandError(string $output): bool
+    {
+        $output = strtolower($output);
+
+        return str_contains($output, 'not found')
+            || str_contains($output, 'not recognized')
+            || str_contains($output, 'introuvable')
+            || str_contains($output, 'erreur');
+    }
+
+    private function updateOsIfChanged(int $id, ?string $previousOs, string $detectedOs): void
+    {
+        $previousOs = trim((string) $previousOs);
+        $detectedOs = trim($detectedOs);
+
+        if ($detectedOs === '' || $detectedOs === $previousOs) {
+            return;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $this->history->recordChange(
+            $id,
+            'os',
+            $previousOs !== '' ? $previousOs : null,
+            $detectedOs,
+            'OS detecte passe de ' . ($previousOs !== '' ? $previousOs : 'inconnu') . ' a ' . $detectedOs . '.',
+            $now
+        );
+
+        $stmt = $this->pdo->prepare("UPDATE servers SET os = :os WHERE id = :id");
+        $stmt->execute([
+            ':os' => $detectedOs,
+            ':id' => $id,
+        ]);
     }
 
     private function updateSshOk(int $id, bool $ok, ?string $createdAt = null): void
