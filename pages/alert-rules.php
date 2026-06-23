@@ -22,8 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $thresholdValue = $thresholdRaw === '' ? null : max(1, (int) $thresholdRaw);
 
     if ($ruleKey !== '') {
-        $repository->updateRule($ruleKey, $enabled, $severity, $thresholdValue);
+        $resolvedAlerts = $repository->updateRule($ruleKey, $enabled, $severity, $thresholdValue);
         $_SESSION['success'] = 'Regle d alerte mise a jour.';
+        if ($resolvedAlerts > 0) {
+            $_SESSION['success'] .= ' ' . $resolvedAlerts . ' alerte(s) active(s) resolue(s).';
+        }
     }
 
     header('Location: alert-rules.php');

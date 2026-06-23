@@ -336,6 +336,8 @@ class PrometheusExporter
              FROM alerts a
              LEFT JOIN servers s ON s.id = a.server_id
              WHERE a.status = 'active'
+               AND a.acknowledged_at IS NULL
+               AND a.ignored_at IS NULL
              ORDER BY a.id ASC"
         );
 

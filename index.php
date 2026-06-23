@@ -14,6 +14,9 @@ $securityRepository = new SecurityStatusRepository($pdo);
 $securityTargets = $securityRepository->getOverview();
 $alertRepository = new AlertRepository($pdo);
 $alertCounts = $alertRepository->getActiveAlertCounts();
+$enabledAlertRules = $alertRepository->getEnabledRules();
+$securityExposedPortsRuleEnabled = isset($enabledAlertRules['security_exposed_ports']);
+$securityFirewallRuleEnabled = isset($enabledAlertRules['security_firewall_disabled']);
 
 $serverStats = $pdo->query("
     SELECT
@@ -46,9 +49,15 @@ $summary = [
     'reboot_required' => array_sum(array_map(fn (array $target): int => (int) ($target['reboot_required'] ?? 0), $patchTargets)),
     'os_upgrades' => array_sum(array_map(fn (array $target): int => (int) ($target['os_upgrade_available'] ?? 0), $patchTargets)),
     'os_risks' => count(array_filter($patchTargets, fn (array $target): bool => in_array($target['os_support_status'] ?? null, ['eol', 'eol_soon'], true))),
-    'security_risks' => count(array_filter($securityTargets, fn (array $target): bool => in_array($target['security_status'] ?? null, ['warning', 'error'], true))),
-    'security_exposed_ports' => array_sum(array_map(fn (array $target): int => (int) ($target['exposed_ports_count'] ?? 0), $securityTargets)),
-    'security_firewall_warnings' => count(array_filter($securityTargets, fn (array $target): bool => in_array($target['firewall_status'] ?? null, ['inactif', 'not_installed', null], true))),
+    'security_risks' => count(array_filter($securityTargets, fn (array $target): bool => ($target['security_status'] ?? null) === 'error'
+        || ($securityExposedPortsRuleEnabled && (int) ($target['exposed_ports_count'] ?? 0) > 0)
+        || ($securityFirewallRuleEnabled && in_array($target['firewall_status'] ?? null, ['inactif', 'not_installed', null], true)))),
+    'security_exposed_ports' => $securityExposedPortsRuleEnabled
+        ? array_sum(array_map(fn (array $target): int => (int) ($target['exposed_ports_count'] ?? 0), $securityTargets))
+        : 0,
+    'security_firewall_warnings' => $securityFirewallRuleEnabled
+        ? count(array_filter($securityTargets, fn (array $target): bool => in_array($target['firewall_status'] ?? null, ['inactif', 'not_installed', null], true)))
+        : 0,
     'active_alerts' => (int) ($alertCounts['total'] ?? 0),
     'critical_alerts' => (int) ($alertCounts['critical'] ?? 0),
 ];
@@ -169,7 +178,7 @@ foreach ($securityTargets as $target) {
         continue;
     }
 
-    if ($exposedPorts > 0) {
+    if ($securityExposedPortsRuleEnabled && $exposedPorts > 0) {
         $priorities[] = [
             'score' => 3,
             'label' => $exposedPorts . ' port(s) expose(s)',
@@ -179,7 +188,7 @@ foreach ($securityTargets as $target) {
             'href' => $baseUrl . 'pages/details-securite.php?id=' . (int) $target['id'],
             'badge' => 'bg-red-100 text-red-700',
         ];
-    } elseif (in_array($firewallStatus, ['inactif', 'not_installed', null], true)) {
+    } elseif ($securityFirewallRuleEnabled && in_array($firewallStatus, ['inactif', 'not_installed', null], true)) {
         $priorities[] = [
             'score' => 4,
             'label' => 'Firewall a verifier',
@@ -343,7 +352,7 @@ $freshness = [
 
         <a href="<?= $baseUrl ?>pages/alerts.php" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
             <div class="flex items-center justify-between">
-                <div class="text-xs font-semibold uppercase text-slate-500">Alertes actives</div>
+                <div class="text-xs font-semibold uppercase text-slate-500">Alertes a traiter</div>
                 <i data-lucide="bell-ring" class="h-5 w-5 text-red-500"></i>
             </div>
             <div class="mt-2 text-3xl font-bold text-red-700"><?= $summary['active_alerts'] ?></div>

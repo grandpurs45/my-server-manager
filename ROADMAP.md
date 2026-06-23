@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version de travail : `v1.4.x`.
+Version de travail : `v1.5.x`.
 
 Socle valide :
 
@@ -22,22 +22,22 @@ Socle valide :
 - patch management Linux, Proxmox, `apt` et `dnf` ;
 - cycle de vie OS avec support / obsolescence / upgrade connu ;
 - securite operationnelle de base ;
-- alerting interne avec regles globales, mur d'alertes et vue backoffice ;
+- alerting interne avec regles globales, mur d'alertes, vue backoffice et traitement manuel ;
 - export Prometheus stable ;
 - titre d'onglet navigateur personnalisable par environnement.
 
-## Priorite v1.5 - Diagnostic par Cible
+## Priorite v1.5 - Traitement Manuel des Alertes
 
-Objectif : expliquer rapidement pourquoi un check echoue sur une cible precise.
+Objectif : rendre le backoffice alertes exploitable au quotidien sans partir sur un systeme de notification complet.
 
-- Afficher un diagnostic depuis la fiche cible.
-- Tester la resolution DNS vue par PHP.
-- Tester le ping MSM.
-- Tester le port TCP SSH.
-- Tester le login SSH via phpseclib.
-- Lire l'OS distant si SSH fonctionne.
-- Afficher les derniers messages d'erreur patch, cycle OS et securite.
-- Garder cette page sans exposition de secrets.
+- Acquitter une alerte active.
+- Retirer un acquittement.
+- Ignorer une alerte active.
+- Reactiver une alerte ignoree.
+- Conserver les actions dans l'historique `alert_events`.
+- Afficher l'historique recent d'une alerte depuis la liste backoffice.
+- Sortir les alertes acquittees ou ignorees du mur d'alertes, du dashboard et des metriques actives.
+- Garder les notifications sortantes, silences et fenetres de maintenance pour v1.x.
 
 ## Backlog v1.x
 
@@ -52,6 +52,11 @@ Objectif : expliquer rapidement pourquoi un check echoue sur une cible precise.
 
 - Parametrage avance des regles : severite, seuils, delais.
 - Desactivation par hote, module ou item precis.
+- Overrides d'alerting par cible :
+  - activer ou desactiver une regle pour une cible precise ;
+  - definir un seuil specifique par cible quand la regle le supporte ;
+  - afficher l'heritage entre regle globale et exception cible ;
+  - resoudre automatiquement les alertes actives quand une regle est desactivee pour une cible.
 - Silences et fenetres de maintenance.
 - Notifications sortantes : email, webhook, Discord ou autre canal.
 - Historique des silences, desactivations et notifications.

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0](https://github.com/grandpurs45/my-server-manager/compare/v1.4.3...v1.5.0) (2026-06-23)
+
+### Features
+
+* ajout de l'acquittement et de l'ignore des alertes depuis le backoffice
+* ajout de l'historique recent des evenements dans la liste des alertes
+* masquage des alertes acquittees ou ignorees dans le dashboard, le mur d'alertes et les metriques Prometheus actives
+* resolution automatique des alertes actives quand une regle d'alerte est desactivee
+
 ## [1.4.3](https://github.com/grandpurs45/my-server-manager/compare/v1.4.2...v1.4.3) (2026-06-21)
 
 ### Features

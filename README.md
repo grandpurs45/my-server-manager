@@ -300,7 +300,17 @@ MSM dispose d'un moteur d'alerting interne base sur les derniers resultats stock
 - Mur d'alertes pour affichage dedie : `pages/alerts-wall.php`
 - Regles globales d'alertes : `pages/alert-rules.php`
 
-La v1 couvre les regles globales, la severite et les seuils simples. Les notifications sortantes, les silences et les desactivations par hote ou par item sont prevus pour la roadmap v1.x.
+Le backoffice permet de filtrer les alertes, de les acquitter ou de les ignorer avec un commentaire optionnel. Les alertes acquittees ou ignorees restent consultables, mais ne sont plus comptees comme alertes a traiter dans le dashboard, le mur d'alertes et les metriques Prometheus actives. La liste affiche aussi l'historique recent des evenements de chaque alerte.
+
+Difference entre acquitter et ignorer :
+
+- Acquitter : l'alerte est reconnue par un operateur. Elle reste active et consultable, mais elle sort des vues "a traiter" pour indiquer que quelqu'un l'a prise en compte.
+- Ignorer : l'alerte est volontairement masquee des vues operationnelles tant qu'elle reste active. C'est utile pour un cas connu, accepte ou non pertinent temporairement.
+- Reactiver : une alerte ignoree redevient une alerte a traiter.
+
+Quand une regle d'alerte est desactivee, les alertes actives rattachees a cette regle sont automatiquement resolues et historisees.
+
+La v1 couvre les regles globales, la severite, les seuils simples et le traitement manuel des alertes. Les notifications sortantes, les silences et les desactivations par hote ou par item sont prevus pour la roadmap v1.x.
 
 ## Authentification locale
 
