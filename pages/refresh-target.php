@@ -6,6 +6,7 @@ use MSM\OsLifecycleManager;
 use MSM\PatchManager;
 use MSM\SecurityManager;
 use MSM\ServerChecker;
+use MSM\HardwareHealthManager;
 
 $serverId = isset($_POST['server_id']) ? (int) $_POST['server_id'] : 0;
 $module = (string) ($_POST['module'] ?? '');
@@ -24,6 +25,7 @@ $moduleRequirements = [
     'patch_management' => 'patch_management',
     'os_lifecycle' => 'patch_management',
     'security' => 'securite',
+    'hardware_health' => 'supervision',
 ];
 
 if (!isset($moduleRequirements[$module])) {
@@ -43,6 +45,7 @@ $labels = [
     'patch_management' => 'Patch Management',
     'os_lifecycle' => 'Cycle de vie OS',
     'security' => 'Securite',
+    'hardware_health' => 'Sante materielle',
 ];
 
 try {
@@ -53,6 +56,7 @@ try {
         'patch_management' => (new PatchManager($pdo))->runForServerId($serverId),
         'os_lifecycle' => (new OsLifecycleManager($pdo))->runForServerId($serverId),
         'security' => (new SecurityManager($pdo))->runForServerId($serverId),
+        'hardware_health' => (new HardwareHealthManager($pdo))->runForServerId($serverId),
     };
 
     ob_end_clean();

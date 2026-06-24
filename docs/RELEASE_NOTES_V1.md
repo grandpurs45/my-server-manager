@@ -4,6 +4,19 @@ MSM v1.0.0 marque le premier socle stable de My Server Manager pour un usage hom
 
 L'objectif v1 est de fournir une source fiable de donnees d'exploitation, exploitable directement dans MSM et exportable vers Prometheus/Grafana.
 
+## Evolution v1.6.0
+
+La v1.6 ajoute la sante materielle aux cibles Linux/Proxmox :
+
+- profil materiel dans l'inventaire ;
+- temperatures via `lm-sensors` ou `/sys/class/thermal` ;
+- SMART en lecture seule sur les equipements physiques ;
+- affichage detaille des disques, temperatures, heures, usure et erreurs media ;
+- resumes temperature et SMART dans le dashboard ;
+- alertes configurables de temperature, SMART, usure, erreurs media et fraicheur du collecteur ;
+- metriques Prometheus associees ;
+- nouveau script planifie `scripts/check-hardware-health.php`.
+
 ## Principes v1
 
 - MSM stocke les derniers resultats connus en base.

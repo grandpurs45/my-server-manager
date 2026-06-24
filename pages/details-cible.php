@@ -9,9 +9,11 @@ use MSM\PatchStatusRepository;
 use MSM\OsLifecycleRepository;
 use MSM\ServerCheckHistoryRepository;
 use MSM\SettingsManager;
+use MSM\HardwareHealthRepository;
 
 $settingsManager = new SettingsManager($pdo);
 $targetTypes = msmInventoryOptions($settingsManager, 'target_types');
+$hardwareProfiles = msmHardwareProfiles();
 $environments = msmInventoryOptions($settingsManager, 'environments');
 $criticalities = msmInventoryOptions($settingsManager, 'criticalities');
 $collectionMethods = msmInventoryOptions($settingsManager, 'collection_methods');
@@ -50,6 +52,15 @@ $latestPatchUpdates = $latestPatchCheck ? $patchRepository->getUpdatesForCheck((
 
 $osLifecycleRepository = new OsLifecycleRepository($pdo);
 $latestOsLifecycleCheck = $osLifecycleRepository->getLatestForServer((int) $server['id']);
+
+$hardwareHealthRepository = new HardwareHealthRepository($pdo);
+$latestHardwareCheck = $hardwareHealthRepository->getLatestForServer((int) $server['id']);
+$latestTemperatures = $latestHardwareCheck
+    ? $hardwareHealthRepository->getTemperaturesForCheck((int) $latestHardwareCheck['id'])
+    : [];
+$latestSmartDisks = $latestHardwareCheck
+    ? $hardwareHealthRepository->getSmartDisksForCheck((int) $latestHardwareCheck['id'])
+    : [];
 
 $checkHistoryRepository = new ServerCheckHistoryRepository($pdo);
 $checkEvents = $checkHistoryRepository->latestForServer((int) $server['id'], 10);
@@ -182,7 +193,36 @@ function msmDetailPatchUpdatesTable(array $updates, string $type): string
     return $html;
 }
 
+function msmDetailBytes(?string $bytes): string
+{
+    if ($bytes === null || !is_numeric($bytes)) {
+        return '-';
+    }
+
+    $value = (float) $bytes;
+    $units = ['o', 'Kio', 'Mio', 'Gio', 'Tio', 'Pio'];
+    $unit = 0;
+    while ($value >= 1024 && $unit < count($units) - 1) {
+        $value /= 1024;
+        $unit++;
+    }
+
+    return number_format($value, $unit === 0 ? 0 : 1, ',', ' ') . ' ' . $units[$unit];
+}
+
+function msmDetailSmartBadge(mixed $passed): string
+{
+    if ($passed === null) {
+        return '<span class="rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Inconnu</span>';
+    }
+
+    return (int) $passed === 1
+        ? '<span class="rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">OK</span>'
+        : '<span class="rounded bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">ECHEC</span>';
+}
+
 $type = $server['target_type'] ?? 'other';
+$hardwareProfile = $server['hardware_profile'] ?? 'unknown';
 $environment = $server['environment'] ?? 'other';
 $criticality = $server['criticality'] ?? 'medium';
 $collectionMethod = $server['collection_method'] ?? 'manual';
@@ -194,6 +234,9 @@ $canRefreshOsLifecycle = $authManager->userCan('patch_management')
     && !empty($server['ssh_enabled'])
     && in_array($type, ['linux', 'proxmox'], true);
 $canRefreshSecurity = $authManager->userCan('securite') && !empty($server['security_enabled']) && !empty($server['ssh_enabled']);
+$canRefreshHardware = $authManager->userCan('supervision')
+    && msmHardwareProfileSupportsSensors($hardwareProfile)
+    && !empty($server['ssh_enabled']);
 ?>
 
 <div class="p-6">
@@ -253,6 +296,18 @@ $canRefreshSecurity = $authManager->userCan('securite') && !empty($server['secur
                     <button type="submit" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                         <i data-lucide="shield-check" class="w-4 h-4"></i>
                         Securite
+                    </button>
+                </form>
+            <?php endif; ?>
+
+            <?php if ($canRefreshHardware): ?>
+                <form method="post" action="<?= $baseUrl ?>pages/refresh-target.php">
+                    <?= msmCsrfField() ?>
+                    <input type="hidden" name="server_id" value="<?= (int) $server['id'] ?>">
+                    <input type="hidden" name="module" value="hardware_health">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                        <i data-lucide="thermometer" class="w-4 h-4"></i>
+                        Temperature
                     </button>
                 </form>
             <?php endif; ?>
@@ -360,6 +415,10 @@ $canRefreshSecurity = $authManager->userCan('securite') && !empty($server['secur
                 <div>
                     <dt class="text-slate-500">Environnement</dt>
                     <dd class="font-semibold text-slate-900"><?= htmlspecialchars($environments[$environment] ?? $environment) ?></dd>
+                </div>
+                <div>
+                    <dt class="text-slate-500">Profil materiel</dt>
+                    <dd class="font-semibold text-slate-900"><?= htmlspecialchars($hardwareProfiles[$hardwareProfile] ?? $hardwareProfiles['unknown']) ?></dd>
                 </div>
                 <div>
                     <dt class="text-slate-500">Criticite</dt>
@@ -505,6 +564,138 @@ $canRefreshSecurity = $authManager->userCan('securite') && !empty($server['secur
                     <p class="mt-4 rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
                         <?= htmlspecialchars($latestOsLifecycleCheck['error_message']) ?>
                     </p>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+
+        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div class="mb-4 flex items-center justify-between gap-3">
+                <h2 class="text-lg font-semibold text-slate-900">Sante materielle</h2>
+                <?php if ($latestHardwareCheck && $latestHardwareCheck['max_temperature_celsius'] !== null): ?>
+                    <span class="inline-flex items-center gap-1 rounded bg-orange-50 px-2 py-1 text-sm font-bold text-orange-700">
+                        <i data-lucide="thermometer" class="w-4 h-4"></i>
+                        <?= htmlspecialchars(number_format((float) $latestHardwareCheck['max_temperature_celsius'], 1, ',', '')) ?> &deg;C max
+                    </span>
+                <?php endif; ?>
+            </div>
+
+            <?php if (!msmHardwareProfileSupportsSensors($hardwareProfile)): ?>
+                <p class="text-sm italic text-slate-500">
+                    Collecte ignoree pour le profil <?= htmlspecialchars($hardwareProfiles[$hardwareProfile] ?? $hardwareProfiles['unknown']) ?>.
+                </p>
+            <?php elseif (!$latestHardwareCheck): ?>
+                <p class="text-sm italic text-slate-500">Aucun check materiel enregistre.</p>
+            <?php else: ?>
+                <dl class="mb-4 grid grid-cols-1 gap-3 text-sm md:grid-cols-3">
+                    <div>
+                        <dt class="text-slate-500">Statut</dt>
+                        <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestHardwareCheck['status'] ?? 'unknown') ?></dd>
+                    </div>
+                    <div>
+                        <dt class="text-slate-500">Collecteur</dt>
+                        <dd class="font-mono text-slate-900"><?= htmlspecialchars($latestHardwareCheck['collector'] ?: '-') ?></dd>
+                    </div>
+                    <div>
+                        <dt class="text-slate-500">Dernier check</dt>
+                        <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestHardwareCheck['checked_at'] ?? '-') ?></dd>
+                    </div>
+                </dl>
+
+                <?php if (!empty($latestHardwareCheck['error_message'])): ?>
+                    <p class="mb-4 rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+                        <?= htmlspecialchars($latestHardwareCheck['error_message']) ?>
+                    </p>
+                <?php endif; ?>
+
+                <?php if ($latestTemperatures): ?>
+                    <div class="overflow-x-auto rounded border border-gray-200">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-slate-100 text-left text-slate-600">
+                                <tr>
+                                    <th class="px-3 py-2 font-semibold">Sonde</th>
+                                    <th class="px-3 py-2 font-semibold">Type</th>
+                                    <th class="px-3 py-2 text-right font-semibold">Temperature</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <?php foreach ($latestTemperatures as $temperature): ?>
+                                    <tr>
+                                        <td class="px-3 py-2 font-semibold text-slate-900"><?= htmlspecialchars($temperature['sensor_label']) ?></td>
+                                        <td class="px-3 py-2 text-slate-500"><?= htmlspecialchars($temperature['sensor_type']) ?></td>
+                                        <td class="px-3 py-2 text-right font-bold text-orange-700">
+                                            <?= htmlspecialchars(number_format((float) $temperature['temperature_celsius'], 1, ',', '')) ?> &deg;C
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <p class="text-sm italic text-slate-500">Aucune temperature disponible.</p>
+                <?php endif; ?>
+
+                <?php if ($hardwareProfile === 'physical'): ?>
+                    <div class="mt-5 border-t border-gray-200 pt-4">
+                        <h3 class="mb-3 text-sm font-semibold uppercase text-slate-500">Disques SMART</h3>
+
+                        <?php if (!empty($latestHardwareCheck['smart_error_message'])): ?>
+                            <p class="mb-3 rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+                                <?= htmlspecialchars($latestHardwareCheck['smart_error_message']) ?>
+                            </p>
+                        <?php endif; ?>
+
+                        <?php if ($latestSmartDisks): ?>
+                            <div class="overflow-x-auto rounded border border-gray-200">
+                                <table class="min-w-full text-sm">
+                                    <thead class="bg-slate-100 text-left text-slate-600">
+                                        <tr>
+                                            <th class="px-3 py-2 font-semibold">Disque</th>
+                                            <th class="px-3 py-2 font-semibold">Modele</th>
+                                            <th class="px-3 py-2 font-semibold">Capacite</th>
+                                            <th class="px-3 py-2 font-semibold">SMART</th>
+                                            <th class="px-3 py-2 font-semibold">Temperature</th>
+                                            <th class="px-3 py-2 font-semibold">Heures</th>
+                                            <th class="px-3 py-2 font-semibold">Usure</th>
+                                            <th class="px-3 py-2 font-semibold">Erreurs media</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        <?php foreach ($latestSmartDisks as $disk): ?>
+                                            <tr>
+                                                <td class="px-3 py-2">
+                                                    <div class="font-mono font-semibold text-slate-900"><?= htmlspecialchars($disk['device_name']) ?></div>
+                                                    <div class="text-xs text-slate-500"><?= htmlspecialchars($disk['protocol'] ?: ($disk['device_type'] ?: '-')) ?></div>
+                                                </td>
+                                                <td class="px-3 py-2">
+                                                    <div class="font-semibold text-slate-900"><?= htmlspecialchars($disk['model_name'] ?: '-') ?></div>
+                                                    <?php if (!empty($disk['serial_number'])): ?>
+                                                        <div class="text-xs text-slate-500">S/N <?= htmlspecialchars($disk['serial_number']) ?></div>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="px-3 py-2"><?= htmlspecialchars(msmDetailBytes($disk['capacity_bytes'])) ?></td>
+                                                <td class="px-3 py-2"><?= msmDetailSmartBadge($disk['smart_passed']) ?></td>
+                                                <td class="px-3 py-2">
+                                                    <?= $disk['temperature_celsius'] !== null
+                                                        ? htmlspecialchars(number_format((float) $disk['temperature_celsius'], 1, ',', '')) . ' &deg;C'
+                                                        : '-' ?>
+                                                </td>
+                                                <td class="px-3 py-2"><?= $disk['power_on_hours'] !== null ? number_format((int) $disk['power_on_hours'], 0, ',', ' ') . ' h' : '-' ?></td>
+                                                <td class="px-3 py-2"><?= $disk['percentage_used'] !== null ? htmlspecialchars(number_format((float) $disk['percentage_used'], 1, ',', '')) . ' %' : '-' ?></td>
+                                                <td class="px-3 py-2"><?= $disk['media_errors'] !== null ? number_format((int) $disk['media_errors'], 0, ',', ' ') : '-' ?></td>
+                                            </tr>
+                                            <?php if (!empty($disk['error_message'])): ?>
+                                                <tr class="bg-yellow-50">
+                                                    <td colspan="8" class="px-3 py-2 text-xs text-yellow-800"><?= htmlspecialchars($disk['error_message']) ?></td>
+                                                </tr>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php elseif (empty($latestHardwareCheck['smart_error_message'])): ?>
+                            <p class="text-sm italic text-slate-500">Aucun disque SMART detecte.</p>
+                        <?php endif; ?>
+                    </div>
                 <?php endif; ?>
             <?php endif; ?>
         </div>

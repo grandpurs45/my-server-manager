@@ -41,6 +41,22 @@ function msmInventoryDefaultOptions(string $key): array
     };
 }
 
+function msmHardwareProfiles(): array
+{
+    return [
+        'unknown' => 'Inconnu',
+        'physical' => 'Equipement physique',
+        'virtual_machine' => 'Machine virtuelle',
+        'container' => 'Conteneur',
+        'appliance' => 'Appliance',
+    ];
+}
+
+function msmHardwareProfileSupportsSensors(string $profile): bool
+{
+    return in_array($profile, ['physical', 'appliance'], true);
+}
+
 function msmInventoryParseOptions(?string $raw, array $fallback): array
 {
     if ($raw === null || trim($raw) === '') {

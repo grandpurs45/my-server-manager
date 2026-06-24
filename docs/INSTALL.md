@@ -824,6 +824,7 @@ Ajouter les checks planifies :
 */10 * * * * /usr/bin/php /var/www/html/msm/scripts/check-patches.php >> /var/www/html/msm/logs/check-patches.log 2>&1
 15 * * * * /usr/bin/php /var/www/html/msm/scripts/check-os-lifecycle.php >> /var/www/html/msm/logs/check-os-lifecycle.log 2>&1
 30 * * * * /usr/bin/php /var/www/html/msm/scripts/check-security.php >> /var/www/html/msm/logs/check-security.log 2>&1
+*/5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-hardware-health.php >> /var/www/html/msm/logs/check-hardware-health.log 2>&1
 */5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-alerts.php >> /var/www/html/msm/logs/check-alerts.log 2>&1
 ```
 

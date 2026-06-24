@@ -117,6 +117,14 @@ require_once __DIR__ . '/../includes/header.php';
                                        placeholder="-">
                                 <?php if (($rule['rule_key'] ?? '') === 'stale_supervision_check'): ?>
                                     <div class="mt-1 text-xs text-slate-500">minutes</div>
+                                <?php elseif (($rule['rule_key'] ?? '') === 'stale_hardware_health_check'): ?>
+                                    <div class="mt-1 text-xs text-slate-500">minutes</div>
+                                <?php elseif (in_array(($rule['rule_key'] ?? ''), ['hardware_temperature_warning', 'hardware_temperature_critical'], true)): ?>
+                                    <div class="mt-1 text-xs text-slate-500">degres Celsius</div>
+                                <?php elseif (in_array(($rule['rule_key'] ?? ''), ['hardware_smart_wear_warning', 'hardware_smart_wear_critical'], true)): ?>
+                                    <div class="mt-1 text-xs text-slate-500">pourcentage utilise</div>
+                                <?php elseif (($rule['rule_key'] ?? '') === 'hardware_smart_media_errors'): ?>
+                                    <div class="mt-1 text-xs text-slate-500">nombre d erreurs</div>
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3 align-top">

@@ -58,6 +58,18 @@ $formAction = $editMode ? 'serveurs.php' : $baseUrl . 'pages/add-server.php';
                 </div>
 
                 <div>
+                    <label class="block font-medium mb-1" for="hardware-profile">Profil materiel</label>
+                    <select id="hardware-profile" name="hardware_profile" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300">
+                        <?php foreach ($hardwareProfiles as $value => $label): ?>
+                            <option value="<?= htmlspecialchars($value) ?>" <?= (($editData['hardware_profile'] ?? 'unknown') === $value) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="mt-1 text-xs text-slate-500">Les futurs controles materiels seront limites aux equipements physiques et appliances.</p>
+                </div>
+
+                <div>
                     <label class="block font-medium mb-1" for="criticality">Criticite</label>
                     <select id="criticality" name="criticality" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300">
                         <?php foreach ($criticalities as $value => $label): ?>
@@ -166,6 +178,7 @@ $formAction = $editMode ? 'serveurs.php' : $baseUrl . 'pages/add-server.php';
 <script>
 window.msmInventoryDefaults = {
     target_type: <?= json_encode(array_key_first($targetTypes) ?: 'other') ?>,
+    hardware_profile: 'unknown',
     environment: <?= json_encode(array_key_first($environments) ?: 'other') ?>,
     criticality: <?= json_encode(array_key_first($criticalities) ?: 'medium') ?>,
     collection_method: <?= json_encode(array_key_first($collectionMethods) ?: 'manual') ?>

@@ -25,7 +25,10 @@ class AlertEngine
             $this->evaluateSupervision($rules),
             $this->evaluatePatchManagement($rules),
             $this->evaluateOsLifecycle($rules),
-            $this->evaluateSecurity($rules)
+            $this->evaluateSecurity($rules),
+            $this->evaluateHardwareHealth($rules),
+            $this->evaluateHardwareSmart($rules),
+            $this->evaluateHardwareRuntime($rules)
         );
 
         return $this->repository->syncCandidates($candidates, array_keys($rules));
@@ -274,6 +277,257 @@ class AlertEngine
         }
 
         return $candidates;
+    }
+
+    private function evaluateHardwareHealth(array $rules): array
+    {
+        if (!$this->tableExists('hardware_health_checks')) {
+            return [];
+        }
+
+        $warningRule = $rules['hardware_temperature_warning'] ?? null;
+        $criticalRule = $rules['hardware_temperature_critical'] ?? null;
+        if ($warningRule === null && $criticalRule === null) {
+            return [];
+        }
+
+        $warningThreshold = max(1, (int) ($warningRule['threshold_value'] ?? 70));
+        $criticalThreshold = max(1, (int) ($criticalRule['threshold_value'] ?? 85));
+        $candidates = [];
+
+        $stmt = $this->pdo->query("
+            SELECT
+                s.id,
+                s.name,
+                s.hardware_profile,
+                hc.status,
+                hc.max_temperature_celsius,
+                hc.checked_at
+            FROM servers s
+            INNER JOIN hardware_health_checks hc
+                ON hc.id = (
+                    SELECT hc2.id
+                    FROM hardware_health_checks hc2
+                    WHERE hc2.server_id = s.id
+                    ORDER BY hc2.checked_at DESC, hc2.id DESC
+                    LIMIT 1
+                )
+            WHERE s.hardware_profile IN ('physical', 'appliance')
+            ORDER BY s.name ASC
+        ");
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $target) {
+            if (($target['status'] ?? '') !== 'ok' || $target['max_temperature_celsius'] === null) {
+                continue;
+            }
+
+            $serverId = (int) $target['id'];
+            $name = $target['name'] ?? 'Serveur inconnu';
+            $temperature = (float) $target['max_temperature_celsius'];
+            $formattedTemperature = number_format($temperature, 1, ',', '');
+
+            if ($criticalRule !== null && $temperature >= $criticalThreshold) {
+                $candidates[] = $this->candidate(
+                    'hardware_temperature_critical',
+                    $serverId,
+                    $criticalRule['severity'] ?? 'critical',
+                    'Temperature critique sur ' . $name,
+                    'La temperature materielle maximale est de ' . $formattedTemperature
+                        . " \u{00B0}C, pour un seuil critique de " . $criticalThreshold . " \u{00B0}C.",
+                    'hardware_temperature_critical:' . $serverId
+                );
+                continue;
+            }
+
+            if ($warningRule !== null && $temperature >= $warningThreshold) {
+                $candidates[] = $this->candidate(
+                    'hardware_temperature_warning',
+                    $serverId,
+                    $warningRule['severity'] ?? 'warning',
+                    'Temperature elevee sur ' . $name,
+                    'La temperature materielle maximale est de ' . $formattedTemperature
+                        . " \u{00B0}C, pour un seuil warning de " . $warningThreshold . " \u{00B0}C.",
+                    'hardware_temperature_warning:' . $serverId
+                );
+            }
+        }
+
+        return $candidates;
+    }
+
+    private function evaluateHardwareSmart(array $rules): array
+    {
+        if (!$this->tableExists('hardware_health_checks') || !$this->tableExists('hardware_smart_disks')) {
+            return [];
+        }
+
+        $failedRule = $rules['hardware_smart_failed'] ?? null;
+        $mediaRule = $rules['hardware_smart_media_errors'] ?? null;
+        $wearWarningRule = $rules['hardware_smart_wear_warning'] ?? null;
+        $wearCriticalRule = $rules['hardware_smart_wear_critical'] ?? null;
+
+        if ($failedRule === null && $mediaRule === null && $wearWarningRule === null && $wearCriticalRule === null) {
+            return [];
+        }
+
+        $mediaThreshold = max(1, (int) ($mediaRule['threshold_value'] ?? 1));
+        $wearWarningThreshold = max(1, (int) ($wearWarningRule['threshold_value'] ?? 80));
+        $wearCriticalThreshold = max(1, (int) ($wearCriticalRule['threshold_value'] ?? 95));
+        $candidates = [];
+
+        $stmt = $this->pdo->query("
+            SELECT
+                s.id AS server_id,
+                s.name AS server_name,
+                d.device_name,
+                d.model_name,
+                d.smart_passed,
+                d.percentage_used,
+                d.media_errors
+            FROM servers s
+            INNER JOIN hardware_health_checks hc
+                ON hc.id = (
+                    SELECT hc2.id
+                    FROM hardware_health_checks hc2
+                    WHERE hc2.server_id = s.id
+                    ORDER BY hc2.checked_at DESC, hc2.id DESC
+                    LIMIT 1
+                )
+            INNER JOIN hardware_smart_disks d
+                ON d.hardware_check_id = hc.id
+            WHERE s.hardware_profile = 'physical'
+            ORDER BY s.name ASC, d.device_name ASC
+        ");
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $disk) {
+            $serverId = (int) $disk['server_id'];
+            $serverName = $disk['server_name'] ?? 'Serveur inconnu';
+            $device = $disk['device_name'] ?? 'disque inconnu';
+            $model = trim((string) ($disk['model_name'] ?? ''));
+            $diskLabel = $device . ($model !== '' ? ' (' . $model . ')' : '');
+            $fingerprintSuffix = $serverId . ':' . $device;
+
+            if ($failedRule !== null && $disk['smart_passed'] !== null && (int) $disk['smart_passed'] === 0) {
+                $candidates[] = $this->candidate(
+                    'hardware_smart_failed',
+                    $serverId,
+                    $failedRule['severity'] ?? 'critical',
+                    'SMART en echec sur ' . $serverName,
+                    'Le test de sante SMART global est en echec pour ' . $diskLabel . '.',
+                    'hardware_smart_failed:' . $fingerprintSuffix
+                );
+            }
+
+            $mediaErrors = $disk['media_errors'] !== null ? (int) $disk['media_errors'] : null;
+            if ($mediaRule !== null && $mediaErrors !== null && $mediaErrors >= $mediaThreshold) {
+                $candidates[] = $this->candidate(
+                    'hardware_smart_media_errors',
+                    $serverId,
+                    $mediaRule['severity'] ?? 'critical',
+                    'Erreurs media sur ' . $serverName,
+                    $diskLabel . ' remonte ' . $mediaErrors
+                        . ' erreur(s) media, pour un seuil de ' . $mediaThreshold . '.',
+                    'hardware_smart_media_errors:' . $fingerprintSuffix
+                );
+            }
+
+            if ($disk['percentage_used'] === null) {
+                continue;
+            }
+
+            $wear = (float) $disk['percentage_used'];
+            $formattedWear = number_format($wear, 1, ',', '');
+
+            if ($wearCriticalRule !== null && $wear >= $wearCriticalThreshold) {
+                $candidates[] = $this->candidate(
+                    'hardware_smart_wear_critical',
+                    $serverId,
+                    $wearCriticalRule['severity'] ?? 'critical',
+                    'Usure disque critique sur ' . $serverName,
+                    $diskLabel . ' indique ' . $formattedWear
+                        . ' % d usure, pour un seuil critique de ' . $wearCriticalThreshold . ' %.',
+                    'hardware_smart_wear_critical:' . $fingerprintSuffix
+                );
+                continue;
+            }
+
+            if ($wearWarningRule !== null && $wear >= $wearWarningThreshold) {
+                $candidates[] = $this->candidate(
+                    'hardware_smart_wear_warning',
+                    $serverId,
+                    $wearWarningRule['severity'] ?? 'warning',
+                    'Usure disque elevee sur ' . $serverName,
+                    $diskLabel . ' indique ' . $formattedWear
+                        . ' % d usure, pour un seuil warning de ' . $wearWarningThreshold . ' %.',
+                    'hardware_smart_wear_warning:' . $fingerprintSuffix
+                );
+            }
+        }
+
+        return $candidates;
+    }
+
+    private function evaluateHardwareRuntime(array $rules): array
+    {
+        $rule = $rules['stale_hardware_health_check'] ?? null;
+        if ($rule === null) {
+            return [];
+        }
+
+        $eligibleTargets = (int) $this->pdo->query("
+            SELECT COUNT(*)
+            FROM servers
+            WHERE hardware_profile IN ('physical', 'appliance')
+        ")->fetchColumn();
+        if ($eligibleTargets === 0) {
+            return [];
+        }
+
+        $thresholdMinutes = max(1, (int) ($rule['threshold_value'] ?? 45));
+        $stmt = $this->pdo->prepare("
+            SELECT setting_value
+            FROM settings
+            WHERE category = 'hardware_health'
+              AND setting_key = 'check_last_run_at'
+        ");
+        $stmt->execute();
+        $lastRun = $stmt->fetchColumn();
+
+        if ($lastRun === false || trim((string) $lastRun) === '') {
+            return [
+                $this->candidate(
+                    'stale_hardware_health_check',
+                    null,
+                    $rule['severity'] ?? 'warning',
+                    'Check materiel jamais execute',
+                    'Au moins une cible materielle est active, mais aucun check materiel termine n est connu.',
+                    'stale_hardware_health_check:global'
+                ),
+            ];
+        }
+
+        try {
+            $lastRunAt = new \DateTimeImmutable((string) $lastRun);
+            $ageMinutes = (int) floor((time() - $lastRunAt->getTimestamp()) / 60);
+        } catch (\Throwable) {
+            $ageMinutes = $thresholdMinutes + 1;
+        }
+
+        if ($ageMinutes <= $thresholdMinutes) {
+            return [];
+        }
+
+        return [
+            $this->candidate(
+                'stale_hardware_health_check',
+                null,
+                $rule['severity'] ?? 'warning',
+                'Check materiel trop ancien',
+                'Le dernier check materiel termine date de ' . $ageMinutes
+                    . ' minutes, pour un seuil de ' . $thresholdMinutes . ' minutes.',
+                'stale_hardware_health_check:global'
+            ),
+        ];
     }
 
     private function candidate(string $ruleKey, ?int $serverId, string $severity, string $title, string $message, string $fingerprint): AlertCandidate

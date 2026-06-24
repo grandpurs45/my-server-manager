@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0](https://github.com/grandpurs45/my-server-manager/compare/v1.5.0...v1.6.0) (2026-06-24)
+
+### Features
+
+* ajout du profil materiel des cibles : physique, machine virtuelle, conteneur, appliance ou inconnu
+* ajout du collecteur de temperatures Linux/Proxmox via `lm-sensors` et `/sys/class/thermal`
+* ajout de la collecte SMART en lecture seule pour les equipements physiques
+* affichage des temperatures et des informations SMART dans la fiche cible
+* ajout des resumes temperature, SMART et fraicheur du check materiel au dashboard
+* ajout des metriques Prometheus de temperature et de sante SMART
+* ajout des alertes configurables de temperature, echec SMART, erreurs media, usure disque et check materiel trop ancien
+* ajout de `scripts/check-hardware-health.php` au setup cron/systemd
+
+### Documentation
+
+* ajout des prerequis optionnels `lm-sensors` et `smartmontools`
+* documentation du nouveau script materiel, de ses droits limites et de son ordonnancement
+
 ## [1.5.0](https://github.com/grandpurs45/my-server-manager/compare/v1.4.3...v1.5.0) (2026-06-23)
 
 ### Features

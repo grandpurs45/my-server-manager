@@ -11,6 +11,7 @@ use MSM\SettingsManager;
 
 $settingsManager = new SettingsManager($pdo);
 $targetTypes = msmInventoryOptions($settingsManager, 'target_types');
+$hardwareProfiles = msmHardwareProfiles();
 $environments = msmInventoryOptions($settingsManager, 'environments');
 $criticalities = msmInventoryOptions($settingsManager, 'criticalities');
 $collectionMethods = msmInventoryOptions($settingsManager, 'collection_methods');
@@ -63,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
     $name = trim($_POST['name'] ?? '');
     $hostname = trim($_POST['hostname'] ?? '');
     $targetType = trim($_POST['target_type'] ?? 'linux');
+    $hardwareProfile = trim($_POST['hardware_profile'] ?? 'unknown');
     $environment = trim($_POST['environment'] ?? 'production');
     $criticality = trim($_POST['criticality'] ?? 'medium');
     $tags = trim($_POST['tags'] ?? '');
@@ -75,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
     $patchManagementEnabled = isset($_POST['patch_management_enabled']) ? 1 : 0;
 
     $targetType = msmInventoryNormalizeSelected($targetType, $targetTypes, array_key_first($targetTypes) ?: 'other');
+    $hardwareProfile = msmInventoryNormalizeSelected($hardwareProfile, $hardwareProfiles, 'unknown');
     $environment = msmInventoryNormalizeSelected($environment, $environments, array_key_first($environments) ?: 'other');
     $criticality = msmInventoryNormalizeSelected($criticality, $criticalities, array_key_first($criticalities) ?: 'medium');
     $collectionMethod = msmInventoryNormalizeSelected($collectionMethod, $collectionMethods, array_key_first($collectionMethods) ?: 'manual');
@@ -118,6 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
                     name = :name,
                     hostname = :hostname,
                     target_type = :target_type,
+                    hardware_profile = :hardware_profile,
                     environment = :environment,
                     criticality = :criticality,
                     tags = :tags,
@@ -136,6 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
                 ':name' => $name,
                 ':hostname' => $hostname,
                 ':target_type' => $targetType,
+                ':hardware_profile' => $hardwareProfile,
                 ':environment' => $environment,
                 ':criticality' => $criticality,
                 ':tags' => $tags !== '' ? $tags : null,
@@ -167,6 +172,11 @@ $filters = [
         array_merge(['' => ''], $targetTypes),
         ''
     ),
+    'hardware_profile' => msmInventoryNormalizeSelected(
+        trim($_GET['hardware_profile'] ?? ''),
+        array_merge(['' => ''], $hardwareProfiles),
+        ''
+    ),
     'environment' => msmInventoryNormalizeSelected(
         trim($_GET['environment'] ?? ''),
         array_merge(['' => ''], $environments),
@@ -184,7 +194,7 @@ $filters = [
 $where = [];
 $queryParams = [];
 
-foreach (['target_type', 'environment', 'criticality', 'status'] as $field) {
+foreach (['target_type', 'hardware_profile', 'environment', 'criticality', 'status'] as $field) {
     if ($filters[$field] !== '') {
         $where[] = "$field = :$field";
         $queryParams[":$field"] = $filters[$field];
@@ -249,13 +259,25 @@ include __DIR__ . '/../includes/server-modal.php';
     <?php endif; ?>
 
     <form method="get" class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
             <div>
                 <label for="filter-target-type" class="block text-sm font-medium text-slate-700 mb-1">Type</label>
                 <select id="filter-target-type" name="target_type" class="w-full border rounded px-3 py-2">
                     <option value="">Tous</option>
                     <?php foreach ($targetTypes as $value => $label): ?>
                         <option value="<?= htmlspecialchars($value) ?>" <?= $filters['target_type'] === $value ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div>
+                <label for="filter-hardware-profile" class="block text-sm font-medium text-slate-700 mb-1">Profil materiel</label>
+                <select id="filter-hardware-profile" name="hardware_profile" class="w-full border rounded px-3 py-2">
+                    <option value="">Tous</option>
+                    <?php foreach ($hardwareProfiles as $value => $label): ?>
+                        <option value="<?= htmlspecialchars($value) ?>" <?= $filters['hardware_profile'] === $value ? 'selected' : '' ?>>
                             <?= htmlspecialchars($label) ?>
                         </option>
                     <?php endforeach; ?>
@@ -325,6 +347,7 @@ include __DIR__ . '/../includes/server-modal.php';
                 <th class="p-3">Nom</th>
                 <th class="p-3">Adresse IP</th>
                 <th class="p-3">Type</th>
+                <th class="p-3">Materiel</th>
                 <th class="p-3">Env.</th>
                 <th class="p-3">Criticite</th>
                 <th class="p-3">Tags</th>
@@ -345,6 +368,12 @@ include __DIR__ . '/../includes/server-modal.php';
                         <td class="p-3">
                             <span class="inline-flex px-2 py-1 rounded bg-slate-100 text-slate-700 text-xs font-semibold">
                                 <?= htmlspecialchars($targetTypes[$server['target_type'] ?? ''] ?? ($server['target_type'] ?? 'linux')) ?>
+                            </span>
+                        </td>
+                        <td class="p-3">
+                            <?php $hardwareProfile = $server['hardware_profile'] ?? 'unknown'; ?>
+                            <span class="inline-flex px-2 py-1 rounded bg-gray-100 text-gray-700 text-xs font-semibold">
+                                <?= htmlspecialchars($hardwareProfiles[$hardwareProfile] ?? $hardwareProfiles['unknown']) ?>
                             </span>
                         </td>
                         <td class="p-3"><?= htmlspecialchars($environments[$server['environment'] ?? ''] ?? ($server['environment'] ?? 'production')) ?></td>
@@ -452,7 +481,7 @@ include __DIR__ . '/../includes/server-modal.php';
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="12" class="text-center text-gray-500 py-4">Aucun serveur enregistre.</td>
+                    <td colspan="13" class="text-center text-gray-500 py-4">Aucun serveur enregistre.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

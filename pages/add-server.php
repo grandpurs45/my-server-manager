@@ -14,6 +14,7 @@ msmRequireValidCsrf('serveurs.php');
 $name = trim($_POST['name'] ?? '');
 $hostname = trim($_POST['hostname'] ?? '');
 $targetType = trim($_POST['target_type'] ?? 'linux');
+$hardwareProfile = trim($_POST['hardware_profile'] ?? 'unknown');
 $environment = trim($_POST['environment'] ?? 'production');
 $criticality = trim($_POST['criticality'] ?? 'medium');
 $tags = trim($_POST['tags'] ?? '');
@@ -31,11 +32,13 @@ $os = 'OS inconnu';
 
 $settingsManager = new SettingsManager($pdo);
 $targetTypes = msmInventoryOptions($settingsManager, 'target_types');
+$hardwareProfiles = msmHardwareProfiles();
 $environments = msmInventoryOptions($settingsManager, 'environments');
 $criticalities = msmInventoryOptions($settingsManager, 'criticalities');
 $collectionMethods = msmInventoryOptions($settingsManager, 'collection_methods');
 
 $targetType = msmInventoryNormalizeSelected($targetType, $targetTypes, array_key_first($targetTypes) ?: 'other');
+$hardwareProfile = msmInventoryNormalizeSelected($hardwareProfile, $hardwareProfiles, 'unknown');
 $environment = msmInventoryNormalizeSelected($environment, $environments, array_key_first($environments) ?: 'other');
 $criticality = msmInventoryNormalizeSelected($criticality, $criticalities, array_key_first($criticalities) ?: 'medium');
 $collectionMethod = msmInventoryNormalizeSelected($collectionMethod, $collectionMethods, array_key_first($collectionMethods) ?: 'manual');
@@ -74,12 +77,12 @@ $status = $pingResult['status'] === 'up' ? 'up' : 'down';
 try {
     $stmt = $pdo->prepare("
         INSERT INTO servers (
-            name, hostname, target_type, environment, criticality, tags, collection_method,
+            name, hostname, target_type, hardware_profile, environment, criticality, tags, collection_method,
             ssh_port, ssh_user, ssh_password, os, ssh_status, ssh_enabled, security_enabled,
             patch_management_enabled, status
         )
         VALUES (
-            :name, :hostname, :target_type, :environment, :criticality, :tags, :collection_method,
+            :name, :hostname, :target_type, :hardware_profile, :environment, :criticality, :tags, :collection_method,
             :ssh_port, :ssh_user, :ssh_password, :os, :ssh_status, :ssh_enabled, :security_enabled,
             :patch_management_enabled, :status
         )
@@ -89,6 +92,7 @@ try {
         ':name' => $name,
         ':hostname' => $hostname,
         ':target_type' => $targetType,
+        ':hardware_profile' => $hardwareProfile,
         ':environment' => $environment,
         ':criticality' => $criticality,
         ':tags' => $tags !== '' ? $tags : null,

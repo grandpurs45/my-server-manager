@@ -10,6 +10,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Patch Management : collecte planifiee des mises a jour Linux/Proxmox via SSH, `apt` et `dnf`.
 - Cycle de vie OS : detection des fins de support et upgrades connus pour les distributions Linux supportees.
 - Securite operationnelle : ports ouverts, exposition reseau, firewall, dernier controle et erreurs de collecte.
+- Sante materielle : temperatures Linux/Proxmox, etat SMART, usure et erreurs media des disques physiques.
 - Alerting : regles globales, alertes actives, mur d'alertes et vue backoffice.
 - Etats operationnels homogenes : `OK`, `Warning`, `Critical`, `Unknown`.
 - Notification de nouvelle version disponible avec lien vers les notes de release et le guide de mise a jour.
@@ -271,6 +272,54 @@ Forcer un check securite manuel sans attendre l'intervalle interne :
 ```bash
 php scripts/check-security.php --force
 ```
+
+Lancer un check de sante materielle sur les cibles physiques et appliances :
+
+```bash
+php scripts/check-hardware-health.php
+```
+
+Forcer le check sans attendre l'intervalle interne :
+
+```bash
+php scripts/check-hardware-health.php --force
+```
+
+Le collecteur Linux/Proxmox utilise `sensors -j` quand `lm-sensors` est installe, puis `/sys/class/thermal` en repli. Pour les cibles marquees `Equipement physique`, il collecte aussi les informations SMART des disques avec `smartctl`. Les machines virtuelles, conteneurs et profils inconnus sont ignores.
+
+Sur une cible physique Debian/Ubuntu ou Proxmox :
+
+```bash
+sudo apt install lm-sensors smartmontools
+sensors
+sudo smartctl --scan-open
+```
+
+Sur une cible physique RHEL/Rocky/AlmaLinux :
+
+```bash
+sudo dnf install lm_sensors smartmontools
+sensors
+sudo smartctl --scan-open
+```
+
+MSM tente `smartctl` directement, puis `sudo -n smartctl`. Si le compte SSH n'a pas les droits de lecture SMART, la temperature reste collectee et la fiche cible affiche l'erreur SMART. Ne pas donner un acces sudo general au compte MSM ; limiter une eventuelle regle sudoers a `smartctl`.
+
+Le moteur d'alerting fournit deux seuils globaux configurables dans `Regles d'alertes` :
+
+- `hardware_temperature_warning`, 70 degres Celsius par defaut ;
+- `hardware_temperature_critical`, 85 degres Celsius par defaut.
+
+Lorsque le seuil critique est atteint, seule l'alerte critique est active pour la cible.
+
+Les disques SMART des equipements physiques disposent aussi de regles configurables :
+
+- `hardware_smart_failed` : etat SMART global en echec ;
+- `hardware_smart_media_errors` : au moins une erreur media par defaut ;
+- `hardware_smart_wear_warning` : 80 % d'usure par defaut ;
+- `hardware_smart_wear_critical` : 95 % d'usure par defaut.
+
+Pour un disque au-dessus du seuil d'usure critique, seule l'alerte d'usure critique est active.
 
 Evaluer les alertes actives :
 

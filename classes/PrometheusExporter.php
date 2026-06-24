@@ -53,6 +53,22 @@ class PrometheusExporter
             '# TYPE msm_security_firewall_enabled gauge',
             '# HELP msm_security_last_check_timestamp Last known security check timestamp as Unix epoch seconds.',
             '# TYPE msm_security_last_check_timestamp gauge',
+            '# HELP msm_hardware_temperature_celsius Last known hardware temperature reported by MSM.',
+            '# TYPE msm_hardware_temperature_celsius gauge',
+            '# HELP msm_hardware_health_check_status Last known hardware health check status. Value is always 1 for the current status label.',
+            '# TYPE msm_hardware_health_check_status gauge',
+            '# HELP msm_hardware_health_last_check_timestamp Last known hardware health check timestamp as Unix epoch seconds.',
+            '# TYPE msm_hardware_health_last_check_timestamp gauge',
+            '# HELP msm_hardware_smart_passed Last known SMART overall health status for a physical disk.',
+            '# TYPE msm_hardware_smart_passed gauge',
+            '# HELP msm_hardware_disk_temperature_celsius Last known SMART disk temperature.',
+            '# TYPE msm_hardware_disk_temperature_celsius gauge',
+            '# HELP msm_hardware_disk_power_on_hours Last known SMART disk power-on hours.',
+            '# TYPE msm_hardware_disk_power_on_hours counter',
+            '# HELP msm_hardware_disk_percentage_used Last known SMART/NVMe disk endurance percentage used.',
+            '# TYPE msm_hardware_disk_percentage_used gauge',
+            '# HELP msm_hardware_disk_media_errors Last known SMART/NVMe media errors count.',
+            '# TYPE msm_hardware_disk_media_errors counter',
             '# HELP msm_alerts_active Active MSM alerts count grouped by severity.',
             '# TYPE msm_alerts_active gauge',
             '# HELP msm_alert_active Active MSM alert. Value is always 1 for each active alert.',
@@ -63,6 +79,7 @@ class PrometheusExporter
         $latestPatchChecks = $this->getLatestPatchChecks();
         $latestOsLifecycleChecks = $this->getLatestOsLifecycleChecks();
         $latestSecurityChecks = $this->getLatestSecurityChecks();
+        $latestHardwareChecks = $this->getLatestHardwareChecks();
         $activeAlerts = $this->getActiveAlerts();
         $activeAlertCounts = ['critical' => 0, 'warning' => 0, 'info' => 0];
 
@@ -162,6 +179,63 @@ class PrometheusExporter
                     $lines[] = "msm_security_last_check_timestamp{{$securityLabels}} " . (int) $securityCheck['checked_at_timestamp'];
                 }
             }
+
+            if (isset($latestHardwareChecks[$serverId])) {
+                $hardwareCheck = $latestHardwareChecks[$serverId];
+                $hardwareStatusLabels = $this->formatLabels($baseLabels + [
+                    'hardware_profile' => $server['hardware_profile'] ?? 'unknown',
+                    'collector' => $hardwareCheck['collector'] ?: 'unknown',
+                    'status' => $hardwareCheck['status'] ?: 'unknown',
+                ]);
+                $lines[] = "msm_hardware_health_check_status{{$hardwareStatusLabels}} 1";
+
+                if ($hardwareCheck['checked_at_timestamp'] !== null) {
+                    $hardwareLabels = $this->formatLabels($baseLabels + [
+                        'hardware_profile' => $server['hardware_profile'] ?? 'unknown',
+                        'collector' => $hardwareCheck['collector'] ?: 'unknown',
+                    ]);
+                    $lines[] = "msm_hardware_health_last_check_timestamp{{$hardwareLabels}} " . (int) $hardwareCheck['checked_at_timestamp'];
+                }
+
+                foreach ($hardwareCheck['temperatures'] as $temperature) {
+                    $temperatureLabels = $this->formatLabels($baseLabels + [
+                        'hardware_profile' => $server['hardware_profile'] ?? 'unknown',
+                        'collector' => $hardwareCheck['collector'] ?: 'unknown',
+                        'sensor' => $temperature['sensor_key'] ?? 'unknown',
+                        'sensor_label' => $temperature['sensor_label'] ?? 'Sonde',
+                        'sensor_type' => $temperature['sensor_type'] ?? 'other',
+                    ]);
+                    $lines[] = "msm_hardware_temperature_celsius{{$temperatureLabels}} "
+                        . $this->formatFloat((float) $temperature['temperature_celsius']);
+                }
+
+                foreach ($hardwareCheck['smart_disks'] as $disk) {
+                    $diskLabels = $this->formatLabels($baseLabels + [
+                        'hardware_profile' => $server['hardware_profile'] ?? 'unknown',
+                        'device' => $disk['device_name'] ?? 'unknown',
+                        'protocol' => $disk['protocol'] ?? 'unknown',
+                        'model' => $disk['model_name'] ?? 'unknown',
+                    ]);
+
+                    if ($disk['smart_passed'] !== null) {
+                        $lines[] = "msm_hardware_smart_passed{{$diskLabels}} " . ((int) $disk['smart_passed'] === 1 ? 1 : 0);
+                    }
+                    if ($disk['temperature_celsius'] !== null) {
+                        $lines[] = "msm_hardware_disk_temperature_celsius{{$diskLabels}} "
+                            . $this->formatFloat((float) $disk['temperature_celsius']);
+                    }
+                    if ($disk['power_on_hours'] !== null) {
+                        $lines[] = "msm_hardware_disk_power_on_hours{{$diskLabels}} " . (int) $disk['power_on_hours'];
+                    }
+                    if ($disk['percentage_used'] !== null) {
+                        $lines[] = "msm_hardware_disk_percentage_used{{$diskLabels}} "
+                            . $this->formatFloat((float) $disk['percentage_used']);
+                    }
+                    if ($disk['media_errors'] !== null) {
+                        $lines[] = "msm_hardware_disk_media_errors{{$diskLabels}} " . (int) $disk['media_errors'];
+                    }
+                }
+            }
         }
 
         foreach ($activeAlerts as $alert) {
@@ -192,7 +266,7 @@ class PrometheusExporter
     private function getServers(): array
     {
         $stmt = $this->pdo->query(
-            'SELECT id, name, hostname, target_type, status, ssh_status, latency, last_check, UNIX_TIMESTAMP(last_check) AS last_check_timestamp
+            'SELECT id, name, hostname, target_type, hardware_profile, status, ssh_status, latency, last_check, UNIX_TIMESTAMP(last_check) AS last_check_timestamp
              FROM servers
              ORDER BY name ASC'
         );
@@ -314,6 +388,59 @@ class PrometheusExporter
 
         $checks = [];
         foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $checks[(int) $row['server_id']] = $row;
+        }
+
+        return $checks;
+    }
+
+    private function getLatestHardwareChecks(): array
+    {
+        if (!$this->tableExists('hardware_health_checks') || !$this->tableExists('hardware_temperature_readings')) {
+            return [];
+        }
+
+        $stmt = $this->pdo->query(
+            'SELECT hc.id,
+                    hc.server_id,
+                    hc.collector,
+                    hc.status,
+                    UNIX_TIMESTAMP(hc.checked_at) AS checked_at_timestamp
+             FROM hardware_health_checks hc
+             INNER JOIN (
+                 SELECT server_id, MAX(checked_at) AS checked_at
+                 FROM hardware_health_checks
+                 GROUP BY server_id
+             ) latest
+                ON latest.server_id = hc.server_id
+               AND latest.checked_at = hc.checked_at'
+        );
+
+        $checks = [];
+        $temperatureStmt = $this->pdo->prepare(
+            'SELECT sensor_key, sensor_label, sensor_type, temperature_celsius
+             FROM hardware_temperature_readings
+             WHERE hardware_check_id = :hardware_check_id
+             ORDER BY id ASC'
+        );
+        $smartDiskStmt = $this->tableExists('hardware_smart_disks')
+            ? $this->pdo->prepare(
+                'SELECT device_name, protocol, model_name, smart_passed, temperature_celsius,
+                        power_on_hours, percentage_used, media_errors
+                 FROM hardware_smart_disks
+                 WHERE hardware_check_id = :hardware_check_id
+                 ORDER BY id ASC'
+            )
+            : null;
+
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $temperatureStmt->execute([':hardware_check_id' => (int) $row['id']]);
+            $row['temperatures'] = $temperatureStmt->fetchAll(\PDO::FETCH_ASSOC);
+            $row['smart_disks'] = [];
+            if ($smartDiskStmt !== null) {
+                $smartDiskStmt->execute([':hardware_check_id' => (int) $row['id']]);
+                $row['smart_disks'] = $smartDiskStmt->fetchAll(\PDO::FETCH_ASSOC);
+            }
             $checks[(int) $row['server_id']] = $row;
         }
 

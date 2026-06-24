@@ -10,6 +10,7 @@ MSM ne lance pas les checks lourds pendant l'affichage des pages ni pendant le s
 | `scripts/check-patches.php` | patch management Linux/Proxmox | toutes les 10 a 15 minutes | `patch_management / check_interval_hours` |
 | `scripts/check-os-lifecycle.php` | cycle de vie OS et upgrades connus | toutes les heures ou tous les jours | `os_lifecycle / check_interval_hours` |
 | `scripts/check-security.php` | ports ouverts et pare-feu | toutes les heures ou tous les jours | `security / check_interval_hours` |
+| `scripts/check-hardware-health.php` | temperatures et SMART des equipements physiques | toutes les 5 minutes | `hardware_health / check_interval_minutes` |
 | `scripts/check-alerts.php` | evaluation des alertes actives | toutes les 1 a 5 minutes | `alerting / check_interval_minutes` |
 
 Les scripts peuvent etre appeles plus souvent que necessaire : chacun respecte son intervalle interne et saute l'execution si le dernier check est trop recent.
@@ -23,6 +24,7 @@ php scripts/check-servers.php
 php scripts/check-patches.php
 php scripts/check-os-lifecycle.php
 php scripts/check-security.php
+php scripts/check-hardware-health.php
 php scripts/check-alerts.php
 ```
 
@@ -33,6 +35,7 @@ php scripts/check-servers.php --force
 php scripts/check-patches.php --force
 php scripts/check-os-lifecycle.php --force
 php scripts/check-security.php --force
+php scripts/check-hardware-health.php --force
 php scripts/check-alerts.php --force
 ```
 
@@ -97,6 +100,7 @@ Exemple :
 */10 * * * * /usr/bin/php /var/www/html/msm/scripts/check-patches.php >> /var/www/html/msm/logs/check-patches.log 2>&1
 15 * * * * /usr/bin/php /var/www/html/msm/scripts/check-os-lifecycle.php >> /var/www/html/msm/logs/check-os-lifecycle.log 2>&1
 30 * * * * /usr/bin/php /var/www/html/msm/scripts/check-security.php >> /var/www/html/msm/logs/check-security.log 2>&1
+*/5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-hardware-health.php >> /var/www/html/msm/logs/check-hardware-health.log 2>&1
 */5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-alerts.php >> /var/www/html/msm/logs/check-alerts.log 2>&1
 ```
 

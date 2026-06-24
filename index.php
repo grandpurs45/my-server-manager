@@ -17,6 +17,17 @@ $alertCounts = $alertRepository->getActiveAlertCounts();
 $enabledAlertRules = $alertRepository->getEnabledRules();
 $securityExposedPortsRuleEnabled = isset($enabledAlertRules['security_exposed_ports']);
 $securityFirewallRuleEnabled = isset($enabledAlertRules['security_firewall_disabled']);
+$temperatureWarningRule = $enabledAlertRules['hardware_temperature_warning'] ?? null;
+$temperatureCriticalRule = $enabledAlertRules['hardware_temperature_critical'] ?? null;
+$temperatureWarningThreshold = max(1, (int) ($temperatureWarningRule['threshold_value'] ?? 70));
+$temperatureCriticalThreshold = max(1, (int) ($temperatureCriticalRule['threshold_value'] ?? 85));
+$smartFailedRuleEnabled = isset($enabledAlertRules['hardware_smart_failed']);
+$smartMediaRule = $enabledAlertRules['hardware_smart_media_errors'] ?? null;
+$smartWearWarningRule = $enabledAlertRules['hardware_smart_wear_warning'] ?? null;
+$smartWearCriticalRule = $enabledAlertRules['hardware_smart_wear_critical'] ?? null;
+$smartMediaThreshold = max(1, (int) ($smartMediaRule['threshold_value'] ?? 1));
+$smartWearWarningThreshold = max(1, (int) ($smartWearWarningRule['threshold_value'] ?? 80));
+$smartWearCriticalThreshold = max(1, (int) ($smartWearCriticalRule['threshold_value'] ?? 95));
 
 $serverStats = $pdo->query("
     SELECT
@@ -30,6 +41,119 @@ $serverStats = $pdo->query("
 $latestPatchCheck = $pdo->query("SELECT MAX(checked_at) FROM patch_checks")->fetchColumn() ?: null;
 $latestOsLifecycleCheck = $pdo->query("SELECT MAX(checked_at) FROM os_lifecycle_checks")->fetchColumn() ?: null;
 $latestSecurityCheck = $pdo->query("SELECT MAX(checked_at) FROM security_checks")->fetchColumn() ?: null;
+$latestHardwareHealthCheck = $pdo->query("SELECT MAX(checked_at) FROM hardware_health_checks")->fetchColumn() ?: null;
+
+$hardwareTargets = $pdo->query("
+    SELECT
+        s.id,
+        s.name,
+        s.hostname,
+        s.target_type,
+        s.hardware_profile,
+        hc.status AS hardware_status,
+        hc.max_temperature_celsius,
+        hc.checked_at
+    FROM servers s
+    LEFT JOIN hardware_health_checks hc
+        ON hc.id = (
+            SELECT hc2.id
+            FROM hardware_health_checks hc2
+            WHERE hc2.server_id = s.id
+            ORDER BY hc2.checked_at DESC, hc2.id DESC
+            LIMIT 1
+        )
+    WHERE s.hardware_profile IN ('physical', 'appliance')
+    ORDER BY s.name ASC
+")->fetchAll(PDO::FETCH_ASSOC);
+
+$hardwareTemperatures = array_values(array_filter(
+    $hardwareTargets,
+    fn (array $target): bool => ($target['hardware_status'] ?? '') === 'ok'
+        && $target['max_temperature_celsius'] !== null
+));
+$maxHardwareTemperature = $hardwareTemperatures === []
+    ? null
+    : max(array_map(fn (array $target): float => (float) $target['max_temperature_celsius'], $hardwareTemperatures));
+$criticalHardwareTargets = $temperatureCriticalRule === null
+    ? []
+    : array_values(array_filter(
+        $hardwareTemperatures,
+        fn (array $target): bool => (float) $target['max_temperature_celsius'] >= $temperatureCriticalThreshold
+    ));
+$warningHardwareTargets = $temperatureWarningRule === null
+    ? []
+    : array_values(array_filter(
+        $hardwareTemperatures,
+        fn (array $target): bool => (float) $target['max_temperature_celsius'] >= $temperatureWarningThreshold
+            && ($temperatureCriticalRule === null || (float) $target['max_temperature_celsius'] < $temperatureCriticalThreshold)
+    ));
+
+$smartDisks = $pdo->query("
+    SELECT
+        s.id AS server_id,
+        s.name AS server_name,
+        s.hostname,
+        s.target_type,
+        d.device_name,
+        d.model_name,
+        d.smart_passed,
+        d.percentage_used,
+        d.media_errors
+    FROM servers s
+    INNER JOIN hardware_health_checks hc
+        ON hc.id = (
+            SELECT hc2.id
+            FROM hardware_health_checks hc2
+            WHERE hc2.server_id = s.id
+            ORDER BY hc2.checked_at DESC, hc2.id DESC
+            LIMIT 1
+        )
+    INNER JOIN hardware_smart_disks d
+        ON d.hardware_check_id = hc.id
+    WHERE s.hardware_profile = 'physical'
+    ORDER BY s.name ASC, d.device_name ASC
+")->fetchAll(PDO::FETCH_ASSOC);
+
+$smartFailedDisks = $smartFailedRuleEnabled
+    ? array_values(array_filter(
+        $smartDisks,
+        fn (array $disk): bool => $disk['smart_passed'] !== null && (int) $disk['smart_passed'] === 0
+    ))
+    : [];
+$smartMediaErrorDisks = $smartMediaRule === null
+    ? []
+    : array_values(array_filter(
+        $smartDisks,
+        fn (array $disk): bool => $disk['media_errors'] !== null
+            && (int) $disk['media_errors'] >= $smartMediaThreshold
+    ));
+$smartWearCriticalDisks = $smartWearCriticalRule === null
+    ? []
+    : array_values(array_filter(
+        $smartDisks,
+        fn (array $disk): bool => $disk['percentage_used'] !== null
+            && (float) $disk['percentage_used'] >= $smartWearCriticalThreshold
+    ));
+$smartWearWarningDisks = $smartWearWarningRule === null
+    ? []
+    : array_values(array_filter(
+        $smartDisks,
+        fn (array $disk): bool => $disk['percentage_used'] !== null
+            && (float) $disk['percentage_used'] >= $smartWearWarningThreshold
+            && ($smartWearCriticalRule === null || (float) $disk['percentage_used'] < $smartWearCriticalThreshold)
+    ));
+$smartMaxWear = array_reduce(
+    $smartDisks,
+    function (?float $maximum, array $disk): ?float {
+        if ($disk['percentage_used'] === null) {
+            return $maximum;
+        }
+
+        $wear = (float) $disk['percentage_used'];
+        return $maximum === null ? $wear : max($maximum, $wear);
+    },
+    null
+);
 
 function msmDashboardCheckRuntime(SettingsManager $settingsManager, string $category): array
 {
@@ -60,6 +184,15 @@ $summary = [
         : 0,
     'active_alerts' => (int) ($alertCounts['total'] ?? 0),
     'critical_alerts' => (int) ($alertCounts['critical'] ?? 0),
+    'hardware_temperature_max' => $maxHardwareTemperature,
+    'hardware_temperature_warning' => count($warningHardwareTargets),
+    'hardware_temperature_critical' => count($criticalHardwareTargets),
+    'smart_disks' => count($smartDisks),
+    'smart_failures' => count($smartFailedDisks),
+    'smart_media_errors' => count($smartMediaErrorDisks),
+    'smart_wear_warning' => count($smartWearWarningDisks),
+    'smart_wear_critical' => count($smartWearCriticalDisks),
+    'smart_max_wear' => $smartMaxWear,
 ];
 
 $priorities = [];
@@ -201,6 +334,78 @@ foreach ($securityTargets as $target) {
     }
 }
 
+foreach ($criticalHardwareTargets as $target) {
+    $priorities[] = [
+        'score' => 0,
+        'label' => number_format((float) $target['max_temperature_celsius'], 1, ',', '') . " \u{00B0}C critique",
+        'name' => $target['name'],
+        'hostname' => $target['hostname'],
+        'target_type' => $target['target_type'] ?? 'other',
+        'href' => $baseUrl . 'pages/details-cible.php?id=' . (int) $target['id'],
+        'badge' => 'bg-red-100 text-red-700',
+    ];
+}
+
+foreach ($warningHardwareTargets as $target) {
+    $priorities[] = [
+        'score' => 3,
+        'label' => number_format((float) $target['max_temperature_celsius'], 1, ',', '') . " \u{00B0}C elevee",
+        'name' => $target['name'],
+        'hostname' => $target['hostname'],
+        'target_type' => $target['target_type'] ?? 'other',
+        'href' => $baseUrl . 'pages/details-cible.php?id=' . (int) $target['id'],
+        'badge' => 'bg-orange-100 text-orange-800',
+    ];
+}
+
+foreach ($smartFailedDisks as $disk) {
+    $priorities[] = [
+        'score' => 0,
+        'label' => 'SMART en echec ' . $disk['device_name'],
+        'name' => $disk['server_name'],
+        'hostname' => $disk['hostname'],
+        'target_type' => $disk['target_type'] ?? 'other',
+        'href' => $baseUrl . 'pages/details-cible.php?id=' . (int) $disk['server_id'],
+        'badge' => 'bg-red-100 text-red-700',
+    ];
+}
+
+foreach ($smartMediaErrorDisks as $disk) {
+    $priorities[] = [
+        'score' => 0,
+        'label' => (int) $disk['media_errors'] . ' erreur(s) media',
+        'name' => $disk['server_name'],
+        'hostname' => $disk['hostname'],
+        'target_type' => $disk['target_type'] ?? 'other',
+        'href' => $baseUrl . 'pages/details-cible.php?id=' . (int) $disk['server_id'],
+        'badge' => 'bg-red-100 text-red-700',
+    ];
+}
+
+foreach ($smartWearCriticalDisks as $disk) {
+    $priorities[] = [
+        'score' => 0,
+        'label' => number_format((float) $disk['percentage_used'], 1, ',', '') . ' % usure critique',
+        'name' => $disk['server_name'],
+        'hostname' => $disk['hostname'],
+        'target_type' => $disk['target_type'] ?? 'other',
+        'href' => $baseUrl . 'pages/details-cible.php?id=' . (int) $disk['server_id'],
+        'badge' => 'bg-red-100 text-red-700',
+    ];
+}
+
+foreach ($smartWearWarningDisks as $disk) {
+    $priorities[] = [
+        'score' => 3,
+        'label' => number_format((float) $disk['percentage_used'], 1, ',', '') . ' % usure',
+        'name' => $disk['server_name'],
+        'hostname' => $disk['hostname'],
+        'target_type' => $disk['target_type'] ?? 'other',
+        'href' => $baseUrl . 'pages/details-cible.php?id=' . (int) $disk['server_id'],
+        'badge' => 'bg-orange-100 text-orange-800',
+    ];
+}
+
 usort($priorities, fn (array $a, array $b): int => $a['score'] <=> $b['score'] ?: strcasecmp($a['name'], $b['name']));
 $priorities = array_slice($priorities, 0, 8);
 
@@ -268,6 +473,11 @@ if ($securityInterval < 1) {
     $securityInterval = 24;
 }
 
+$hardwareHealthInterval = (int) ($settingsManager->get('hardware_health', 'check_interval_minutes') ?? 15);
+if ($hardwareHealthInterval < 1) {
+    $hardwareHealthInterval = 15;
+}
+
 $alertingInterval = (int) ($settingsManager->get('alerting', 'check_interval_minutes') ?? 5);
 if ($alertingInterval < 1) {
     $alertingInterval = 5;
@@ -279,6 +489,7 @@ $supervisionRuntime = msmDashboardCheckRuntime($settingsManager, 'supervision');
 $patchRuntime = msmDashboardCheckRuntime($settingsManager, 'patch_management');
 $osLifecycleRuntime = msmDashboardCheckRuntime($settingsManager, 'os_lifecycle');
 $securityRuntime = msmDashboardCheckRuntime($settingsManager, 'security');
+$hardwareHealthRuntime = msmDashboardCheckRuntime($settingsManager, 'hardware_health');
 $alertingRuntime = msmDashboardCheckRuntime($settingsManager, 'alerting');
 
 $freshness = [
@@ -321,6 +532,20 @@ $freshness = [
         'status' => $securityRuntime['status'],
         'message' => $securityRuntime['message'],
         'href' => $baseUrl . 'pages/securite-serveurs.php',
+    ],
+    [
+        'name' => 'Sante materielle',
+        'execution_date' => $hardwareHealthRuntime['attempt'] ?: ($hardwareHealthRuntime['run'] ?: $latestHardwareHealthCheck),
+        'result_date' => $latestHardwareHealthCheck,
+        'interval' => $hardwareHealthInterval . ' min',
+        'state' => msmDashboardFreshness(
+            $hardwareHealthRuntime['attempt'] ?: ($hardwareHealthRuntime['run'] ?: $latestHardwareHealthCheck),
+            max(900, $hardwareHealthInterval * 60 * 3),
+            $hardwareHealthRuntime['status']
+        ),
+        'status' => $hardwareHealthRuntime['status'],
+        'message' => $hardwareHealthRuntime['message'],
+        'href' => $baseUrl . 'pages/serveurs.php',
     ],
     [
         'name' => 'Alerting',
@@ -410,6 +635,39 @@ $freshness = [
                 <i data-lucide="calendar-warning" class="h-5 w-5 text-yellow-600"></i>
             </div>
             <div class="mt-2 text-3xl font-bold text-yellow-700"><?= $summary['os_risks'] ?></div>
+        </a>
+
+        <a href="<?= $baseUrl ?>pages/serveurs.php" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold uppercase text-slate-500">Temperatures</div>
+                <i data-lucide="thermometer" class="h-5 w-5 <?= $summary['hardware_temperature_critical'] > 0 ? 'text-red-500' : ($summary['hardware_temperature_warning'] > 0 ? 'text-orange-500' : 'text-green-600') ?>"></i>
+            </div>
+            <div class="mt-2 text-3xl font-bold <?= $summary['hardware_temperature_critical'] > 0 ? 'text-red-700' : ($summary['hardware_temperature_warning'] > 0 ? 'text-orange-700' : 'text-slate-900') ?>">
+                <?= $summary['hardware_temperature_max'] !== null
+                    ? htmlspecialchars(number_format((float) $summary['hardware_temperature_max'], 1, ',', '')) . ' &deg;C'
+                    : '-' ?>
+            </div>
+            <div class="mt-1 text-xs text-slate-500">
+                <?= $summary['hardware_temperature_critical'] ?> critique(s),
+                <?= $summary['hardware_temperature_warning'] ?> warning(s)
+            </div>
+        </a>
+
+        <a href="<?= $baseUrl ?>pages/serveurs.php" class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold uppercase text-slate-500">Disques SMART</div>
+                <i data-lucide="hard-drive" class="h-5 w-5 <?= ($summary['smart_failures'] + $summary['smart_media_errors'] + $summary['smart_wear_critical']) > 0 ? 'text-red-500' : ($summary['smart_wear_warning'] > 0 ? 'text-orange-500' : 'text-green-600') ?>"></i>
+            </div>
+            <div class="mt-2 text-3xl font-bold <?= ($summary['smart_failures'] + $summary['smart_media_errors'] + $summary['smart_wear_critical']) > 0 ? 'text-red-700' : ($summary['smart_wear_warning'] > 0 ? 'text-orange-700' : 'text-slate-900') ?>">
+                <?= $summary['smart_disks'] ?>
+            </div>
+            <div class="mt-1 text-xs text-slate-500">
+                <?= $summary['smart_failures'] ?> echec(s),
+                <?= $summary['smart_media_errors'] ?> avec erreurs media
+                <?php if ($summary['smart_max_wear'] !== null): ?>
+                    &middot; usure max <?= htmlspecialchars(number_format((float) $summary['smart_max_wear'], 1, ',', '')) ?> %
+                <?php endif; ?>
+            </div>
         </a>
     </div>
 

@@ -93,10 +93,19 @@ php scripts/check-servers.php --force
 php scripts/check-patches.php --force
 php scripts/check-os-lifecycle.php --force
 php scripts/check-security.php --force
+php scripts/check-hardware-health.php --force
 php scripts/check-alerts.php --force
 ```
 
 Les scripts lisent et ecrivent en base. Ils ne doivent pas etre lances depuis une page web.
+
+Depuis la v1.6, verifier que l'ordonnancement contient aussi :
+
+```cron
+*/5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-hardware-health.php >> /var/www/html/msm/logs/check-hardware-health.log 2>&1
+```
+
+Le chemin exact depend de l'installation. Utiliser `php scripts/setup.php --cron` pour generer la ligne adaptee.
 
 ## 8. Verifier l'application
 

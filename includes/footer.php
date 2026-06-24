@@ -41,6 +41,7 @@ $version = getVersionFromPackageJson();
 
         const defaults = window.msmInventoryDefaults || {
             target_type: 'other',
+            hardware_profile: 'unknown',
             environment: 'other',
             criticality: 'medium',
             collection_method: 'manual'

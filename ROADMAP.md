@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version de travail : `v1.5.x`.
+Version actuelle : `v1.6.0`.
 
 Socle valide :
 
@@ -18,11 +18,13 @@ Socle valide :
 - guide d'installation, guide de mise a jour et assistant CLI disponibles ;
 - authentification locale avec utilisateurs, droits modules et politique de mots de passe ;
 - inventaire configurable des cibles ;
+- profil materiel des cibles : physique, machine virtuelle, conteneur, appliance ou inconnu ;
 - supervision ping / SSH / latence / disque avec refresh cible ;
 - patch management Linux, Proxmox, `apt` et `dnf` ;
 - cycle de vie OS avec support / obsolescence / upgrade connu ;
 - securite operationnelle de base ;
 - alerting interne avec regles globales, mur d'alertes, vue backoffice et traitement manuel ;
+- sante materielle Linux/Proxmox avec temperatures, SMART, dashboard, alertes et export Prometheus ;
 - export Prometheus stable ;
 - titre d'onglet navigateur personnalisable par environnement.
 
@@ -98,6 +100,16 @@ Objectif : rendre le backoffice alertes exploitable au quotidien sans partir sur
 - Analyse de mots de passe faibles ou compromis.
 
 ## Realise
+
+### v1.6 - Sante Materielle
+
+- Profil materiel dans l'inventaire.
+- Collecte des temperatures via `lm-sensors` ou `/sys/class/thermal`.
+- Collecte SMART en lecture seule avec `smartctl` sur les equipements physiques.
+- Stockage des checks, sondes et disques en base.
+- Affichage detaille sur la fiche cible et resumes dashboard.
+- Metriques Prometheus pour temperatures, SMART, usure et erreurs media.
+- Alertes configurables de temperature, SMART, usure, erreurs media et fraicheur du collecteur.
 
 ### v1.4 - Refresh Cible et Personnalisation Environnement
 

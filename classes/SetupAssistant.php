@@ -54,6 +54,17 @@ class SetupAssistant
             'log' => 'check-security.log',
         ],
         [
+            'name' => 'Sante materielle',
+            'unit' => 'msm-check-hardware-health',
+            'description' => 'MSM hardware health check',
+            'timer_description' => 'Run MSM hardware health check every 5 minutes',
+            'cron' => '*/5 * * * *',
+            'on_boot' => '5min',
+            'on_active' => '5min',
+            'script' => 'check-hardware-health.php',
+            'log' => 'check-hardware-health.log',
+        ],
+        [
             'name' => 'Alerting',
             'unit' => 'msm-check-alerts',
             'description' => 'MSM alerting evaluation',

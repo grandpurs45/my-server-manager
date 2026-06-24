@@ -23,6 +23,7 @@ Certaines familles ajoutent des labels specialises :
 - Patch Management : `update_type`, `collector`, `status` ;
 - Cycle de vie OS : `os_family`, `os_version`, `support_status`.
 - Securite : `status`.
+- Sante materielle : `hardware_profile`, `collector`, `sensor`, `sensor_label`, `sensor_type`, `device`, `protocol`, `model`.
 - Alerting : `rule`, `severity`.
 
 ```text
@@ -47,6 +48,10 @@ msm_security_open_ports{server="server-01",hostname="server-01.example.local",ty
 msm_security_exposed_ports{server="server-01",hostname="server-01.example.local",type="linux"} 2
 msm_security_firewall_enabled{server="server-01",hostname="server-01.example.local",type="linux"} 1
 msm_security_last_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux"} 1780000000
+msm_hardware_temperature_celsius{server="server-01",hostname="server-01.example.local",type="linux",hardware_profile="physical",collector="lm_sensors+smartctl",sensor="coretemp/Package id 0/temp1_input",sensor_label="Package id 0",sensor_type="cpu"} 62
+msm_hardware_smart_passed{server="server-01",hostname="server-01.example.local",type="linux",hardware_profile="physical",device="/dev/nvme0",protocol="NVMe",model="Example NVMe"} 1
+msm_hardware_disk_temperature_celsius{server="server-01",hostname="server-01.example.local",type="linux",hardware_profile="physical",device="/dev/nvme0",protocol="NVMe",model="Example NVMe"} 39
+msm_hardware_disk_percentage_used{server="server-01",hostname="server-01.example.local",type="linux",hardware_profile="physical",device="/dev/nvme0",protocol="NVMe",model="Example NVMe"} 16
 msm_alerts_active{severity="critical"} 1
 msm_alert_active{server="server-01",hostname="server-01.example.local",type="linux",rule="server_down",severity="critical"} 1
 ```
@@ -86,6 +91,7 @@ php scripts/check-servers.php --force
 php scripts/check-patches.php --force
 php scripts/check-os-lifecycle.php --force
 php scripts/check-security.php --force
+php scripts/check-hardware-health.php --force
 php scripts/check-alerts.php --force
 ```
 
