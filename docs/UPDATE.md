@@ -2,7 +2,28 @@
 
 Ce guide decrit une mise a jour standard de My Server Manager sur une installation existante.
 
-Les commandes sont a executer depuis la racine du projet MSM, par exemple `/var/www/html/msm` ou `/var/www/msm` selon l'installation.
+## 0. Se placer dans le dossier d'installation MSM
+
+Toutes les commandes de ce guide doivent etre executees depuis la racine du projet MSM.
+
+Chemin recommande par la procedure d'installation :
+
+```bash
+cd /var/www/html/msm
+```
+
+Certaines installations historiques peuvent utiliser un autre chemin, par exemple `/var/www/msm`. Verifier le dossier courant avant de continuer :
+
+```bash
+pwd
+test -f package.json && test -f apply_migrations.php && echo "Dossier MSM confirme"
+```
+
+Si le chemin d'installation est inconnu, rechercher le fichier principal de version :
+
+```bash
+sudo find /var/www -maxdepth 4 -type f -name package.json -path '*/msm/package.json' 2>/dev/null
+```
 
 ## 1. Identifier la version actuelle
 
@@ -41,7 +62,7 @@ Pour mettre a jour vers une version taguee precise :
 
 ```bash
 git fetch --tags
-git checkout v0.26.0
+git checkout v1.6.0
 ```
 
 En production, utiliser `main` si l'instance suit le flux courant, ou un tag si l'on veut figer une version.
@@ -83,6 +104,68 @@ php scripts/update-check.php
 ```
 
 Ce script verifie la version, les dependances, `.env`, la connexion base, les migrations, les logs et la presence des scripts dans la crontab quand elle est accessible.
+
+### Corriger les warnings du controle post-update
+
+#### `Crontab MSM - scripts absents: check-hardware-health.php`
+
+Ce warning indique que le code v1.6 est installe, mais que le nouveau collecteur materiel n'a pas encore ete ajoute a la crontab de l'utilisateur courant.
+
+Afficher la ligne adaptee au chemin reel de l'installation :
+
+```bash
+php scripts/setup.php --cron
+```
+
+Ouvrir ensuite la crontab :
+
+```bash
+crontab -e
+```
+
+Ajouter la ligne `check-hardware-health.php` affichee par l'assistant. Pour une installation standard dans `/var/www/html/msm` :
+
+```cron
+*/5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-hardware-health.php >> /var/www/html/msm/logs/check-hardware-health.log 2>&1
+```
+
+Verifier que la ligne est bien enregistree :
+
+```bash
+crontab -l | grep check-hardware-health
+```
+
+Ne pas ajouter cette ligne si MSM utilise deja le timer systemd `msm-check-hardware-health.timer`. Cron et systemd ne doivent pas executer le meme check en double.
+
+#### `Sante materielle log - absent: logs/check-hardware-health.log`
+
+Ce warning est normal tant que le nouveau script n'a jamais ete execute avec sa redirection de log.
+
+Executer immediatement le check avec la meme redirection que le cron :
+
+```bash
+/usr/bin/php scripts/check-hardware-health.php --force >> logs/check-hardware-health.log 2>&1
+```
+
+Verifier ensuite le fichier :
+
+```bash
+tail -n 30 logs/check-hardware-health.log
+```
+
+Si le dossier ou le fichier n'est pas accessible :
+
+```bash
+php scripts/setup.php --init-logs
+ls -ld logs
+ls -l logs/check-hardware-health.log
+```
+
+Relancer enfin le controle :
+
+```bash
+php scripts/update-check.php
+```
 
 ## 7. Relancer les checks principaux
 

@@ -740,6 +740,7 @@ class SetupAssistant
             $this->ok('Crontab MSM', 'tous les scripts sont presents');
         } else {
             $this->warn('Crontab MSM', 'scripts absents: ' . implode(', ', $missing));
+            $this->addAction('Generer les lignes adaptees avec `php scripts/setup.php --cron`, puis ajouter les scripts absents avec `crontab -e`.');
         }
     }
 
@@ -787,7 +788,15 @@ class SetupAssistant
             $path = $logs . DIRECTORY_SEPARATOR . $check['log'];
             if (!is_file($path)) {
                 $this->warn($check['name'] . ' log', 'absent: logs/' . $check['log']);
-                $this->addAction('Creer les fichiers de logs avec `php scripts/setup.php --init-logs`.');
+                $this->addAction(
+                    'Initialiser les logs avec `php scripts/setup.php --init-logs`, puis executer `'
+                    . $this->phpBinary()
+                    . ' scripts/'
+                    . $check['script']
+                    . ' --force >> logs/'
+                    . $check['log']
+                    . ' 2>&1`.'
+                );
                 continue;
             }
 

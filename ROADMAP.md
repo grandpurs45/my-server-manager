@@ -28,6 +28,38 @@ Socle valide :
 - export Prometheus stable ;
 - titre d'onglet navigateur personnalisable par environnement.
 
+## Priorite v1.7 - Mise a jour automatisee
+
+Objectif : reduire une mise a jour MSM a une commande guidee, controlee et rejouable.
+
+- Ajouter un assistant CLI `scripts/update.php`.
+- Verifier avant modification :
+  - dossier MSM et depot Git valides ;
+  - branche, version et fichiers locaux modifies ;
+  - prerequis, espace disque et connexion base ;
+  - version cible disponible.
+- Creer automatiquement avant mise a jour :
+  - sauvegarde MariaDB/MySQL ;
+  - sauvegarde de `.env` ;
+  - rapport de version et d'ordonnancement courant.
+- Appliquer avec validation explicite :
+  - recuperation du code ou du tag cible ;
+  - `composer install --no-dev --optimize-autoloader` ;
+  - migrations ;
+  - initialisation des nouveaux fichiers de logs ;
+  - proposition d'ajout des nouveaux cron ou timers systemd.
+- Relancer les checks principaux et `scripts/update-check.php`.
+- Afficher un bilan final clair : OK, WARN, FAIL et actions restantes.
+- Conserver un journal local de la mise a jour.
+- Fournir une commande de rollback guidee sans executer de restauration destructive automatiquement.
+- Prevoir des modes :
+  - `--check` pour simuler et afficher les actions ;
+  - `--apply` pour lancer la mise a jour ;
+  - `--target=vX.Y.Z` pour cibler une release ;
+  - `--yes` uniquement pour les confirmations non sensibles.
+- Refuser la mise a jour automatique si des fichiers Git versionnes sont modifies localement.
+- Ne jamais ecraser `.env`, restaurer une base ou modifier les droits sudo sans confirmation explicite.
+
 ## Priorite v1.5 - Traitement Manuel des Alertes
 
 Objectif : rendre le backoffice alertes exploitable au quotidien sans partir sur un systeme de notification complet.
