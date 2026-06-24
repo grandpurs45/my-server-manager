@@ -20,6 +20,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Export Prometheus pour Grafana.
 - Guide d'installation et de mise a jour documente.
 - Assistant CLI de setup / maintenance pour verifier l'installation, la base, les migrations, les logs et l'ordonnancement.
+- Assistant de prevalidation des mises a jour avec `php scripts/update.php --check`.
 
 ## Dashboard et fraicheur des checks
 
@@ -49,6 +50,18 @@ Le detail du support et des limites est documente dans [docs/COMPATIBILITY.md](d
 Pour une installation complete sur un environnement vierge, suivre [docs/INSTALL.md](docs/INSTALL.md).
 
 Pour mettre a jour une installation existante, suivre [docs/UPDATE.md](docs/UPDATE.md).
+
+Prevalider une future mise a jour sans modifier l'instance :
+
+```bash
+php scripts/update.php --check
+```
+
+Appliquer une release taguee avec sauvegardes et controles :
+
+```bash
+php scripts/update.php --apply --target=v1.7.0
+```
 
 Verifier les prerequis depuis la racine du projet :
 

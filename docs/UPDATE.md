@@ -2,6 +2,49 @@
 
 Ce guide decrit une mise a jour standard de My Server Manager sur une installation existante.
 
+## Assistant de prevalidation v1.7
+
+Le developpement v1.7 introduit un assistant non destructif pour verifier une instance avant mise a jour :
+
+```bash
+php scripts/update.php --check
+```
+
+Pour verifier la preparation d'une release precise :
+
+```bash
+php scripts/update.php --check --target=v1.7.0
+```
+
+Le script controle notamment le depot Git, les modifications locales versionnees, PHP, Composer, l'outil de sauvegarde SQL, l'espace disque, `.env`, la connexion base et l'emplacement des sauvegardes.
+
+Le mode `--check` n'effectue aucune modification.
+
+Pour appliquer une release taguee apres une prevalidation reussie :
+
+```bash
+php scripts/update.php --apply --target=v1.7.0
+```
+
+Le mode `--apply` :
+
+- refuse les fichiers Git versionnes modifies localement ;
+- exige une cible explicite ;
+- demande une confirmation, sauf avec `--yes` ;
+- sauvegarde `.env`, la base et le contexte d'execution hors du dossier web ;
+- recupere le tag, installe les dependances, applique les migrations et initialise les logs ;
+- genere les propositions cron/systemd et relance les checks principaux avec `--force` ;
+- lance le controle post-update ;
+- conserve un journal dans le dossier de sauvegarde.
+
+Pour imposer un autre emplacement securise hors du dossier MSM :
+
+```bash
+php scripts/update.php --apply --target=v1.7.0 --backup-dir=/srv/backups/msm
+```
+
+Le script ne restaure jamais automatiquement la base ou `.env`. En cas d'echec, il affiche la revision Git precedente et l'emplacement exact des sauvegardes.
+
 ## 0. Se placer dans le dossier d'installation MSM
 
 Toutes les commandes de ce guide doivent etre executees depuis la racine du projet MSM.
@@ -62,7 +105,7 @@ Pour mettre a jour vers une version taguee precise :
 
 ```bash
 git fetch --tags
-git checkout v1.6.0
+git checkout v1.7.0
 ```
 
 En production, utiliser `main` si l'instance suit le flux courant, ou un tag si l'on veut figer une version.

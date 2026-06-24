@@ -4,6 +4,19 @@ MSM v1.0.0 marque le premier socle stable de My Server Manager pour un usage hom
 
 L'objectif v1 est de fournir une source fiable de donnees d'exploitation, exploitable directement dans MSM et exportable vers Prometheus/Grafana.
 
+## Evolution v1.7.0
+
+La v1.7 automatise et securise la mise a jour d'une instance MSM :
+
+- prevalidation non destructive avec `php scripts/update.php --check` ;
+- cible de release explicite avec `--target=vX.Y.Z` ;
+- refus des fichiers Git versionnes modifies localement ;
+- sauvegarde de `.env`, de MariaDB/MySQL et du contexte d'execution hors du dossier web ;
+- installation Composer, migrations et initialisation des logs ;
+- generation des propositions cron et systemd ;
+- relance des checks principaux et controle post-update ;
+- journal local et instructions de retour au code precedent sans restauration destructive automatique.
+
 ## Evolution v1.6.0
 
 La v1.6 ajoute la sante materielle aux cibles Linux/Proxmox :
@@ -93,7 +106,6 @@ Hors v1 :
 - autodiscovery ;
 - notifications sortantes ;
 - silences et maintenances ;
-- authentification applicative ;
 - setup interactif.
 
 Voir aussi [COMPATIBILITY.md](COMPATIBILITY.md).
@@ -106,7 +118,7 @@ Procedure recommandee :
 git pull
 composer install --no-dev --optimize-autoloader
 php apply_migrations.php
-php scripts/check-prerequisites.php
+php scripts/update.php --check
 ```
 
 Puis relancer les checks si besoin :
@@ -116,6 +128,7 @@ php scripts/check-servers.php --force
 php scripts/check-patches.php --force
 php scripts/check-os-lifecycle.php --force
 php scripts/check-security.php --force
+php scripts/check-hardware-health.php --force
 php scripts/check-alerts.php --force
 ```
 
@@ -124,6 +137,6 @@ Voir [UPDATE.md](UPDATE.md) pour la procedure complete.
 ## Points d'attention
 
 - Les alertes Dependabot connues avant v1 ont ete traitees cote runtime PHP et outillage npm local.
-- Le projet ne fournit pas encore d'authentification applicative.
-- Les checks planifies doivent etre configures manuellement avec cron ou systemd timer.
+- L'authentification locale doit etre configuree avec des mots de passe forts et des droits modules limites.
+- L'assistant genere les propositions cron/systemd mais ne modifie pas automatiquement l'ordonnancement existant.
 - Les secrets doivent rester hors Git dans `.env`.

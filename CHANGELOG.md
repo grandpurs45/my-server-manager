@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0](https://github.com/grandpurs45/my-server-manager/compare/v1.6.0...v1.7.0) (2026-06-24)
+
+### Features
+
+* ajout de `scripts/update.php --check` pour pre-valider une mise a jour sans modifier l'instance
+* ajout de `scripts/update.php --apply --target=vX.Y.Z` avec sauvegarde de `.env`, dump SQL, rapport d'execution, journal local, Composer, migrations et controle post-update
+* generation des propositions cron et systemd dans le dossier de sauvegarde
+* relance non bloquante des checks principaux apres la mise a jour
+
+### Security
+
+* refus des fichiers Git versionnes modifies, des sauvegardes dans le dossier web et des cibles identiques ou inferieures
+* utilisation d'un fichier de connexion temporaire protege pour ne pas exposer le mot de passe SQL dans la ligne de commande
+* aucune restauration automatique destructive en cas d'echec
+
 ## [1.6.0](https://github.com/grandpurs45/my-server-manager/compare/v1.5.0...v1.6.0) (2026-06-24)
 
 ### Features

@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.6.0`.
+Version actuelle : `v1.7.0`.
 
 Socle valide :
 
@@ -32,7 +32,15 @@ Socle valide :
 
 Objectif : reduire une mise a jour MSM a une commande guidee, controlee et rejouable.
 
-- Ajouter un assistant CLI `scripts/update.php`.
+- Assistant CLI `scripts/update.php` initialise :
+  - mode `--check` non destructif ;
+  - controle du depot, de la version, des fichiers locaux, du systeme, de la base et des sauvegardes ;
+  - affichage du plan execute par le mode `--apply`.
+- Mode d'application controle `scripts/update.php --apply --target=vX.Y.Z` :
+  - cible obligatoire et confirmation explicite ;
+  - sauvegarde de `.env`, de la base et du contexte d'execution avant modification ;
+  - recuperation du tag, Composer, migrations, logs et controle post-update ;
+  - journal local et instructions de retour au code precedent en cas d'echec.
 - Verifier avant modification :
   - dossier MSM et depot Git valides ;
   - branche, version et fichiers locaux modifies ;
