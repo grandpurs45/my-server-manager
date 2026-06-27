@@ -65,6 +65,17 @@ class SetupAssistant
             'log' => 'check-hardware-health.log',
         ],
         [
+            'name' => 'Home Assistant',
+            'unit' => 'msm-check-home-assistant',
+            'description' => 'MSM Home Assistant check',
+            'timer_description' => 'Run MSM Home Assistant check every 15 minutes',
+            'cron' => '*/15 * * * *',
+            'on_boot' => '7min',
+            'on_active' => '15min',
+            'script' => 'check-home-assistant.php',
+            'log' => 'check-home-assistant.log',
+        ],
+        [
             'name' => 'Alerting',
             'unit' => 'msm-check-alerts',
             'description' => 'MSM alerting evaluation',

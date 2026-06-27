@@ -9,6 +9,7 @@ function msmInventoryDefaultOptions(string $key): array
             'linux' => 'Linux',
             'windows' => 'Windows',
             'proxmox' => 'Proxmox',
+            'home_assistant' => 'Home Assistant',
             'synology' => 'Synology',
             'docker' => 'Docker',
             'website' => 'Site web',

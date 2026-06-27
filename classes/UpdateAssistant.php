@@ -645,6 +645,7 @@ class UpdateAssistant
             'Cycle de vie OS' => 'check-os-lifecycle.php',
             'Securite' => 'check-security.php',
             'Sante materielle' => 'check-hardware-health.php',
+            'Home Assistant' => 'check-home-assistant.php',
             'Alerting' => 'check-alerts.php',
         ];
 

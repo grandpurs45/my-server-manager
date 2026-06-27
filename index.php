@@ -42,6 +42,12 @@ $latestPatchCheck = $pdo->query("SELECT MAX(checked_at) FROM patch_checks")->fet
 $latestOsLifecycleCheck = $pdo->query("SELECT MAX(checked_at) FROM os_lifecycle_checks")->fetchColumn() ?: null;
 $latestSecurityCheck = $pdo->query("SELECT MAX(checked_at) FROM security_checks")->fetchColumn() ?: null;
 $latestHardwareHealthCheck = $pdo->query("SELECT MAX(checked_at) FROM hardware_health_checks")->fetchColumn() ?: null;
+$homeAssistantChecksTableExists = (int) $pdo
+    ->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'home_assistant_checks'")
+    ->fetchColumn() > 0;
+$latestHomeAssistantCheck = $homeAssistantChecksTableExists
+    ? ($pdo->query("SELECT MAX(checked_at) FROM home_assistant_checks")->fetchColumn() ?: null)
+    : null;
 
 $hardwareTargets = $pdo->query("
     SELECT
@@ -478,6 +484,11 @@ if ($hardwareHealthInterval < 1) {
     $hardwareHealthInterval = 15;
 }
 
+$homeAssistantInterval = (int) ($settingsManager->get('home_assistant', 'check_interval_minutes') ?? 15);
+if ($homeAssistantInterval < 1) {
+    $homeAssistantInterval = 15;
+}
+
 $alertingInterval = (int) ($settingsManager->get('alerting', 'check_interval_minutes') ?? 5);
 if ($alertingInterval < 1) {
     $alertingInterval = 5;
@@ -490,6 +501,7 @@ $patchRuntime = msmDashboardCheckRuntime($settingsManager, 'patch_management');
 $osLifecycleRuntime = msmDashboardCheckRuntime($settingsManager, 'os_lifecycle');
 $securityRuntime = msmDashboardCheckRuntime($settingsManager, 'security');
 $hardwareHealthRuntime = msmDashboardCheckRuntime($settingsManager, 'hardware_health');
+$homeAssistantRuntime = msmDashboardCheckRuntime($settingsManager, 'home_assistant');
 $alertingRuntime = msmDashboardCheckRuntime($settingsManager, 'alerting');
 
 $freshness = [
@@ -546,6 +558,20 @@ $freshness = [
         'status' => $hardwareHealthRuntime['status'],
         'message' => $hardwareHealthRuntime['message'],
         'href' => $baseUrl . 'pages/serveurs.php',
+    ],
+    [
+        'name' => 'Home Assistant',
+        'execution_date' => $homeAssistantRuntime['attempt'] ?: ($homeAssistantRuntime['run'] ?: $latestHomeAssistantCheck),
+        'result_date' => $latestHomeAssistantCheck,
+        'interval' => $homeAssistantInterval . ' min',
+        'state' => msmDashboardFreshness(
+            $homeAssistantRuntime['attempt'] ?: ($homeAssistantRuntime['run'] ?: $latestHomeAssistantCheck),
+            max(900, $homeAssistantInterval * 60 * 3),
+            $homeAssistantRuntime['status']
+        ),
+        'status' => $homeAssistantRuntime['status'],
+        'message' => $homeAssistantRuntime['message'],
+        'href' => $baseUrl . 'pages/serveurs.php?target_type=home_assistant',
     ],
     [
         'name' => 'Alerting',

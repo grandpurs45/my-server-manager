@@ -73,10 +73,6 @@ if (!$authManager->isInstalled()) {
                     Connexion
                 </button>
             </form>
-
-            <p class="mt-6 text-xs text-gray-500">
-                Compte initial apres migration : <code>admin</code> / <code>admin</code>. Changez ce mot de passe apres la premiere connexion.
-            </p>
         </div>
     </main>
 

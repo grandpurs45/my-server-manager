@@ -10,6 +10,7 @@ use MSM\OsLifecycleRepository;
 use MSM\ServerCheckHistoryRepository;
 use MSM\SettingsManager;
 use MSM\HardwareHealthRepository;
+use MSM\HomeAssistantRepository;
 
 $settingsManager = new SettingsManager($pdo);
 $targetTypes = msmInventoryOptions($settingsManager, 'target_types');
@@ -61,6 +62,22 @@ $latestTemperatures = $latestHardwareCheck
 $latestSmartDisks = $latestHardwareCheck
     ? $hardwareHealthRepository->getSmartDisksForCheck((int) $latestHardwareCheck['id'])
     : [];
+
+$latestHomeAssistantCheck = null;
+if (($server['target_type'] ?? 'other') === 'home_assistant') {
+    try {
+        $homeAssistantChecksTableExists = (int) $pdo
+            ->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'home_assistant_checks'")
+            ->fetchColumn() > 0;
+
+        if ($homeAssistantChecksTableExists) {
+            $homeAssistantRepository = new HomeAssistantRepository($pdo);
+            $latestHomeAssistantCheck = $homeAssistantRepository->getLatestForServer((int) $server['id']);
+        }
+    } catch (Throwable) {
+        $latestHomeAssistantCheck = null;
+    }
+}
 
 $checkHistoryRepository = new ServerCheckHistoryRepository($pdo);
 $checkEvents = $checkHistoryRepository->latestForServer((int) $server['id'], 10);
@@ -221,6 +238,17 @@ function msmDetailSmartBadge(mixed $passed): string
         : '<span class="rounded bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">ECHEC</span>';
 }
 
+function msmDetailHomeAssistantStatusBadge(?string $status): string
+{
+    return match ($status) {
+        'ok' => '<span class="inline-flex rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">OK</span>',
+        'warning' => '<span class="inline-flex rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">Update</span>',
+        'error' => '<span class="inline-flex rounded bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Erreur</span>',
+        'unsupported' => '<span class="inline-flex rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Limite</span>',
+        default => '<span class="inline-flex rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Inconnu</span>',
+    };
+}
+
 $type = $server['target_type'] ?? 'other';
 $hardwareProfile = $server['hardware_profile'] ?? 'unknown';
 $environment = $server['environment'] ?? 'other';
@@ -234,8 +262,12 @@ $canRefreshOsLifecycle = $authManager->userCan('patch_management')
     && !empty($server['ssh_enabled'])
     && in_array($type, ['linux', 'proxmox'], true);
 $canRefreshSecurity = $authManager->userCan('securite') && !empty($server['security_enabled']) && !empty($server['ssh_enabled']);
+$showHardwareHealthCard = msmHardwareProfileSupportsSensors($hardwareProfile);
 $canRefreshHardware = $authManager->userCan('supervision')
-    && msmHardwareProfileSupportsSensors($hardwareProfile)
+    && $showHardwareHealthCard
+    && !empty($server['ssh_enabled']);
+$canRefreshHomeAssistant = $authManager->userCan('supervision')
+    && $type === 'home_assistant'
     && !empty($server['ssh_enabled']);
 ?>
 
@@ -308,6 +340,18 @@ $canRefreshHardware = $authManager->userCan('supervision')
                     <button type="submit" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                         <i data-lucide="thermometer" class="w-4 h-4"></i>
                         Temperature
+                    </button>
+                </form>
+            <?php endif; ?>
+
+            <?php if ($canRefreshHomeAssistant): ?>
+                <form method="post" action="<?= $baseUrl ?>pages/refresh-target.php">
+                    <?= msmCsrfField() ?>
+                    <input type="hidden" name="server_id" value="<?= (int) $server['id'] ?>">
+                    <input type="hidden" name="module" value="home_assistant">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                        <i data-lucide="house" class="w-4 h-4"></i>
+                        Home Assistant
                     </button>
                 </form>
             <?php endif; ?>
@@ -568,6 +612,7 @@ $canRefreshHardware = $authManager->userCan('supervision')
             <?php endif; ?>
         </div>
 
+        <?php if ($showHardwareHealthCard): ?>
         <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div class="mb-4 flex items-center justify-between gap-3">
                 <h2 class="text-lg font-semibold text-slate-900">Sante materielle</h2>
@@ -579,11 +624,7 @@ $canRefreshHardware = $authManager->userCan('supervision')
                 <?php endif; ?>
             </div>
 
-            <?php if (!msmHardwareProfileSupportsSensors($hardwareProfile)): ?>
-                <p class="text-sm italic text-slate-500">
-                    Collecte ignoree pour le profil <?= htmlspecialchars($hardwareProfiles[$hardwareProfile] ?? $hardwareProfiles['unknown']) ?>.
-                </p>
-            <?php elseif (!$latestHardwareCheck): ?>
+            <?php if (!$latestHardwareCheck): ?>
                 <p class="text-sm italic text-slate-500">Aucun check materiel enregistre.</p>
             <?php else: ?>
                 <dl class="mb-4 grid grid-cols-1 gap-3 text-sm md:grid-cols-3">
@@ -699,6 +740,89 @@ $canRefreshHardware = $authManager->userCan('supervision')
                 <?php endif; ?>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
+
+        <?php if ($type === 'home_assistant'): ?>
+            <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <h2 class="text-lg font-semibold text-slate-900">Home Assistant</h2>
+                    <?php if ($latestHomeAssistantCheck): ?>
+                        <?= msmDetailHomeAssistantStatusBadge($latestHomeAssistantCheck['status'] ?? null) ?>
+                    <?php endif; ?>
+                </div>
+
+                <?php if (!$latestHomeAssistantCheck): ?>
+                    <p class="text-sm italic text-slate-500">Aucun check Home Assistant enregistre.</p>
+                <?php else: ?>
+                    <dl class="mb-4 grid grid-cols-1 gap-3 text-sm md:grid-cols-3">
+                        <div>
+                            <dt class="text-slate-500">Installation</dt>
+                            <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestHomeAssistantCheck['installation_type'] ?: '-') ?></dd>
+                        </div>
+                        <div>
+                            <dt class="text-slate-500">Collecteur</dt>
+                            <dd class="font-mono text-slate-900"><?= htmlspecialchars($latestHomeAssistantCheck['collector'] ?: '-') ?></dd>
+                        </div>
+                        <div>
+                            <dt class="text-slate-500">Dernier check</dt>
+                            <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestHomeAssistantCheck['checked_at'] ?? '-') ?></dd>
+                        </div>
+                    </dl>
+
+                    <?php if (!empty($latestHomeAssistantCheck['error_message'])): ?>
+                        <p class="mb-4 rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+                            <?= htmlspecialchars($latestHomeAssistantCheck['error_message']) ?>
+                        </p>
+                    <?php endif; ?>
+
+                    <div class="overflow-x-auto rounded border border-gray-200">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-slate-100 text-left text-slate-600">
+                                <tr>
+                                    <th class="px-3 py-2 font-semibold">Composant</th>
+                                    <th class="px-3 py-2 font-semibold">Version</th>
+                                    <th class="px-3 py-2 font-semibold">Derniere version</th>
+                                    <th class="px-3 py-2 font-semibold">Update</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <?php foreach ([
+                                    'Home Assistant' => ['version' => 'ha_version', 'latest' => 'ha_latest_version', 'update' => 'ha_update_available'],
+                                    'Supervisor' => ['version' => 'supervisor_version', 'latest' => 'supervisor_latest_version', 'update' => 'supervisor_update_available'],
+                                    'OS' => ['version' => 'os_version', 'latest' => 'os_latest_version', 'update' => 'os_update_available'],
+                                ] as $label => $fields): ?>
+                                    <tr>
+                                        <td class="px-3 py-2 font-semibold text-slate-900"><?= htmlspecialchars($label) ?></td>
+                                        <td class="px-3 py-2"><?= htmlspecialchars($latestHomeAssistantCheck[$fields['version']] ?: '-') ?></td>
+                                        <td class="px-3 py-2"><?= htmlspecialchars($latestHomeAssistantCheck[$fields['latest']] ?: '-') ?></td>
+                                        <td class="px-3 py-2">
+                                            <?php if ($latestHomeAssistantCheck[$fields['update']] === null): ?>
+                                                <span class="text-slate-500">-</span>
+                                            <?php elseif ((int) $latestHomeAssistantCheck[$fields['update']] === 1): ?>
+                                                <span class="rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">Oui</span>
+                                            <?php else: ?>
+                                                <span class="rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">Non</span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <dl class="mt-4 grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+                        <div>
+                            <dt class="text-slate-500">OS hote</dt>
+                            <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestHomeAssistantCheck['host_os'] ?: '-') ?></dd>
+                        </div>
+                        <div>
+                            <dt class="text-slate-500">Kernel</dt>
+                            <dd class="font-mono text-slate-900"><?= htmlspecialchars($latestHomeAssistantCheck['kernel'] ?: '-') ?></dd>
+                        </div>
+                    </dl>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
 
         <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <h2 class="mb-4 text-lg font-semibold text-slate-900">Historique supervision</h2>

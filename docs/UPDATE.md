@@ -13,7 +13,7 @@ php scripts/update.php --check
 Pour verifier la preparation d'une release precise :
 
 ```bash
-php scripts/update.php --check --target=v1.7.0
+php scripts/update.php --check --target=v1.8.0
 ```
 
 Le script controle notamment le depot Git, les modifications locales versionnees, PHP, Composer, l'outil de sauvegarde SQL, l'espace disque, `.env`, la connexion base et l'emplacement des sauvegardes.
@@ -23,7 +23,7 @@ Le mode `--check` n'effectue aucune modification.
 Pour appliquer une release taguee apres une prevalidation reussie :
 
 ```bash
-php scripts/update.php --apply --target=v1.7.0
+php scripts/update.php --apply --target=v1.8.0
 ```
 
 Le mode `--apply` :
@@ -40,7 +40,7 @@ Le mode `--apply` :
 Pour imposer un autre emplacement securise hors du dossier MSM :
 
 ```bash
-php scripts/update.php --apply --target=v1.7.0 --backup-dir=/srv/backups/msm
+php scripts/update.php --apply --target=v1.8.0 --backup-dir=/srv/backups/msm
 ```
 
 Le script ne restaure jamais automatiquement la base ou `.env`. En cas d'echec, il affiche la revision Git precedente et l'emplacement exact des sauvegardes.
@@ -105,7 +105,7 @@ Pour mettre a jour vers une version taguee precise :
 
 ```bash
 git fetch --tags
-git checkout v1.7.0
+git checkout v1.8.0
 ```
 
 En production, utiliser `main` si l'instance suit le flux courant, ou un tag si l'on veut figer une version.

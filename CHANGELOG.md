@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0](https://github.com/grandpurs45/my-server-manager/compare/v1.7.0...v1.8.0) (2026-06-27)
+
+### Changed
+
+* retrait du rappel du compte initial depuis la mire de connexion ; l'information reste documentee dans le README
+* ajout de Home Assistant comme type de cible par defaut pour les nouvelles installations
+* masquage de la carte sante materielle sur les profils qui ne supportent pas les capteurs
+
+### Features
+
+* ajout du collecteur SSH Home Assistant avec stockage des versions Core, Supervisor, OS et etat d'update quand la CLI `ha` est disponible
+* ajout du script `scripts/check-home-assistant.php`, du refresh cible et de la fraicheur dashboard associee
+* affichage des informations Home Assistant dans la fiche cible
+* ajout des metriques Prometheus Home Assistant
+
+### Fixed
+
+* correction de la fiche cible quand la table Home Assistant n'est pas encore presente
+
+### Documentation
+
+* ajout du connecteur Home Assistant SSH dans la roadmap v1.x, les notes de compatibilite, Prometheus et l'ordonnancement
+* documentation du test manuel, de la visibilite des resultats et du cron Home Assistant
+
 ## [1.7.0](https://github.com/grandpurs45/my-server-manager/compare/v1.6.0...v1.7.0) (2026-06-24)
 
 ### Features

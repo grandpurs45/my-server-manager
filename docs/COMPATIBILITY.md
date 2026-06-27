@@ -58,6 +58,20 @@ Support v1 limite.
 
 Les collecteurs DSM, mises a jour Synology et controles dedies sont prevus pour v1.x.
 
+### Home Assistant
+
+Support v1 limite.
+
+- inventaire ;
+- supervision ping ;
+- statut SSH si l'instance accepte SSH ;
+- collecte SSH dediee si la cible est configuree avec le type `home_assistant` ;
+- detection progressive des versions Home Assistant, Supervisor et OS quand la CLI `ha` est disponible ;
+- fallback systeme Linux si la CLI `ha` n'est pas exposee ;
+- affichage dans les vues principales et export Prometheus.
+
+Le connecteur doit rester compatible avec les installations en VM, bare metal, conteneur ou appliance. Les alertes Home Assistant dediees restent prevues pour v1.x.
+
 ### Docker
 
 Docker est hors v1.

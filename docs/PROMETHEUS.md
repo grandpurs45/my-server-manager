@@ -16,7 +16,7 @@ Les labels communs stables sont :
 - `hostname` : hostname ou IP configure dans MSM ;
 - `type` : type de cible issu de l'inventaire MSM.
 
-Le label `type` doit rester une valeur controlee par l'inventaire, par exemple `linux`, `windows`, `proxmox`, `synology`, `docker`, `website`, `network` ou `other`.
+Le label `type` doit rester une valeur controlee par l'inventaire, par exemple `linux`, `windows`, `proxmox`, `home_assistant`, `synology`, `docker`, `website`, `network` ou `other`.
 
 Certaines familles ajoutent des labels specialises :
 
@@ -24,6 +24,7 @@ Certaines familles ajoutent des labels specialises :
 - Cycle de vie OS : `os_family`, `os_version`, `support_status`.
 - Securite : `status`.
 - Sante materielle : `hardware_profile`, `collector`, `sensor`, `sensor_label`, `sensor_type`, `device`, `protocol`, `model`.
+- Home Assistant : `collector`, `installation_type`, `component`.
 - Alerting : `rule`, `severity`.
 
 ```text
@@ -52,6 +53,9 @@ msm_hardware_temperature_celsius{server="server-01",hostname="server-01.example.
 msm_hardware_smart_passed{server="server-01",hostname="server-01.example.local",type="linux",hardware_profile="physical",device="/dev/nvme0",protocol="NVMe",model="Example NVMe"} 1
 msm_hardware_disk_temperature_celsius{server="server-01",hostname="server-01.example.local",type="linux",hardware_profile="physical",device="/dev/nvme0",protocol="NVMe",model="Example NVMe"} 39
 msm_hardware_disk_percentage_used{server="server-01",hostname="server-01.example.local",type="linux",hardware_profile="physical",device="/dev/nvme0",protocol="NVMe",model="Example NVMe"} 16
+msm_home_assistant_check_status{server="ha",hostname="ha.local",type="home_assistant",collector="ssh+ha_cli",installation_type="Home Assistant OS",status="ok"} 1
+msm_home_assistant_update_available{server="ha",hostname="ha.local",type="home_assistant",component="ha"} 0
+msm_home_assistant_last_check_timestamp{server="ha",hostname="ha.local",type="home_assistant",collector="ssh+ha_cli",installation_type="Home Assistant OS"} 1780000000
 msm_alerts_active{severity="critical"} 1
 msm_alert_active{server="server-01",hostname="server-01.example.local",type="linux",rule="server_down",severity="critical"} 1
 ```
@@ -92,6 +96,7 @@ php scripts/check-patches.php --force
 php scripts/check-os-lifecycle.php --force
 php scripts/check-security.php --force
 php scripts/check-hardware-health.php --force
+php scripts/check-home-assistant.php --force
 php scripts/check-alerts.php --force
 ```
 

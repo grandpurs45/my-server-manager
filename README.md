@@ -11,6 +11,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Cycle de vie OS : detection des fins de support et upgrades connus pour les distributions Linux supportees.
 - Securite operationnelle : ports ouverts, exposition reseau, firewall, dernier controle et erreurs de collecte.
 - Sante materielle : temperatures Linux/Proxmox, etat SMART, usure et erreurs media des disques physiques.
+- Home Assistant : collecte SSH dediee, versions disponibles et etat d'update quand la CLI `ha` est exposee.
 - Alerting : regles globales, alertes actives, mur d'alertes et vue backoffice.
 - Etats operationnels homogenes : `OK`, `Warning`, `Critical`, `Unknown`.
 - Notification de nouvelle version disponible avec lien vers les notes de release et le guide de mise a jour.
@@ -40,6 +41,7 @@ Cette distinction permet de voir si un cron tourne correctement mais saute un ch
 La v1 cible un usage homelab / petite infrastructure avec un support principal Linux et Proxmox.
 
 - Linux / Proxmox : supervision, SSH, patch management, cycle de vie OS, securite operationnelle et metriques Prometheus.
+- Home Assistant : inventaire, supervision de base, collecte SSH dediee des versions et export Prometheus.
 - Windows / Synology : inventaire et supervision de base, support avance reporte en v1.x.
 - Docker : hors v1, prevu en v1.x.
 
@@ -60,8 +62,10 @@ php scripts/update.php --check
 Appliquer une release taguee avec sauvegardes et controles :
 
 ```bash
-php scripts/update.php --apply --target=v1.7.0
+php scripts/update.php --apply --target=v1.8.0
 ```
+
+Le connecteur Home Assistant est documente dans [docs/HOME_ASSISTANT.md](docs/HOME_ASSISTANT.md).
 
 Verifier les prerequis depuis la racine du projet :
 

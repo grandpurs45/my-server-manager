@@ -69,6 +69,12 @@ class PrometheusExporter
             '# TYPE msm_hardware_disk_percentage_used gauge',
             '# HELP msm_hardware_disk_media_errors Last known SMART/NVMe media errors count.',
             '# TYPE msm_hardware_disk_media_errors counter',
+            '# HELP msm_home_assistant_check_status Last known Home Assistant check status. Value is always 1 for the current status label.',
+            '# TYPE msm_home_assistant_check_status gauge',
+            '# HELP msm_home_assistant_update_available Last known Home Assistant component update availability.',
+            '# TYPE msm_home_assistant_update_available gauge',
+            '# HELP msm_home_assistant_last_check_timestamp Last known Home Assistant check timestamp as Unix epoch seconds.',
+            '# TYPE msm_home_assistant_last_check_timestamp gauge',
             '# HELP msm_alerts_active Active MSM alerts count grouped by severity.',
             '# TYPE msm_alerts_active gauge',
             '# HELP msm_alert_active Active MSM alert. Value is always 1 for each active alert.',
@@ -80,6 +86,7 @@ class PrometheusExporter
         $latestOsLifecycleChecks = $this->getLatestOsLifecycleChecks();
         $latestSecurityChecks = $this->getLatestSecurityChecks();
         $latestHardwareChecks = $this->getLatestHardwareChecks();
+        $latestHomeAssistantChecks = $this->getLatestHomeAssistantChecks();
         $activeAlerts = $this->getActiveAlerts();
         $activeAlertCounts = ['critical' => 0, 'warning' => 0, 'info' => 0];
 
@@ -234,6 +241,36 @@ class PrometheusExporter
                     if ($disk['media_errors'] !== null) {
                         $lines[] = "msm_hardware_disk_media_errors{{$diskLabels}} " . (int) $disk['media_errors'];
                     }
+                }
+            }
+
+            if (isset($latestHomeAssistantChecks[$serverId])) {
+                $haCheck = $latestHomeAssistantChecks[$serverId];
+                $haStatusLabels = $this->formatLabels($baseLabels + [
+                    'collector' => $haCheck['collector'] ?: 'unknown',
+                    'installation_type' => $haCheck['installation_type'] ?: 'unknown',
+                    'status' => $haCheck['status'] ?: 'unknown',
+                ]);
+                $lines[] = "msm_home_assistant_check_status{{$haStatusLabels}} 1";
+
+                $haLabels = $this->formatLabels($baseLabels + [
+                    'collector' => $haCheck['collector'] ?: 'unknown',
+                    'installation_type' => $haCheck['installation_type'] ?: 'unknown',
+                ]);
+                if ($haCheck['checked_at_timestamp'] !== null) {
+                    $lines[] = "msm_home_assistant_last_check_timestamp{{$haLabels}} " . (int) $haCheck['checked_at_timestamp'];
+                }
+
+                foreach (['ha', 'supervisor', 'os'] as $component) {
+                    $field = $component . '_update_available';
+                    if ($haCheck[$field] === null) {
+                        continue;
+                    }
+                    $componentLabels = $this->formatLabels($baseLabels + [
+                        'component' => $component,
+                    ]);
+                    $lines[] = "msm_home_assistant_update_available{{$componentLabels}} "
+                        . ((int) $haCheck[$field] === 1 ? 1 : 0);
                 }
             }
         }
@@ -441,6 +478,39 @@ class PrometheusExporter
                 $smartDiskStmt->execute([':hardware_check_id' => (int) $row['id']]);
                 $row['smart_disks'] = $smartDiskStmt->fetchAll(\PDO::FETCH_ASSOC);
             }
+            $checks[(int) $row['server_id']] = $row;
+        }
+
+        return $checks;
+    }
+
+    private function getLatestHomeAssistantChecks(): array
+    {
+        if (!$this->tableExists('home_assistant_checks')) {
+            return [];
+        }
+
+        $stmt = $this->pdo->query(
+            'SELECT hac.server_id,
+                    hac.collector,
+                    hac.status,
+                    hac.installation_type,
+                    hac.ha_update_available,
+                    hac.supervisor_update_available,
+                    hac.os_update_available,
+                    UNIX_TIMESTAMP(hac.checked_at) AS checked_at_timestamp
+             FROM home_assistant_checks hac
+             INNER JOIN (
+                 SELECT server_id, MAX(checked_at) AS checked_at
+                 FROM home_assistant_checks
+                 GROUP BY server_id
+             ) latest
+                ON latest.server_id = hac.server_id
+               AND latest.checked_at = hac.checked_at'
+        );
+
+        $checks = [];
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
             $checks[(int) $row['server_id']] = $row;
         }
 

@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.7.0`.
+Version actuelle : `v1.8.0`.
 
 Socle valide :
 
@@ -25,8 +25,23 @@ Socle valide :
 - securite operationnelle de base ;
 - alerting interne avec regles globales, mur d'alertes, vue backoffice et traitement manuel ;
 - sante materielle Linux/Proxmox avec temperatures, SMART, dashboard, alertes et export Prometheus ;
+- connecteur Home Assistant SSH avec versions Core, Supervisor, OS, statut d'update et export Prometheus ;
 - export Prometheus stable ;
 - titre d'onglet navigateur personnalisable par environnement.
+
+## Priorite v1.8 - Connecteur Home Assistant
+
+Objectif : donner une premiere visibilite exploitable sur Home Assistant sans creer un collecteur lourd.
+
+- Type de cible `Home Assistant`.
+- Collecte SSH dediee via `scripts/check-home-assistant.php`.
+- Detection des versions Core, Supervisor et Home Assistant OS quand la CLI `ha` est disponible.
+- Fallback systeme Linux limite quand la CLI `ha` n'est pas exposee.
+- Stockage en base des derniers resultats.
+- Affichage dans la fiche cible.
+- Fraicheur du check dans le dashboard.
+- Export Prometheus `msm_home_assistant_*`.
+- Documentation de l'ordonnancement cron/systemd.
 
 ## Priorite v1.7 - Mise a jour automatisee
 
@@ -87,6 +102,11 @@ Objectif : rendre le backoffice alertes exploitable au quotidien sans partir sur
 
 - Synology DSM.
 - Windows via PowerShell SSH ou WinRM.
+- Home Assistant avance :
+  - statut des services essentiels ;
+  - redemarrage requis ;
+  - stockage et sante simple ;
+  - alertes dediees Home Assistant.
 - Docker via SSH sur l'hote Docker : containers, images, statuts, ports exposes.
 - Proxmox avance : discovery, VMs, conteneurs, stockage.
 

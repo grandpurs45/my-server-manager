@@ -24,7 +24,7 @@ return [
         'target_types' => [
             'type' => 'textarea',
             'label' => 'Types de cibles',
-            'default' => "linux=Linux\nwindows=Windows\nproxmox=Proxmox\nsynology=Synology\ndocker=Docker\nwebsite=Site web\nnetwork=Equipement reseau\nother=Autre"
+            'default' => "linux=Linux\nwindows=Windows\nproxmox=Proxmox\nhome_assistant=Home Assistant\nsynology=Synology\ndocker=Docker\nwebsite=Site web\nnetwork=Equipement reseau\nother=Autre"
         ],
         'environments' => [
             'type' => 'textarea',

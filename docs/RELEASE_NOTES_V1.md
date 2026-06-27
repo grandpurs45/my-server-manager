@@ -4,6 +4,19 @@ MSM v1.0.0 marque le premier socle stable de My Server Manager pour un usage hom
 
 L'objectif v1 est de fournir une source fiable de donnees d'exploitation, exploitable directement dans MSM et exportable vers Prometheus/Grafana.
 
+## Evolution v1.8.0
+
+La v1.8 ajoute un premier connecteur Home Assistant via SSH :
+
+- nouveau type de cible `Home Assistant` ;
+- collecte dediee avec `scripts/check-home-assistant.php` ;
+- detection des versions Home Assistant Core, Supervisor et Home Assistant OS quand la CLI `ha` est disponible ;
+- fallback systeme Linux limite si la CLI `ha` n'est pas exposee ;
+- affichage des resultats dans la fiche cible ;
+- fraicheur du check Home Assistant dans le dashboard ;
+- metriques Prometheus `msm_home_assistant_*` ;
+- generation cron/systemd et documentation dediee.
+
 ## Evolution v1.7.0
 
 La v1.7 automatise et securise la mise a jour d'une instance MSM :
@@ -84,6 +97,8 @@ La v1.6 ajoute la sante materielle aux cibles Linux/Proxmox :
   - patch management ;
   - cycle de vie OS ;
   - securite ;
+  - sante materielle ;
+  - Home Assistant ;
   - alerting.
 
 ## Support v1

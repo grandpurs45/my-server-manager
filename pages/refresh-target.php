@@ -7,6 +7,7 @@ use MSM\PatchManager;
 use MSM\SecurityManager;
 use MSM\ServerChecker;
 use MSM\HardwareHealthManager;
+use MSM\HomeAssistantManager;
 
 $serverId = isset($_POST['server_id']) ? (int) $_POST['server_id'] : 0;
 $module = (string) ($_POST['module'] ?? '');
@@ -26,6 +27,7 @@ $moduleRequirements = [
     'os_lifecycle' => 'patch_management',
     'security' => 'securite',
     'hardware_health' => 'supervision',
+    'home_assistant' => 'supervision',
 ];
 
 if (!isset($moduleRequirements[$module])) {
@@ -46,6 +48,7 @@ $labels = [
     'os_lifecycle' => 'Cycle de vie OS',
     'security' => 'Securite',
     'hardware_health' => 'Sante materielle',
+    'home_assistant' => 'Home Assistant',
 ];
 
 try {
@@ -57,6 +60,7 @@ try {
         'os_lifecycle' => (new OsLifecycleManager($pdo))->runForServerId($serverId),
         'security' => (new SecurityManager($pdo))->runForServerId($serverId),
         'hardware_health' => (new HardwareHealthManager($pdo))->runForServerId($serverId),
+        'home_assistant' => (new HomeAssistantManager($pdo))->runForServerId($serverId),
     };
 
     ob_end_clean();
