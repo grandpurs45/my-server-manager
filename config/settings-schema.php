@@ -14,6 +14,11 @@ return [
             'label' => 'Titre onglet navigateur',
             'default' => 'My Server Manager'
         ],
+        'date_display_format' => [
+            'type' => 'text',
+            'label' => 'Format affichage dates',
+            'default' => 'd/m/Y H:i:s'
+        ],
         'debug_mode' => [
             'type' => 'checkbox',
             'label' => 'Mode debug',

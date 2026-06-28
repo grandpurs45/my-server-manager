@@ -400,7 +400,7 @@ $canRefreshHomeAssistant = $authManager->userCan('supervision')
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-sm text-slate-600">Dernier check</span>
-                    <span class="text-sm font-semibold text-slate-800" title="<?= htmlspecialchars($server['last_check'] ?? '') ?>">
+                    <span class="text-sm font-semibold text-slate-800" title="<?= htmlspecialchars(msmDisplayDate($server['last_check'] ?? null)) ?>">
                         <?= htmlspecialchars(msmDetailLastCheck($server['last_check'] ?? null, $server['last_check_age_seconds'] ?? null)) ?>
                     </span>
                 </div>
@@ -527,7 +527,7 @@ $canRefreshHomeAssistant = $authManager->userCan('supervision')
                     </div>
                     <div>
                         <dt class="text-slate-500">Dernier check</dt>
-                        <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestPatchCheck['checked_at'] ?? '-') ?></dd>
+                        <dd class="font-semibold text-slate-900"><?= htmlspecialchars(msmDisplayDate($latestPatchCheck['checked_at'] ?? null, '-')) ?></dd>
                     </div>
                     <div>
                         <dt class="text-slate-500">Updates securite</dt>
@@ -584,7 +584,7 @@ $canRefreshHomeAssistant = $authManager->userCan('supervision')
                     </div>
                     <div>
                         <dt class="text-slate-500">Dernier check</dt>
-                        <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestOsLifecycleCheck['checked_at'] ?? '-') ?></dd>
+                        <dd class="font-semibold text-slate-900"><?= htmlspecialchars(msmDisplayDate($latestOsLifecycleCheck['checked_at'] ?? null, '-')) ?></dd>
                     </div>
                     <div>
                         <dt class="text-slate-500">OS detecte</dt>
@@ -638,7 +638,7 @@ $canRefreshHomeAssistant = $authManager->userCan('supervision')
                     </div>
                     <div>
                         <dt class="text-slate-500">Dernier check</dt>
-                        <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestHardwareCheck['checked_at'] ?? '-') ?></dd>
+                        <dd class="font-semibold text-slate-900"><?= htmlspecialchars(msmDisplayDate($latestHardwareCheck['checked_at'] ?? null, '-')) ?></dd>
                     </div>
                 </dl>
 
@@ -765,7 +765,7 @@ $canRefreshHomeAssistant = $authManager->userCan('supervision')
                         </div>
                         <div>
                             <dt class="text-slate-500">Dernier check</dt>
-                            <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestHomeAssistantCheck['checked_at'] ?? '-') ?></dd>
+                            <dd class="font-semibold text-slate-900"><?= htmlspecialchars(msmDisplayDate($latestHomeAssistantCheck['checked_at'] ?? null, '-')) ?></dd>
                         </div>
                     </dl>
 
@@ -850,7 +850,7 @@ $canRefreshHomeAssistant = $authManager->userCan('supervision')
                                             <div class="text-xs text-slate-500"><?= htmlspecialchars($event['message']) ?></div>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="px-3 py-2 text-slate-500"><?= htmlspecialchars($event['created_at'] ?? '') ?></td>
+                                    <td class="px-3 py-2 text-slate-500"><?= htmlspecialchars(msmDisplayDate($event['created_at'] ?? null, '-')) ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

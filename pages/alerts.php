@@ -248,7 +248,7 @@ function msmAlertEventLabel(string $eventType): string
                                                     <div class="font-semibold text-slate-800">
                                                         <?= htmlspecialchars(msmAlertEventLabel((string) ($event['event_type'] ?? ''))) ?>
                                                         <span class="font-normal text-slate-500">
-                                                            - <?= htmlspecialchars($event['created_at'] ?? '') ?>
+                                                            - <?= htmlspecialchars(msmDisplayDate($event['created_at'] ?? null, '-')) ?>
                                                         </span>
                                                     </div>
                                                     <div class="text-slate-600">
@@ -288,13 +288,13 @@ function msmAlertEventLabel(string $eventType): string
                             </div>
                         </td>
                         <td class="px-4 py-3 align-top text-xs text-slate-600">
-                            <div>Premiere : <?= htmlspecialchars($alert['first_seen_at'] ?? '') ?></div>
-                            <div>Derniere : <?= htmlspecialchars($alert['last_seen_at'] ?? '') ?></div>
+                            <div>Premiere : <?= htmlspecialchars(msmDisplayDate($alert['first_seen_at'] ?? null, '-')) ?></div>
+                            <div>Derniere : <?= htmlspecialchars(msmDisplayDate($alert['last_seen_at'] ?? null, '-')) ?></div>
                             <?php if (!empty($alert['resolved_at'])): ?>
-                                <div>Resolution : <?= htmlspecialchars($alert['resolved_at']) ?></div>
+                                <div>Resolution : <?= htmlspecialchars(msmDisplayDate($alert['resolved_at'] ?? null, '-')) ?></div>
                             <?php endif; ?>
                             <?php if (!empty($alert['acknowledged_at'])): ?>
-                                <div>Acquittee : <?= htmlspecialchars($alert['acknowledged_at']) ?></div>
+                                <div>Acquittee : <?= htmlspecialchars(msmDisplayDate($alert['acknowledged_at'] ?? null, '-')) ?></div>
                                 <?php if (!empty($alert['acknowledged_comment'])): ?>
                                     <div class="mt-1 rounded bg-blue-50 px-2 py-1 text-blue-800">
                                         <?= htmlspecialchars($alert['acknowledged_comment']) ?>
@@ -302,7 +302,7 @@ function msmAlertEventLabel(string $eventType): string
                                 <?php endif; ?>
                             <?php endif; ?>
                             <?php if (!empty($alert['ignored_at'])): ?>
-                                <div>Ignoree : <?= htmlspecialchars($alert['ignored_at']) ?></div>
+                                <div>Ignoree : <?= htmlspecialchars(msmDisplayDate($alert['ignored_at'] ?? null, '-')) ?></div>
                                 <?php if (!empty($alert['ignored_comment'])): ?>
                                     <div class="mt-1 rounded bg-slate-100 px-2 py-1 text-slate-700">
                                         <?= htmlspecialchars($alert['ignored_comment']) ?>

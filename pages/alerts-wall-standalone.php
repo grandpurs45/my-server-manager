@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/bootstrap.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/alerts_helper.php';
 
 $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '/pages/alerts-wall-standalone.php');
@@ -136,7 +137,7 @@ $alerts = msm_get_active_alerts($pdo);
                         </div>
                         <div class="text-right text-xs text-slate-400">
                             <div>Derniere detection :</div>
-                            <div class="font-mono"><?= htmlspecialchars($alert['last_seen_at'] ?? '') ?></div>
+                            <div class="font-mono"><?= htmlspecialchars(msmDisplayDate($alert['last_seen_at'] ?? null, '-')) ?></div>
                         </div>
                     </div>
 

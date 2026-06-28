@@ -120,7 +120,7 @@ if (!is_dir($logsPath)) {
                 echo diagnosticRow('Version MSM', getVersionFromPackageJson(), getVersionFromPackageJson() !== 'unknown');
                 echo diagnosticRow('Version PHP', PHP_VERSION, version_compare(PHP_VERSION, '8.0.0', '>='));
                 echo diagnosticRow('Timezone PHP', date_default_timezone_get(), true);
-                echo diagnosticRow('Heure PHP', date('Y-m-d H:i:s'), true);
+                echo diagnosticRow('Heure PHP', msmDisplayDate(date('Y-m-d H:i:s')), true);
                 echo diagnosticRow('Connexion MariaDB', $dbOk ? 'Connectee' : 'Erreur', $dbOk);
                 echo diagnosticRow('Heure MariaDB', $dbNow, $dbOk);
                 echo diagnosticRow('Timezone MariaDB globale', $dbGlobalTimezone, $dbOk);

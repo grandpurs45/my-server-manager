@@ -115,7 +115,7 @@ function msmSecurityExposureBadge(string $exposure): string
             <dl class="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
                 <div>
                     <dt class="text-slate-500">Date</dt>
-                    <dd class="font-semibold text-slate-900"><?= htmlspecialchars($latestSecurityCheck['checked_at'] ?? '-') ?></dd>
+                    <dd class="font-semibold text-slate-900"><?= htmlspecialchars(msmDisplayDate($latestSecurityCheck['checked_at'] ?? null, '-')) ?></dd>
                 </div>
                 <div>
                     <dt class="text-slate-500">Duree</dt>

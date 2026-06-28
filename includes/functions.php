@@ -43,3 +43,35 @@ function getRemoteOS(string $ip): ?string {
 
     return null;
 }
+
+function msmDisplayDate(?string $date, string $fallback = 'Jamais', ?string $format = null): string
+{
+    if ($date === null || trim($date) === '') {
+        return $fallback;
+    }
+
+    if ($format === null) {
+        $format = msmDateDisplayFormat();
+    }
+
+    try {
+        return (new DateTimeImmutable($date))->format($format);
+    } catch (Throwable) {
+        return $date;
+    }
+}
+
+function msmDateDisplayFormat(): string
+{
+    $format = null;
+
+    if (isset($GLOBALS['settings']) && is_object($GLOBALS['settings']) && method_exists($GLOBALS['settings'], 'get')) {
+        try {
+            $format = trim((string) ($GLOBALS['settings']->get('msm', 'date_display_format') ?? ''));
+        } catch (Throwable) {
+            $format = null;
+        }
+    }
+
+    return $format !== null && $format !== '' ? $format : 'd/m/Y H:i:s';
+}

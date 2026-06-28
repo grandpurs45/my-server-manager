@@ -461,7 +461,7 @@ include __DIR__ . '/../includes/server-modal.php';
                                 <?php endif; ?>
                             </div>
                         </td>
-                        <td class="p-3"><?= $server['last_check'] ? htmlspecialchars($server['last_check']) : 'Jamais' ?></td>
+                        <td class="p-3"><?= htmlspecialchars(msmDisplayDate($server['last_check'] ?? null)) ?></td>
                         <td class="px-4 py-2">
                             <a href="details-cible.php?id=<?= (int) $server['id'] ?>" class="text-slate-700 hover:underline flex items-center gap-1 mb-2">
                                 <i data-lucide="eye" class="w-4 h-4"></i> Details

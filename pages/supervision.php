@@ -241,7 +241,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <?= msmSupervisionStatusBadge($server['status'] ?? null) ?>
                         <?= msmSupervisionSshBadge($server) ?>
                         <span class="inline-flex rounded border px-2 py-1 text-xs font-semibold <?= htmlspecialchars($lastCheckStatus['badge']) ?>"
-                              title="<?= htmlspecialchars($server['last_check'] ?? '') ?>">
+                              title="<?= htmlspecialchars(msmDisplayDate($server['last_check'] ?? null)) ?>">
                             <?= htmlspecialchars($lastCheckStatus['text']) ?>
                         </span>
                     </div>

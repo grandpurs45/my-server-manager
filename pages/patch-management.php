@@ -159,7 +159,7 @@ function msmPatchStatusBadge(?string $status): string
 
 function msmPatchFormatDate(?string $date): string
 {
-    return $date ? htmlspecialchars($date) : '-';
+    return htmlspecialchars(msmDisplayDate($date, '-'));
 }
 
 function msmPatchRebootBadge(bool $rebootRequired): string
@@ -451,7 +451,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?= msmPatchFormatDate($target['checked_at'] ?? null) ?>
                                 <?php if (!empty($target['os_lifecycle_checked_at'])): ?>
                                     <div class="mt-1 text-xs text-slate-500">
-                                        OS : <?= htmlspecialchars($target['os_lifecycle_checked_at']) ?>
+                                        OS : <?= htmlspecialchars(msmDisplayDate($target['os_lifecycle_checked_at'] ?? null, '-')) ?>
                                     </div>
                                 <?php endif; ?>
                                 <?php if (!empty($target['error_message'])): ?>

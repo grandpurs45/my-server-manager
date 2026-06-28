@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.1](https://github.com/grandpurs45/my-server-manager/compare/v1.8.0...v1.8.1) (2026-06-28)
+
+### Changed
+
+* ajout d'un parametre `MSM / Format affichage dates`
+* uniformisation des dates visibles au format francais par defaut `jj/mm/aaaa hh:mm:ss`
+
 ## [1.8.0](https://github.com/grandpurs45/my-server-manager/compare/v1.7.0...v1.8.0) (2026-06-27)
 
 ### Changed

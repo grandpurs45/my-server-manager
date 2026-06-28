@@ -24,7 +24,7 @@ function msmFirewallBadge(?string $status): string
 
 function msmSecurityDate(?string $date): string
 {
-    return $date !== null && $date !== '' ? $date : 'Jamais';
+    return msmDisplayDate($date);
 }
 
 $summary = [

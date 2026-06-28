@@ -417,7 +417,7 @@ $priorities = array_slice($priorities, 0, 8);
 
 function msmDashboardDate(?string $date): string
 {
-    return $date ? htmlspecialchars($date) : 'Jamais';
+    return htmlspecialchars(msmDisplayDate($date));
 }
 
 function msmDashboardFreshness(?string $date, int $maxAgeSeconds, ?string $status = null): array
