@@ -1,12 +1,13 @@
 <?php
 require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/csrf.php';
+require_once __DIR__ . '/../includes/os_logos.php';
 
 use MSM\SettingsManager;
 
 $settingsManager = new SettingsManager($pdo);
 
-$categories = ['reseau', 'supervision', 'inventaire', 'patch_management', 'os_lifecycle', 'security', 'alerting', 'auth', 'bdd', 'msm'];
+$categories = ['reseau', 'supervision', 'inventaire', 'patch_management', 'os_lifecycle', 'security', 'hardware_health', 'home_assistant', 'alerting', 'auth', 'bdd', 'msm'];
 $labels = [
     'reseau' => 'Reseau',
     'supervision' => 'Supervision',
@@ -14,6 +15,8 @@ $labels = [
     'patch_management' => 'Patch Management',
     'os_lifecycle' => 'Cycle de vie OS',
     'security' => 'Securite',
+    'hardware_health' => 'Sante materielle',
+    'home_assistant' => 'Home Assistant',
     'alerting' => 'Alerting',
     'auth' => 'Authentification',
     'bdd' => 'Base de donnees',
@@ -27,6 +30,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'check
 
     $settingsManager->deleteCategory('msm_update');
     $_SESSION['success'] = 'Cache de verification des mises a jour MSM vide. La prochaine page chargee relancera la verification.';
+    header('Location: settings.php');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'upload_os_logo') {
+    msmRequireValidCsrf('settings.php');
+
+    $slug = msmOsLogoSlug((string) ($_POST['logo_slug'] ?? ''));
+    $file = $_FILES['logo_file'] ?? null;
+
+    if ($slug === '') {
+        $_SESSION['error'] = 'Identifiant de logo invalide.';
+    } elseif (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        $_SESSION['error'] = 'Aucun fichier PNG valide recu.';
+    } elseif (($file['size'] ?? 0) > 512 * 1024) {
+        $_SESSION['error'] = 'Le logo est trop volumineux. Taille maximale : 512 Ko.';
+    } else {
+        $tmpPath = (string) ($file['tmp_name'] ?? '');
+        $imageInfo = $tmpPath !== '' ? @getimagesize($tmpPath) : false;
+
+        if (!is_array($imageInfo) || ($imageInfo['mime'] ?? '') !== 'image/png') {
+            $_SESSION['error'] = 'Seuls les fichiers PNG sont acceptes pour les logos OS.';
+        } else {
+            $logoDirectory = msmOsLogoDirectory();
+            if (!is_dir($logoDirectory) && !mkdir($logoDirectory, 0775, true) && !is_dir($logoDirectory)) {
+                $_SESSION['error'] = 'Impossible de creer le dossier des logos OS.';
+            } else {
+                $destination = $logoDirectory . '/' . $slug . '.png';
+                if (move_uploaded_file($tmpPath, $destination)) {
+                    $_SESSION['success'] = 'Logo OS ajoute : ' . $slug . '.png.';
+                } else {
+                    $_SESSION['error'] = 'Impossible d enregistrer le logo OS.';
+                }
+            }
+        }
+    }
+
+    header('Location: settings.php');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'fetch_os_logo') {
+    msmRequireValidCsrf('settings.php');
+
+    $query = trim((string) ($_POST['logo_query'] ?? ''));
+    if ($query === '') {
+        $_SESSION['error'] = 'Nom OS invalide.';
+    } else {
+        $result = msmOsLogoFetchFromInternet($query);
+        $_SESSION[$result['success'] ? 'success' : 'error'] = $result['message'];
+    }
+
     header('Location: settings.php');
     exit;
 }
@@ -113,6 +168,68 @@ require_once __DIR__ . '/../includes/header.php';
                                     Verifier les mises a jour MSM
                                 </button>
                             </form>
+                        </div>
+                    </div>
+
+                    <div class="mb-5 rounded-lg border border-gray-200 bg-white p-4">
+                        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <h2 class="text-base font-semibold text-slate-900">Logos OS</h2>
+                                <p class="mt-1 text-sm text-slate-600">
+                                    Convention : <code><?= htmlspecialchars(msmOsLogoRelativeDirectory()) ?>/identifiant.png</code>.
+                                    Exemple : <code>alpine.png</code> pour Alpine Linux.
+                                </p>
+                            </div>
+                        </div>
+
+                        <form method="POST" class="mb-4 grid grid-cols-1 gap-3 rounded border border-blue-100 bg-blue-50 p-3 md:grid-cols-[1fr_auto]">
+                            <?php echo msmCsrfField(); ?>
+                            <input type="hidden" name="action" value="fetch_os_logo">
+                            <div>
+                                <label class="block text-sm font-semibold text-blue-900" for="logo_query">Recherche automatique</label>
+                                <input id="logo_query" name="logo_query" type="text" placeholder="Alpine Linux 3.21, Rocky Linux 10.1, Home Assistant OS"
+                                       class="mt-1 block w-full rounded border-gray-300 shadow-sm">
+                                <p class="mt-1 text-xs text-blue-800">MSM essaie d'abord les familles connues, puis un identifiant derive du texte saisi.</p>
+                            </div>
+                            <div class="flex items-end">
+                                <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                                    Trouver automatiquement
+                                </button>
+                            </div>
+                        </form>
+
+                        <form method="POST" enctype="multipart/form-data" class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto]">
+                            <?php echo msmCsrfField(); ?>
+                            <input type="hidden" name="action" value="upload_os_logo">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700" for="logo_slug">Identifiant OS</label>
+                                <input id="logo_slug" name="logo_slug" type="text" placeholder="alpine, freebsd, oracle-linux"
+                                       class="mt-1 block w-full rounded border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700" for="logo_file">Fichier PNG</label>
+                                <input id="logo_file" name="logo_file" type="file" accept="image/png"
+                                       class="mt-1 block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm">
+                            </div>
+                            <div class="flex items-end">
+                                <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                                    Ajouter
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                            <?php foreach (msmOsLogoEntries($baseUrl) as $logo): ?>
+                                <div class="rounded border border-gray-200 bg-slate-50 p-3">
+                                    <div class="flex items-center gap-2">
+                                        <img src="<?= htmlspecialchars($logo['url']) ?>" alt="" class="h-6 w-6">
+                                        <span class="truncate text-sm font-semibold text-slate-800"><?= htmlspecialchars($logo['slug']) ?></span>
+                                    </div>
+                                    <div class="mt-1 text-xs text-slate-500">
+                                        <?= $logo['custom'] ? 'Personnalise' : 'Integre' ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                 <?php endif; ?>

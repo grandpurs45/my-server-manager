@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/crypto.php';
 require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../includes/inventory_options.php';
+require_once __DIR__ . '/../includes/os_logos.php';
 
 use MSM\SSHUtils;
 use MSM\SettingsManager;
@@ -216,20 +217,6 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($queryParams);
 $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-function getOSLogo(string $osName, string $targetType, string $baseUrl): string {
-    $osName = strtolower($osName);
-    $targetType = strtolower($targetType);
-
-    return match (true) {
-        str_contains($osName, 'debian') => $baseUrl . 'assets/logos/debian.png',
-        str_contains($osName, 'ubuntu') => $baseUrl . 'assets/logos/ubuntu.png',
-        str_contains($osName, 'windows') => $baseUrl . 'assets/logos/windows.png',
-        str_contains($osName, 'rocky') => $baseUrl . 'assets/logos/rocky.png',
-        $targetType === 'linux' || $targetType === 'proxmox' || $targetType === 'docker' => $baseUrl . 'assets/logos/linux.svg',
-        default => $baseUrl . 'assets/logos/unknown.png',
-    };
-}
-
 $server = $editMode ? $editData : null;
 include __DIR__ . '/../includes/server-modal.php';
 ?>
@@ -402,7 +389,7 @@ include __DIR__ . '/../includes/server-modal.php';
                         </td>
                         <td class="p-3">
                             <div class="flex items-center gap-2">
-                                <img src="<?= getOSLogo($server['os'] ?? '', $server['target_type'] ?? '', $baseUrl) ?>" alt="Logo OS" class="w-5 h-5">
+                                <img src="<?= msmOsLogoUrl($server['os'] ?? '', $server['target_type'] ?? '', $baseUrl) ?>" alt="Logo OS" class="w-5 h-5">
                                 <span><?= htmlspecialchars($server['os'] ?? '-') ?></span>
                             </div>
                         </td>

@@ -69,4 +69,15 @@ Ne pas configurer cron et systemd timer en double pour ce meme script.
 - Le connecteur ne modifie pas Home Assistant.
 - Aucun upgrade n'est lance par MSM.
 - Les installations Home Assistant ne fournissent pas toutes la CLI `ha` via SSH.
-- Les alertes dediees Home Assistant sont prevues pour une version v1.x ulterieure.
+
+## Alertes
+
+MSM peut generer des alertes internes a partir du dernier check Home Assistant :
+
+- check Home Assistant en erreur ;
+- check Home Assistant trop ancien ;
+- update Home Assistant Core disponible ;
+- update Supervisor disponible ;
+- update Home Assistant OS disponible.
+
+Ces regles sont visibles dans `Regles d'alertes` avec la source `home_assistant`.

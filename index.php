@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/bootstrap.php';
+require_once __DIR__ . '/classes/SetupAssistant.php';
 
 use MSM\PatchStatusRepository;
 use MSM\AlertRepository;
@@ -37,17 +38,6 @@ $serverStats = $pdo->query("
         MAX(last_check) AS last_supervision_check
     FROM servers
 ")->fetch(PDO::FETCH_ASSOC) ?: [];
-
-$latestPatchCheck = $pdo->query("SELECT MAX(checked_at) FROM patch_checks")->fetchColumn() ?: null;
-$latestOsLifecycleCheck = $pdo->query("SELECT MAX(checked_at) FROM os_lifecycle_checks")->fetchColumn() ?: null;
-$latestSecurityCheck = $pdo->query("SELECT MAX(checked_at) FROM security_checks")->fetchColumn() ?: null;
-$latestHardwareHealthCheck = $pdo->query("SELECT MAX(checked_at) FROM hardware_health_checks")->fetchColumn() ?: null;
-$homeAssistantChecksTableExists = (int) $pdo
-    ->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'home_assistant_checks'")
-    ->fetchColumn() > 0;
-$latestHomeAssistantCheck = $homeAssistantChecksTableExists
-    ? ($pdo->query("SELECT MAX(checked_at) FROM home_assistant_checks")->fetchColumn() ?: null)
-    : null;
 
 $hardwareTargets = $pdo->query("
     SELECT
@@ -160,17 +150,6 @@ $smartMaxWear = array_reduce(
     },
     null
 );
-
-function msmDashboardCheckRuntime(SettingsManager $settingsManager, string $category): array
-{
-    return [
-        'attempt' => $settingsManager->get($category, 'check_last_attempt_at'),
-        'run' => $settingsManager->get($category, 'check_last_run_at'),
-        'finished' => $settingsManager->get($category, 'check_last_finished_at'),
-        'status' => $settingsManager->get($category, 'check_last_status'),
-        'message' => $settingsManager->get($category, 'check_last_message'),
-    ];
-}
 
 $summary = [
     'servers_down' => (int) ($serverStats['down_count'] ?? 0),
@@ -415,175 +394,108 @@ foreach ($smartWearWarningDisks as $disk) {
 usort($priorities, fn (array $a, array $b): int => $a['score'] <=> $b['score'] ?: strcasecmp($a['name'], $b['name']));
 $priorities = array_slice($priorities, 0, 8);
 
-function msmDashboardDate(?string $date): string
+function msmDashboardDuration(int $seconds): string
 {
-    return htmlspecialchars(msmDisplayDate($date));
+    if ($seconds < 120) {
+        return $seconds . ' s';
+    }
+
+    $minutes = intdiv($seconds, 60);
+    if ($minutes < 120) {
+        return $minutes . ' min';
+    }
+
+    $hours = intdiv($minutes, 60);
+    $remainingMinutes = $minutes % 60;
+
+    return $remainingMinutes > 0 ? $hours . ' h ' . $remainingMinutes . ' min' : $hours . ' h';
 }
 
-function msmDashboardFreshness(?string $date, int $maxAgeSeconds, ?string $status = null): array
+function msmDashboardScheduledChecks(SettingsManager $settingsManager, string $root): array
 {
-    if ($status === 'error') {
-        return ['label' => 'Erreur', 'class' => 'text-red-700 bg-red-50 border-red-200'];
+    $logsDirectory = $root . DIRECTORY_SEPARATOR . 'logs';
+    $summary = [
+        'total' => 0,
+        'ok' => 0,
+        'running' => 0,
+        'stale' => 0,
+        'error' => 0,
+        'items' => [],
+    ];
+
+    foreach (SetupAssistant::checks() as $check) {
+        $summary['total']++;
+
+        $category = (string) ($check['settings_category'] ?? '');
+        $status = $category !== '' ? (string) ($settingsManager->get($category, 'check_last_status') ?? '') : '';
+        $lastAttempt = $category !== '' ? $settingsManager->get($category, 'check_last_attempt_at') : null;
+        $scriptPath = $root . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . $check['script'];
+        $logPath = $logsDirectory . DIRECTORY_SEPARATOR . $check['log'];
+        $state = 'ok';
+        $reason = 'OK';
+
+        if (!is_file($scriptPath)) {
+            $state = 'error';
+            $reason = 'script absent';
+        } elseif ($status === 'running') {
+            $state = 'running';
+            $reason = 'en cours';
+        } elseif ($status === 'error') {
+            $state = 'error';
+            $reason = 'derniere execution en erreur';
+        } elseif (!is_file($logPath)) {
+            $state = 'stale';
+            $reason = 'log absent';
+        } else {
+            $mtime = filemtime($logPath);
+            $staleAfterMinutes = (int) ($check['log_stale_after_minutes'] ?? 0);
+            $lastAttemptAgeSeconds = msmDashboardDateAgeSeconds($lastAttempt);
+            if ($staleAfterMinutes > 0 && $lastAttemptAgeSeconds !== null && $lastAttemptAgeSeconds > $staleAfterMinutes * 60) {
+                $state = 'stale';
+                $reason = 'derniere tentative ancienne de ' . msmDashboardDuration($lastAttemptAgeSeconds);
+            } elseif ($mtime !== false && $staleAfterMinutes > 0 && $lastAttemptAgeSeconds === null) {
+                $logAgeSeconds = time() - $mtime;
+                if ($logAgeSeconds > $staleAfterMinutes * 60) {
+                    $state = 'stale';
+                    $reason = 'log ancien de ' . msmDashboardDuration($logAgeSeconds);
+                }
+            }
+        }
+
+        $summary[$state]++;
+        if (!in_array($state, ['ok', 'running'], true)) {
+            $summary['items'][] = [
+                'name' => $check['name'],
+                'state' => $state,
+                'reason' => $reason,
+            ];
+        }
     }
 
-    if ($status === 'running') {
-        return ['label' => 'En cours', 'class' => 'text-blue-700 bg-blue-50 border-blue-200'];
-    }
+    return $summary;
+}
 
-    if (!$date) {
-        return ['label' => 'Jamais', 'class' => 'text-red-700 bg-red-50 border-red-200'];
+function msmDashboardDateAgeSeconds(?string $date): ?int
+{
+    if ($date === null || trim($date) === '') {
+        return null;
     }
 
     try {
-        $checkedAt = new DateTimeImmutable($date);
-    } catch (Exception) {
-        return ['label' => 'Date invalide', 'class' => 'text-red-700 bg-red-50 border-red-200'];
+        return time() - (new DateTimeImmutable($date))->getTimestamp();
+    } catch (Throwable) {
+        return null;
     }
-
-    $ageSeconds = time() - $checkedAt->getTimestamp();
-    if ($ageSeconds <= $maxAgeSeconds) {
-        return ['label' => 'A jour', 'class' => 'text-green-700 bg-green-50 border-green-200'];
-    }
-
-    return ['label' => 'Ancien', 'class' => 'text-yellow-800 bg-yellow-50 border-yellow-200'];
 }
 
-function msmDashboardStatusLabel(?string $status): string
-{
-    return match ($status) {
-        'success' => 'termine',
-        'skipped' => 'saute',
-        'running' => 'en cours',
-        'error' => 'en erreur',
-        default => $status ?: '-',
-    };
-}
-
-$supervisionInterval = (int) ($settingsManager->get('supervision', 'check_interval_minutes') ?? 10);
-if ($supervisionInterval < 1) {
-    $supervisionInterval = 10;
-}
-
-$patchInterval = (int) ($settingsManager->get('patch_management', 'check_interval_hours') ?? 6);
-if ($patchInterval < 1) {
-    $patchInterval = 6;
-}
-
-$osLifecycleInterval = (int) ($settingsManager->get('os_lifecycle', 'check_interval_hours') ?? 168);
-if ($osLifecycleInterval < 1) {
-    $osLifecycleInterval = 168;
-}
-
-$securityInterval = (int) ($settingsManager->get('security', 'check_interval_hours') ?? 24);
-if ($securityInterval < 1) {
-    $securityInterval = 24;
-}
-
-$hardwareHealthInterval = (int) ($settingsManager->get('hardware_health', 'check_interval_minutes') ?? 15);
-if ($hardwareHealthInterval < 1) {
-    $hardwareHealthInterval = 15;
-}
-
-$homeAssistantInterval = (int) ($settingsManager->get('home_assistant', 'check_interval_minutes') ?? 15);
-if ($homeAssistantInterval < 1) {
-    $homeAssistantInterval = 15;
-}
-
-$alertingInterval = (int) ($settingsManager->get('alerting', 'check_interval_minutes') ?? 5);
-if ($alertingInterval < 1) {
-    $alertingInterval = 5;
-}
-
-$latestAlertingCheck = $settingsManager->get('alerting', 'check_last_run_at');
-
-$supervisionRuntime = msmDashboardCheckRuntime($settingsManager, 'supervision');
-$patchRuntime = msmDashboardCheckRuntime($settingsManager, 'patch_management');
-$osLifecycleRuntime = msmDashboardCheckRuntime($settingsManager, 'os_lifecycle');
-$securityRuntime = msmDashboardCheckRuntime($settingsManager, 'security');
-$hardwareHealthRuntime = msmDashboardCheckRuntime($settingsManager, 'hardware_health');
-$homeAssistantRuntime = msmDashboardCheckRuntime($settingsManager, 'home_assistant');
-$alertingRuntime = msmDashboardCheckRuntime($settingsManager, 'alerting');
-
-$freshness = [
-    [
-        'name' => 'Supervision',
-        'execution_date' => $supervisionRuntime['attempt'] ?: ($supervisionRuntime['run'] ?: ($serverStats['last_supervision_check'] ?? null)),
-        'result_date' => $serverStats['last_supervision_check'] ?? null,
-        'interval' => $supervisionInterval . ' min',
-        'state' => msmDashboardFreshness($supervisionRuntime['attempt'] ?: ($supervisionRuntime['run'] ?: ($serverStats['last_supervision_check'] ?? null)), max(900, $supervisionInterval * 60 * 3), $supervisionRuntime['status']),
-        'status' => $supervisionRuntime['status'],
-        'message' => $supervisionRuntime['message'],
-        'href' => $baseUrl . 'pages/supervision.php',
-    ],
-    [
-        'name' => 'Patch Management',
-        'execution_date' => $patchRuntime['attempt'] ?: ($patchRuntime['run'] ?: $latestPatchCheck),
-        'result_date' => $latestPatchCheck,
-        'interval' => $patchInterval . ' h',
-        'state' => msmDashboardFreshness($patchRuntime['attempt'] ?: ($patchRuntime['run'] ?: $latestPatchCheck), max(86400, $patchInterval * 3600 * 2), $patchRuntime['status']),
-        'status' => $patchRuntime['status'],
-        'message' => $patchRuntime['message'],
-        'href' => $baseUrl . 'pages/patch-management.php',
-    ],
-    [
-        'name' => 'Cycle de vie OS',
-        'execution_date' => $osLifecycleRuntime['attempt'] ?: ($osLifecycleRuntime['run'] ?: $latestOsLifecycleCheck),
-        'result_date' => $latestOsLifecycleCheck,
-        'interval' => $osLifecycleInterval . ' h',
-        'state' => msmDashboardFreshness($osLifecycleRuntime['attempt'] ?: ($osLifecycleRuntime['run'] ?: $latestOsLifecycleCheck), max(604800, $osLifecycleInterval * 3600 * 2), $osLifecycleRuntime['status']),
-        'status' => $osLifecycleRuntime['status'],
-        'message' => $osLifecycleRuntime['message'],
-        'href' => $baseUrl . 'pages/patch-management.php?action=os_upgrade',
-    ],
-    [
-        'name' => 'Securite',
-        'execution_date' => $securityRuntime['attempt'] ?: ($securityRuntime['run'] ?: $latestSecurityCheck),
-        'result_date' => $latestSecurityCheck,
-        'interval' => $securityInterval . ' h',
-        'state' => msmDashboardFreshness($securityRuntime['attempt'] ?: ($securityRuntime['run'] ?: $latestSecurityCheck), max(86400, $securityInterval * 3600 * 2), $securityRuntime['status']),
-        'status' => $securityRuntime['status'],
-        'message' => $securityRuntime['message'],
-        'href' => $baseUrl . 'pages/securite-serveurs.php',
-    ],
-    [
-        'name' => 'Sante materielle',
-        'execution_date' => $hardwareHealthRuntime['attempt'] ?: ($hardwareHealthRuntime['run'] ?: $latestHardwareHealthCheck),
-        'result_date' => $latestHardwareHealthCheck,
-        'interval' => $hardwareHealthInterval . ' min',
-        'state' => msmDashboardFreshness(
-            $hardwareHealthRuntime['attempt'] ?: ($hardwareHealthRuntime['run'] ?: $latestHardwareHealthCheck),
-            max(900, $hardwareHealthInterval * 60 * 3),
-            $hardwareHealthRuntime['status']
-        ),
-        'status' => $hardwareHealthRuntime['status'],
-        'message' => $hardwareHealthRuntime['message'],
-        'href' => $baseUrl . 'pages/serveurs.php',
-    ],
-    [
-        'name' => 'Home Assistant',
-        'execution_date' => $homeAssistantRuntime['attempt'] ?: ($homeAssistantRuntime['run'] ?: $latestHomeAssistantCheck),
-        'result_date' => $latestHomeAssistantCheck,
-        'interval' => $homeAssistantInterval . ' min',
-        'state' => msmDashboardFreshness(
-            $homeAssistantRuntime['attempt'] ?: ($homeAssistantRuntime['run'] ?: $latestHomeAssistantCheck),
-            max(900, $homeAssistantInterval * 60 * 3),
-            $homeAssistantRuntime['status']
-        ),
-        'status' => $homeAssistantRuntime['status'],
-        'message' => $homeAssistantRuntime['message'],
-        'href' => $baseUrl . 'pages/serveurs.php?target_type=home_assistant',
-    ],
-    [
-        'name' => 'Alerting',
-        'execution_date' => $alertingRuntime['attempt'] ?: ($alertingRuntime['run'] ?: $latestAlertingCheck),
-        'result_date' => $latestAlertingCheck,
-        'interval' => $alertingInterval . ' min',
-        'state' => msmDashboardFreshness($alertingRuntime['attempt'] ?: ($alertingRuntime['run'] ?: $latestAlertingCheck), max(900, $alertingInterval * 60 * 3), $alertingRuntime['status']),
-        'status' => $alertingRuntime['status'],
-        'message' => $alertingRuntime['message'],
-        'href' => $baseUrl . 'pages/alerts.php',
-    ],
-];
+$scheduledChecks = msmDashboardScheduledChecks($settingsManager, __DIR__);
+$scheduledChecksState = $scheduledChecks['error'] > 0
+    ? ['label' => 'Erreur', 'class' => 'border-red-200 bg-red-50 text-red-700', 'icon' => 'circle-alert']
+    : ($scheduledChecks['stale'] > 0
+        ? ['label' => 'Attention', 'class' => 'border-yellow-200 bg-yellow-50 text-yellow-800', 'icon' => 'triangle-alert']
+        : ($scheduledChecks['running'] > 0
+            ? ['label' => 'En cours', 'class' => 'border-blue-200 bg-blue-50 text-blue-700', 'icon' => 'loader-circle']
+            : ['label' => 'OK', 'class' => 'border-green-200 bg-green-50 text-green-700', 'icon' => 'circle-check']));
 ?>
 
 <div class="p-6">
@@ -730,45 +642,57 @@ $freshness = [
         </section>
 
         <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <h2 class="mb-4 text-lg font-semibold text-slate-900">Fraicheur des checks</h2>
-            <div class="space-y-3">
-                <?php foreach ($freshness as $item): ?>
-                    <a href="<?= htmlspecialchars($item['href']) ?>" class="block rounded border border-gray-200 p-3 hover:border-blue-300">
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="font-semibold text-slate-900"><?= htmlspecialchars($item['name']) ?></div>
-                            <span class="rounded border px-2 py-1 text-xs font-semibold <?= htmlspecialchars($item['state']['class']) ?>">
-                                <?= htmlspecialchars($item['state']['label']) ?>
-                            </span>
-                        </div>
-                        <div class="mt-2 text-xs text-slate-500">
-                            Derniere execution : <?= msmDashboardDate($item['execution_date']) ?>
-                        </div>
-                        <?php if (!empty($item['result_date'])): ?>
-                            <div class="text-xs text-slate-500">
-                                Dernier resultat : <?= msmDashboardDate($item['result_date']) ?>
-                            </div>
-                        <?php endif; ?>
-                        <div class="text-xs text-slate-500">
-                            Intervalle : <?= htmlspecialchars($item['interval']) ?>
-                        </div>
-                        <?php if (!empty($item['status']) || !empty($item['message'])): ?>
-                            <div class="mt-2 rounded bg-slate-50 px-2 py-1 text-xs text-slate-600">
-                                <?php if (!empty($item['status'])): ?>
-                                    <span class="font-semibold">Script <?= htmlspecialchars(msmDashboardStatusLabel($item['status'])) ?></span>
-                                <?php endif; ?>
-                                <?php if (!empty($item['message'])): ?>
-                                    <span><?= !empty($item['status']) ? ' - ' : '' ?><?= htmlspecialchars($item['message']) ?></span>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
-                    </a>
-                <?php endforeach; ?>
+            <div class="mb-4 flex items-start justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-900">Checks planifies</h2>
+                    <p class="mt-1 text-sm text-slate-500">Synthese des scripts, logs et derniers statuts connus.</p>
+                </div>
+                <span class="inline-flex items-center gap-2 rounded border px-3 py-1.5 text-sm font-semibold <?= htmlspecialchars($scheduledChecksState['class']) ?>">
+                    <i data-lucide="<?= htmlspecialchars($scheduledChecksState['icon']) ?>" class="h-4 w-4"></i>
+                    <?= htmlspecialchars($scheduledChecksState['label']) ?>
+                </span>
             </div>
 
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <div class="rounded border border-green-100 bg-green-50 p-3">
+                    <div class="text-xs font-semibold uppercase text-green-700">OK</div>
+                    <div class="mt-1 text-2xl font-bold text-green-800"><?= (int) $scheduledChecks['ok'] ?></div>
+                </div>
+                <div class="rounded border border-blue-100 bg-blue-50 p-3">
+                    <div class="text-xs font-semibold uppercase text-blue-700">En cours</div>
+                    <div class="mt-1 text-2xl font-bold text-blue-800"><?= (int) $scheduledChecks['running'] ?></div>
+                </div>
+                <div class="rounded border border-yellow-100 bg-yellow-50 p-3">
+                    <div class="text-xs font-semibold uppercase text-yellow-700">Retard</div>
+                    <div class="mt-1 text-2xl font-bold text-yellow-800"><?= (int) $scheduledChecks['stale'] ?></div>
+                </div>
+                <div class="rounded border border-red-100 bg-red-50 p-3">
+                    <div class="text-xs font-semibold uppercase text-red-700">Erreur</div>
+                    <div class="mt-1 text-2xl font-bold text-red-800"><?= (int) $scheduledChecks['error'] ?></div>
+                </div>
+            </div>
+
+            <?php if (!empty($scheduledChecks['items'])): ?>
+                <div class="mt-4 divide-y divide-gray-100 rounded border border-gray-200">
+                    <?php foreach (array_slice($scheduledChecks['items'], 0, 4) as $item): ?>
+                        <div class="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                            <div class="font-semibold text-slate-800"><?= htmlspecialchars($item['name']) ?></div>
+                            <div class="<?= $item['state'] === 'error' ? 'text-red-700' : 'text-yellow-800' ?>">
+                                <?= htmlspecialchars($item['reason']) ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <p class="mt-4 rounded border border-green-200 bg-green-50 px-3 py-3 text-sm font-semibold text-green-700">
+                    Tous les checks planifies sont a jour.
+                </p>
+            <?php endif; ?>
+
             <div class="mt-4 grid grid-cols-2 gap-2">
-                <a href="<?= $baseUrl ?>pages/diagnostic.php" class="inline-flex items-center justify-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50">
-                    <i data-lucide="stethoscope" class="h-4 w-4"></i>
-                    Diagnostic
+                <a href="<?= $baseUrl ?>pages/collectors.php" class="inline-flex items-center justify-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50">
+                    <i data-lucide="workflow" class="h-4 w-4"></i>
+                    Collecteurs
                 </a>
                 <a href="<?= $baseUrl ?>metrics.php" class="inline-flex items-center justify-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50">
                     <i data-lucide="activity" class="h-4 w-4"></i>

@@ -387,7 +387,7 @@ class AuthManager
             'patch-management.php' => 'patch_management',
             'securite-serveurs.php', 'securite-web.php', 'details-securite.php' => 'securite',
             'diagnostic.php' => 'diagnostic',
-            'settings.php', 'users.php' => 'settings',
+            'settings.php', 'users.php', 'collectors.php' => 'settings',
             default => 'dashboard',
         };
     }

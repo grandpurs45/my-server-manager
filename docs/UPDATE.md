@@ -150,9 +150,9 @@ Ce script verifie la version, les dependances, `.env`, la connexion base, les mi
 
 ### Corriger les warnings du controle post-update
 
-#### `Crontab MSM - scripts absents: check-hardware-health.php`
+#### `Crontab MSM - scripts absents: ...`
 
-Ce warning indique que le code v1.6 est installe, mais que le nouveau collecteur materiel n'a pas encore ete ajoute a la crontab de l'utilisateur courant.
+Ce warning indique qu'un ou plusieurs scripts MSM existent dans le code, mais ne sont pas encore ajoutes a la crontab de l'utilisateur courant. Cela arrive typiquement apres l'ajout d'un nouveau collecteur, par exemple `check-hardware-health.php` ou `check-home-assistant.php`.
 
 Afficher la ligne adaptee au chemin reel de l'installation :
 
@@ -166,34 +166,38 @@ Ouvrir ensuite la crontab :
 crontab -e
 ```
 
-Ajouter la ligne `check-hardware-health.php` affichee par l'assistant. Pour une installation standard dans `/var/www/html/msm` :
+Ajouter les lignes absentes affichees par l'assistant. Pour une installation standard dans `/var/www/html/msm` :
 
 ```cron
 */5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-hardware-health.php >> /var/www/html/msm/logs/check-hardware-health.log 2>&1
+*/15 * * * * /usr/bin/php /var/www/html/msm/scripts/check-home-assistant.php >> /var/www/html/msm/logs/check-home-assistant.log 2>&1
 ```
 
-Verifier que la ligne est bien enregistree :
+Verifier que les lignes sont bien enregistrees :
 
 ```bash
 crontab -l | grep check-hardware-health
+crontab -l | grep check-home-assistant
 ```
 
-Ne pas ajouter cette ligne si MSM utilise deja le timer systemd `msm-check-hardware-health.timer`. Cron et systemd ne doivent pas executer le meme check en double.
+Ne pas ajouter une ligne cron si MSM utilise deja le timer systemd equivalent. Cron et systemd ne doivent pas executer le meme check en double.
 
-#### `Sante materielle log - absent: logs/check-hardware-health.log`
+#### `... log - absent` ou `... log - ancien`
 
-Ce warning est normal tant que le nouveau script n'a jamais ete execute avec sa redirection de log.
+Un log absent est normal tant que le nouveau script n'a jamais ete execute avec sa redirection de log. Un log ancien indique que le script a deja fonctionne, mais que l'ordonnancement ne le relance plus assez souvent.
 
-Executer immediatement le check avec la meme redirection que le cron :
+Executer immediatement le check concerne avec la meme redirection que le cron :
 
 ```bash
 /usr/bin/php scripts/check-hardware-health.php --force >> logs/check-hardware-health.log 2>&1
+/usr/bin/php scripts/check-home-assistant.php --force >> logs/check-home-assistant.log 2>&1
 ```
 
 Verifier ensuite le fichier :
 
 ```bash
 tail -n 30 logs/check-hardware-health.log
+tail -n 30 logs/check-home-assistant.log
 ```
 
 Si le dossier ou le fichier n'est pas accessible :
@@ -202,6 +206,7 @@ Si le dossier ou le fichier n'est pas accessible :
 php scripts/setup.php --init-logs
 ls -ld logs
 ls -l logs/check-hardware-health.log
+ls -l logs/check-home-assistant.log
 ```
 
 Relancer enfin le controle :
@@ -220,15 +225,17 @@ php scripts/check-patches.php --force
 php scripts/check-os-lifecycle.php --force
 php scripts/check-security.php --force
 php scripts/check-hardware-health.php --force
+php scripts/check-home-assistant.php --force
 php scripts/check-alerts.php --force
 ```
 
 Les scripts lisent et ecrivent en base. Ils ne doivent pas etre lances depuis une page web.
 
-Depuis la v1.6, verifier que l'ordonnancement contient aussi :
+Verifier que l'ordonnancement contient aussi les scripts ajoutes par les versions recentes :
 
 ```cron
 */5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-hardware-health.php >> /var/www/html/msm/logs/check-hardware-health.log 2>&1
+*/15 * * * * /usr/bin/php /var/www/html/msm/scripts/check-home-assistant.php >> /var/www/html/msm/logs/check-home-assistant.log 2>&1
 ```
 
 Le chemin exact depend de l'installation. Utiliser `php scripts/setup.php --cron` pour generer la ligne adaptee.

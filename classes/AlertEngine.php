@@ -28,7 +28,8 @@ class AlertEngine
             $this->evaluateSecurity($rules),
             $this->evaluateHardwareHealth($rules),
             $this->evaluateHardwareSmart($rules),
-            $this->evaluateHardwareRuntime($rules)
+            $this->evaluateHardwareRuntime($rules),
+            $this->evaluateHomeAssistant($rules)
         );
 
         return $this->repository->syncCandidates($candidates, array_keys($rules));
@@ -528,6 +529,156 @@ class AlertEngine
                 'stale_hardware_health_check:global'
             ),
         ];
+    }
+
+    private function evaluateHomeAssistant(array $rules): array
+    {
+        if (!$this->tableExists('home_assistant_checks')) {
+            return [];
+        }
+
+        $errorRule = $rules['home_assistant_check_error'] ?? null;
+        $staleRule = $rules['home_assistant_check_stale'] ?? null;
+        $coreUpdateRule = $rules['home_assistant_core_update_available'] ?? null;
+        $supervisorUpdateRule = $rules['home_assistant_supervisor_update_available'] ?? null;
+        $osUpdateRule = $rules['home_assistant_os_update_available'] ?? null;
+
+        if ($errorRule === null
+            && $staleRule === null
+            && $coreUpdateRule === null
+            && $supervisorUpdateRule === null
+            && $osUpdateRule === null
+        ) {
+            return [];
+        }
+
+        $staleThreshold = max(1, (int) ($staleRule['threshold_value'] ?? 60));
+        $candidates = [];
+
+        $stmt = $this->pdo->query("
+            SELECT
+                s.id,
+                s.name,
+                s.hostname,
+                hac.status,
+                hac.ha_version,
+                hac.ha_latest_version,
+                hac.ha_update_available,
+                hac.supervisor_version,
+                hac.supervisor_latest_version,
+                hac.supervisor_update_available,
+                hac.os_version,
+                hac.os_latest_version,
+                hac.os_update_available,
+                hac.checked_at,
+                hac.error_message,
+                TIMESTAMPDIFF(MINUTE, hac.checked_at, NOW()) AS check_age_minutes
+            FROM servers s
+            LEFT JOIN home_assistant_checks hac
+                ON hac.id = (
+                    SELECT hac2.id
+                    FROM home_assistant_checks hac2
+                    WHERE hac2.server_id = s.id
+                    ORDER BY hac2.checked_at DESC, hac2.id DESC
+                    LIMIT 1
+                )
+            WHERE s.target_type = 'home_assistant'
+            ORDER BY s.name ASC
+        ");
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $target) {
+            $serverId = (int) $target['id'];
+            $name = $target['name'] ?? 'Home Assistant';
+
+            if ($staleRule !== null) {
+                $age = $target['check_age_minutes'] !== null ? (int) $target['check_age_minutes'] : null;
+                if ($target['checked_at'] === null || ($age !== null && $age > $staleThreshold)) {
+                    $message = $target['checked_at'] === null
+                        ? 'Aucun check Home Assistant connu pour cette cible.'
+                        : 'Le dernier check Home Assistant date de ' . $age
+                            . ' minutes, pour un seuil de ' . $staleThreshold . ' minutes.';
+
+                    $candidates[] = $this->candidate(
+                        'home_assistant_check_stale',
+                        $serverId,
+                        $staleRule['severity'] ?? 'warning',
+                        'Check Home Assistant ancien sur ' . $name,
+                        $message,
+                        'home_assistant_check_stale:' . $serverId
+                    );
+                }
+            }
+
+            if ($target['checked_at'] === null) {
+                continue;
+            }
+
+            if ($errorRule !== null && ($target['status'] ?? '') === 'error') {
+                $message = 'Le dernier check Home Assistant est en erreur.';
+                if (!empty($target['error_message'])) {
+                    $message .= ' Message: ' . $target['error_message'];
+                }
+
+                $candidates[] = $this->candidate(
+                    'home_assistant_check_error',
+                    $serverId,
+                    $errorRule['severity'] ?? 'warning',
+                    'Check Home Assistant en erreur sur ' . $name,
+                    $message,
+                    'home_assistant_check_error:' . $serverId
+                );
+            }
+
+            if ($coreUpdateRule !== null && (int) ($target['ha_update_available'] ?? 0) === 1) {
+                $candidates[] = $this->candidate(
+                    'home_assistant_core_update_available',
+                    $serverId,
+                    $coreUpdateRule['severity'] ?? 'warning',
+                    'Update Home Assistant Core sur ' . $name,
+                    $this->homeAssistantUpdateMessage('Core', $target['ha_version'] ?? null, $target['ha_latest_version'] ?? null),
+                    'home_assistant_core_update_available:' . $serverId
+                );
+            }
+
+            if ($supervisorUpdateRule !== null && (int) ($target['supervisor_update_available'] ?? 0) === 1) {
+                $candidates[] = $this->candidate(
+                    'home_assistant_supervisor_update_available',
+                    $serverId,
+                    $supervisorUpdateRule['severity'] ?? 'warning',
+                    'Update Home Assistant Supervisor sur ' . $name,
+                    $this->homeAssistantUpdateMessage('Supervisor', $target['supervisor_version'] ?? null, $target['supervisor_latest_version'] ?? null),
+                    'home_assistant_supervisor_update_available:' . $serverId
+                );
+            }
+
+            if ($osUpdateRule !== null && (int) ($target['os_update_available'] ?? 0) === 1) {
+                $candidates[] = $this->candidate(
+                    'home_assistant_os_update_available',
+                    $serverId,
+                    $osUpdateRule['severity'] ?? 'warning',
+                    'Update Home Assistant OS sur ' . $name,
+                    $this->homeAssistantUpdateMessage('OS', $target['os_version'] ?? null, $target['os_latest_version'] ?? null),
+                    'home_assistant_os_update_available:' . $serverId
+                );
+            }
+        }
+
+        return $candidates;
+    }
+
+    private function homeAssistantUpdateMessage(string $component, ?string $currentVersion, ?string $latestVersion): string
+    {
+        $message = 'Une mise a jour Home Assistant ' . $component . ' est disponible.';
+
+        if ($currentVersion !== null && trim($currentVersion) !== '') {
+            $message .= ' Version actuelle : ' . $currentVersion . '.';
+        }
+
+        if ($latestVersion !== null && trim($latestVersion) !== '') {
+            $message .= ' Derniere version : ' . $latestVersion . '.';
+        }
+
+        return $message;
     }
 
     private function candidate(string $ruleKey, ?int $serverId, string $severity, string $title, string $message, string $fingerprint): AlertCandidate

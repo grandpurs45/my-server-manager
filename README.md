@@ -13,10 +13,12 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Sante materielle : temperatures Linux/Proxmox, etat SMART, usure et erreurs media des disques physiques.
 - Home Assistant : collecte SSH dediee, versions disponibles et etat d'update quand la CLI `ha` est exposee.
 - Alerting : regles globales, alertes actives, mur d'alertes et vue backoffice.
+- Collecteurs / Checks : controle des scripts planifies, logs, intervalles internes et lignes cron attendues.
 - Etats operationnels homogenes : `OK`, `Warning`, `Critical`, `Unknown`.
 - Notification de nouvelle version disponible avec lien vers les notes de release et le guide de mise a jour.
 - Titre d'onglet navigateur personnalisable pour distinguer les environnements.
 - Format d'affichage des dates configurable dans les parametres MSM.
+- Logos OS extensibles via la convention `assets/logos/os/<identifiant>.png`, l'upload manuel et la recuperation automatique depuis une source connue.
 - Parametres dynamiques : debug, supervision, reseau.
 - Migrations SQL versionnees.
 - Export Prometheus pour Grafana.
@@ -24,18 +26,17 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Assistant CLI de setup / maintenance pour verifier l'installation, la base, les migrations, les logs et l'ordonnancement.
 - Assistant de prevalidation des mises a jour avec `php scripts/update.php --check`.
 
-## Dashboard et fraicheur des checks
+## Dashboard et checks planifies
 
 Le dashboard affiche une synthese des derniers resultats connus et ne lance aucun check lourd.
 
-La carte `Fraicheur des checks` distingue :
+La carte `Checks planifies` affiche uniquement l'etat global :
 
-- la derniere execution du script planifie ;
-- le dernier resultat stocke en base ;
-- le statut du script : termine, saute, en cours ou en erreur ;
-- le dernier message court du script.
+- nombre de checks OK ;
+- nombre de checks en retard ;
+- nombre de checks en erreur.
 
-Cette distinction permet de voir si un cron tourne correctement mais saute un check a cause de l'intervalle interne, ou si le script echoue avant de produire un nouveau resultat.
+Le detail par script est disponible dans `Parametres > Collecteurs` : script attendu, ligne cron, log, dernier statut et dernier message.
 
 ## Perimetre v1
 

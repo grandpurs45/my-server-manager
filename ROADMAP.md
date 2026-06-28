@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.8.0`.
+Version actuelle : `v1.9.0`.
 
 Socle valide :
 
@@ -26,75 +26,31 @@ Socle valide :
 - alerting interne avec regles globales, mur d'alertes, vue backoffice et traitement manuel ;
 - sante materielle Linux/Proxmox avec temperatures, SMART, dashboard, alertes et export Prometheus ;
 - connecteur Home Assistant SSH avec versions Core, Supervisor, OS, statut d'update et export Prometheus ;
+- logos OS extensibles avec upload manuel et recuperation automatique depuis une source connue ;
+- page Collecteurs / Checks pour controler scripts, logs, intervalles internes et lignes cron attendues ;
 - export Prometheus stable ;
 - titre d'onglet navigateur personnalisable par environnement.
 
-## Priorite v1.8 - Connecteur Home Assistant
+## Priorite v1.10 - Collecteurs et Maintenance
 
-Objectif : donner une premiere visibilite exploitable sur Home Assistant sans creer un collecteur lourd.
+Objectif : rendre les collecteurs administrables et reduire encore le diagnostic manuel en production.
 
-- Type de cible `Home Assistant`.
-- Collecte SSH dediee via `scripts/check-home-assistant.php`.
-- Detection des versions Core, Supervisor et Home Assistant OS quand la CLI `ha` est disponible.
-- Fallback systeme Linux limite quand la CLI `ha` n'est pas exposee.
-- Stockage en base des derniers resultats.
-- Affichage dans la fiche cible.
-- Fraicheur du check dans le dashboard.
-- Export Prometheus `msm_home_assistant_*`.
-- Documentation de l'ordonnancement cron/systemd.
-
-## Priorite v1.7 - Mise a jour automatisee
-
-Objectif : reduire une mise a jour MSM a une commande guidee, controlee et rejouable.
-
-- Assistant CLI `scripts/update.php` initialise :
-  - mode `--check` non destructif ;
-  - controle du depot, de la version, des fichiers locaux, du systeme, de la base et des sauvegardes ;
-  - affichage du plan execute par le mode `--apply`.
-- Mode d'application controle `scripts/update.php --apply --target=vX.Y.Z` :
-  - cible obligatoire et confirmation explicite ;
-  - sauvegarde de `.env`, de la base et du contexte d'execution avant modification ;
-  - recuperation du tag, Composer, migrations, logs et controle post-update ;
-  - journal local et instructions de retour au code precedent en cas d'echec.
-- Verifier avant modification :
-  - dossier MSM et depot Git valides ;
-  - branche, version et fichiers locaux modifies ;
-  - prerequis, espace disque et connexion base ;
-  - version cible disponible.
-- Creer automatiquement avant mise a jour :
-  - sauvegarde MariaDB/MySQL ;
-  - sauvegarde de `.env` ;
-  - rapport de version et d'ordonnancement courant.
-- Appliquer avec validation explicite :
-  - recuperation du code ou du tag cible ;
-  - `composer install --no-dev --optimize-autoloader` ;
-  - migrations ;
-  - initialisation des nouveaux fichiers de logs ;
-  - proposition d'ajout des nouveaux cron ou timers systemd.
-- Relancer les checks principaux et `scripts/update-check.php`.
-- Afficher un bilan final clair : OK, WARN, FAIL et actions restantes.
-- Conserver un journal local de la mise a jour.
-- Fournir une commande de rollback guidee sans executer de restauration destructive automatiquement.
-- Prevoir des modes :
-  - `--check` pour simuler et afficher les actions ;
-  - `--apply` pour lancer la mise a jour ;
-  - `--target=vX.Y.Z` pour cibler une release ;
-  - `--yes` uniquement pour les confirmations non sensibles.
-- Refuser la mise a jour automatique si des fichiers Git versionnes sont modifies localement.
-- Ne jamais ecraser `.env`, restaurer une base ou modifier les droits sudo sans confirmation explicite.
-
-## Priorite v1.5 - Traitement Manuel des Alertes
-
-Objectif : rendre le backoffice alertes exploitable au quotidien sans partir sur un systeme de notification complet.
-
-- Acquitter une alerte active.
-- Retirer un acquittement.
-- Ignorer une alerte active.
-- Reactiver une alerte ignoree.
-- Conserver les actions dans l'historique `alert_events`.
-- Afficher l'historique recent d'une alerte depuis la liste backoffice.
-- Sortir les alertes acquittees ou ignorees du mur d'alertes, du dashboard et des metriques actives.
-- Garder les notifications sortantes, silences et fenetres de maintenance pour v1.x.
+- Gestion des collecteurs depuis l'interface :
+  - activer ou desactiver un collecteur globalement ;
+  - visualiser les familles supportees ;
+  - afficher les scripts, logs, intervalles et commandes de test ;
+  - preparer l'activation / desactivation par hote et par item.
+- Diagnostic SSH integre :
+  - test DNS ;
+  - test TCP port SSH ;
+  - test authentification ;
+  - commande simple type `whoami` / `uname` ;
+  - messages reformules sans exposer les secrets.
+- Setup web / installation assistee :
+  - assistant navigateur pour premiere configuration ;
+  - verification `.env`, base, migrations et droits ;
+  - aide a la creation des cron avec confirmation explicite ;
+  - aucun secret affiche en clair.
 
 ## Backlog v1.x
 
@@ -160,6 +116,41 @@ Objectif : rendre le backoffice alertes exploitable au quotidien sans partir sur
 - Analyse de mots de passe faibles ou compromis.
 
 ## Realise
+
+### v1.9 - Collecteurs, Logos OS et Alertes Home Assistant
+
+- Page `Collecteurs / Checks` :
+  - statut OK, en cours, ancien ou erreur ;
+  - derniere tentative, dernier resultat, fin d'execution et log ;
+  - ligne cron attendue et bouton de copie ;
+  - synthese dashboard simplifiee.
+- Logos OS extensibles :
+  - convention `assets/logos/os/<identifiant>.png|svg|webp` ;
+  - upload manuel depuis les parametres MSM ;
+  - recuperation automatique depuis une source connue avec validation du SVG.
+- Alertes Home Assistant :
+  - check en erreur ;
+  - check trop ancien ;
+  - updates Core, Supervisor et OS disponibles.
+- Documentation d'installation, mise a jour et ordonnancement ajustee pour les nouveaux scripts.
+
+### v1.8 - Connecteur Home Assistant
+
+- Type de cible `Home Assistant`.
+- Collecte SSH dediee via `scripts/check-home-assistant.php`.
+- Detection des versions Core, Supervisor et Home Assistant OS quand la CLI `ha` est disponible.
+- Fallback systeme Linux limite quand la CLI `ha` n'est pas exposee.
+- Stockage en base des derniers resultats.
+- Affichage dans la fiche cible.
+- Export Prometheus `msm_home_assistant_*`.
+- Documentation de l'ordonnancement cron/systemd.
+
+### v1.7 - Mise a jour automatisee
+
+- Assistant CLI `scripts/update.php --check` et `--apply`.
+- Sauvegarde de `.env`, dump SQL, rapport d'execution et journal local.
+- Composer, migrations, logs, controle post-update et relance non bloquante des checks principaux.
+- Refus des fichiers Git versionnes modifies et absence de restauration destructive automatique.
 
 ### v1.6 - Sante Materielle
 

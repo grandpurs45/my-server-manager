@@ -14,7 +14,11 @@ class SetupAssistant
             'unit' => 'msm-check-servers',
             'description' => 'MSM server supervision check',
             'timer_description' => 'Run MSM server supervision check every minute',
+            'settings_category' => 'supervision',
+            'interval_key' => 'check_interval_minutes',
+            'interval_unit' => 'minutes',
             'cron' => '* * * * *',
+            'log_stale_after_minutes' => 5,
             'on_boot' => '1min',
             'on_active' => '1min',
             'script' => 'check-servers.php',
@@ -25,7 +29,11 @@ class SetupAssistant
             'unit' => 'msm-check-patches',
             'description' => 'MSM patch management check',
             'timer_description' => 'Run MSM patch management check every 10 minutes',
+            'settings_category' => 'patch_management',
+            'interval_key' => 'check_interval_hours',
+            'interval_unit' => 'hours',
             'cron' => '*/10 * * * *',
+            'log_stale_after_minutes' => 30,
             'on_boot' => '5min',
             'on_active' => '10min',
             'script' => 'check-patches.php',
@@ -36,7 +44,11 @@ class SetupAssistant
             'unit' => 'msm-check-os-lifecycle',
             'description' => 'MSM OS lifecycle check',
             'timer_description' => 'Run MSM OS lifecycle check hourly',
+            'settings_category' => 'os_lifecycle',
+            'interval_key' => 'check_interval_hours',
+            'interval_unit' => 'hours',
             'cron' => '15 * * * *',
+            'log_stale_after_minutes' => 180,
             'on_boot' => '10min',
             'on_active' => '1h',
             'script' => 'check-os-lifecycle.php',
@@ -47,7 +59,11 @@ class SetupAssistant
             'unit' => 'msm-check-security',
             'description' => 'MSM security check',
             'timer_description' => 'Run MSM security check hourly',
+            'settings_category' => 'security',
+            'interval_key' => 'check_interval_hours',
+            'interval_unit' => 'hours',
             'cron' => '30 * * * *',
+            'log_stale_after_minutes' => 180,
             'on_boot' => '15min',
             'on_active' => '1h',
             'script' => 'check-security.php',
@@ -58,7 +74,11 @@ class SetupAssistant
             'unit' => 'msm-check-hardware-health',
             'description' => 'MSM hardware health check',
             'timer_description' => 'Run MSM hardware health check every 5 minutes',
+            'settings_category' => 'hardware_health',
+            'interval_key' => 'check_interval_minutes',
+            'interval_unit' => 'minutes',
             'cron' => '*/5 * * * *',
+            'log_stale_after_minutes' => 20,
             'on_boot' => '5min',
             'on_active' => '5min',
             'script' => 'check-hardware-health.php',
@@ -69,7 +89,11 @@ class SetupAssistant
             'unit' => 'msm-check-home-assistant',
             'description' => 'MSM Home Assistant check',
             'timer_description' => 'Run MSM Home Assistant check every 15 minutes',
+            'settings_category' => 'home_assistant',
+            'interval_key' => 'check_interval_minutes',
+            'interval_unit' => 'minutes',
             'cron' => '*/15 * * * *',
+            'log_stale_after_minutes' => 45,
             'on_boot' => '7min',
             'on_active' => '15min',
             'script' => 'check-home-assistant.php',
@@ -80,7 +104,11 @@ class SetupAssistant
             'unit' => 'msm-check-alerts',
             'description' => 'MSM alerting evaluation',
             'timer_description' => 'Run MSM alerting evaluation every 5 minutes',
+            'settings_category' => 'alerting',
+            'interval_key' => 'check_interval_minutes',
+            'interval_unit' => 'minutes',
             'cron' => '*/5 * * * *',
+            'log_stale_after_minutes' => 20,
             'on_boot' => '2min',
             'on_active' => '5min',
             'script' => 'check-alerts.php',
@@ -99,6 +127,11 @@ class SetupAssistant
         $realRoot = realpath($root);
         $this->root = $realRoot !== false ? $realRoot : $root;
         $this->colorsEnabled = $this->detectColorSupport();
+    }
+
+    public static function checks(): array
+    {
+        return self::CHECKS;
     }
 
     public function runSetup(bool $cronOnly = false): int
@@ -752,6 +785,11 @@ class SetupAssistant
         } else {
             $this->warn('Crontab MSM', 'scripts absents: ' . implode(', ', $missing));
             $this->addAction('Generer les lignes adaptees avec `php scripts/setup.php --cron`, puis ajouter les scripts absents avec `crontab -e`.');
+            foreach (self::CHECKS as $check) {
+                if (in_array($check['script'], $missing, true)) {
+                    $this->addAction('Ligne cron manquante pour ' . $check['name'] . ' : `' . $this->formatCronLine($check) . '`.');
+                }
+            }
         }
     }
 
@@ -817,8 +855,55 @@ class SetupAssistant
                 continue;
             }
 
+            $ageSeconds = time() - $mtime;
+            $staleAfterMinutes = (int) ($check['log_stale_after_minutes'] ?? 0);
+            if ($staleAfterMinutes > 0 && $ageSeconds > ($staleAfterMinutes * 60)) {
+                $this->warn(
+                    $check['name'] . ' log',
+                    date('Y-m-d H:i:s', $mtime)
+                    . ' - ancien de '
+                    . $this->formatDuration($ageSeconds)
+                    . ', cron attendu: '
+                    . $check['cron']
+                );
+                $this->addAction('Verifier que cette ligne est bien dans la crontab active : `' . $this->formatCronLine($check) . '`.');
+                continue;
+            }
+
             $this->ok($check['name'] . ' log', date('Y-m-d H:i:s', $mtime));
         }
+    }
+
+    private function formatCronLine(array $check): string
+    {
+        return sprintf(
+            '%s %s %s/scripts/%s >> %s/%s 2>&1',
+            $check['cron'],
+            $this->detectPhpBinary(),
+            $this->pathForShell($this->root),
+            $check['script'],
+            $this->pathForShell($this->root . DIRECTORY_SEPARATOR . 'logs'),
+            $check['log']
+        );
+    }
+
+    private function formatDuration(int $seconds): string
+    {
+        if ($seconds < 120) {
+            return $seconds . ' s';
+        }
+
+        $minutes = intdiv($seconds, 60);
+        if ($minutes < 120) {
+            return $minutes . ' min';
+        }
+
+        $hours = intdiv($minutes, 60);
+        $remainingMinutes = $minutes % 60;
+
+        return $remainingMinutes > 0
+            ? $hours . ' h ' . $remainingMinutes . ' min'
+            : $hours . ' h';
     }
 
     private function checkGitStatus(): void

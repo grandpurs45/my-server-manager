@@ -68,6 +68,20 @@ return [
             'default' => '24'
         ]
     ],
+    'hardware_health' => [
+        'check_interval_minutes' => [
+            'type' => 'number',
+            'label' => 'Intervalle des checks sante materielle (minutes)',
+            'default' => '15'
+        ]
+    ],
+    'home_assistant' => [
+        'check_interval_minutes' => [
+            'type' => 'number',
+            'label' => 'Intervalle des checks Home Assistant (minutes)',
+            'default' => '15'
+        ]
+    ],
     'alerting' => [
         'check_interval_minutes' => [
             'type' => 'number',

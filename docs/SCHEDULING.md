@@ -2,6 +2,8 @@
 
 MSM ne lance pas les checks lourds pendant l'affichage des pages ni pendant le scrape Prometheus. Les scripts CLI collectent les donnees, les stockent en base, puis l'interface et `/metrics.php` lisent les derniers resultats connus.
 
+La page `Parametres > Collecteurs` permet de controler les scripts attendus, l'age des logs, le dernier statut stocke en base et la ligne cron recommandee pour chaque check. Elle ne modifie pas la crontab automatiquement.
+
 ## Scripts a planifier
 
 | Script | Role | Frequence cron conseillee | Intervalle interne MSM |
@@ -137,6 +139,7 @@ tail -n 50 /var/www/html/msm/logs/check-servers.log
 tail -n 50 /var/www/html/msm/logs/check-patches.log
 tail -n 50 /var/www/html/msm/logs/check-os-lifecycle.log
 tail -n 50 /var/www/html/msm/logs/check-security.log
+tail -n 50 /var/www/html/msm/logs/check-hardware-health.log
 tail -n 50 /var/www/html/msm/logs/check-home-assistant.log
 tail -n 50 /var/www/html/msm/logs/check-alerts.log
 ```

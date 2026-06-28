@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0](https://github.com/grandpurs45/my-server-manager/compare/v1.8.1...v1.9.0) (2026-06-28)
+
+### Changed
+
+* simplification de la carte dashboard des checks planifies au profit de la page detaillee `Collecteurs / Checks`
+
+### Features
+
+* ajout des regles d'alertes Home Assistant : check en erreur, check trop ancien et updates Core, Supervisor, OS
+* ajout d'une convention extensible `assets/logos/os/<identifiant>.png`, d'un upload manuel et d'une recuperation automatique de logos OS depuis une source connue
+* ajout d'une page `Collecteurs / Checks` pour controler les scripts planifies, logs, intervalles internes et lignes cron attendues
+
+### Fixed
+
+* correction de la detection de fraicheur des collecteurs quand la base indique une execution recente mais que le fichier log local est ancien
+* ajout d'un etat visuel `En cours` pour les checks planifies en cours d'execution
+
+### Documentation
+
+* mise a jour des guides d'installation, mise a jour, ordonnancement et Home Assistant pour les nouveaux checks et collecteurs
+
 ## [1.8.1](https://github.com/grandpurs45/my-server-manager/compare/v1.8.0...v1.8.1) (2026-06-28)
 
 ### Changed
