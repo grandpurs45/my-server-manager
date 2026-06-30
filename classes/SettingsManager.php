@@ -9,7 +9,13 @@ class SettingsManager {
     }
 
     public function get(string $category, string $key): ?string {
-        $stmt = $this->pdo->prepare("SELECT setting_value FROM settings WHERE category = ? AND setting_key = ?");
+        $stmt = $this->pdo->prepare("
+            SELECT setting_value
+            FROM settings
+            WHERE category = ? AND setting_key = ?
+            ORDER BY updated_at DESC, id DESC
+            LIMIT 1
+        ");
         $stmt->execute([$category, $key]);
         $value = $stmt->fetchColumn();
 
@@ -26,9 +32,20 @@ class SettingsManager {
     }
 
     public function getAllByCategory(string $category): array {
-        $stmt = $this->pdo->prepare("SELECT setting_key, setting_value FROM settings WHERE category = ?");
+        $stmt = $this->pdo->prepare("
+            SELECT setting_key, setting_value
+            FROM settings
+            WHERE category = ?
+            ORDER BY setting_key ASC, updated_at ASC, id ASC
+        ");
         $stmt->execute([$category]);
-        return $stmt->fetchAll(\PDO::FETCH_KEY_PAIR);
+
+        $settings = [];
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $settings[$row['setting_key']] = $row['setting_value'];
+        }
+
+        return $settings;
     }
 
     public function deleteCategory(string $category): bool {
@@ -37,7 +54,11 @@ class SettingsManager {
     }
 
     public function getAll(): array {
-        $stmt = $this->pdo->query("SELECT category, setting_key, setting_value FROM settings ORDER BY category, setting_key");
+        $stmt = $this->pdo->query("
+            SELECT category, setting_key, setting_value
+            FROM settings
+            ORDER BY category ASC, setting_key ASC, updated_at ASC, id ASC
+        ");
         $settings = [];
         while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $settings[$row['category']][$row['setting_key']] = $row['setting_value'];
