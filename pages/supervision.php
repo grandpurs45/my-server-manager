@@ -135,6 +135,20 @@ function msmSupervisionModuleBadge(string $label, bool $enabled, string $activeC
     return '<span class="inline-flex rounded border px-2 py-1 text-xs font-semibold ' . $class . '">' . htmlspecialchars($label) . ' ' . $suffix . '</span>';
 }
 
+function msmSupervisionPingLossBadge(mixed $loss): string
+{
+    if ($loss === null || !is_numeric($loss)) {
+        return '<span class="font-semibold text-slate-500">-</span>';
+    }
+
+    $loss = (float) $loss;
+    $class = $loss >= 50
+        ? 'text-red-700'
+        : ($loss > 0 ? 'text-yellow-700' : 'text-green-700');
+
+    return '<span class="font-semibold ' . $class . '">' . htmlspecialchars(number_format($loss, 1, ',', '')) . ' %</span>';
+}
+
 $summary = [
     'total' => count($servers),
     'down' => 0,
@@ -224,6 +238,11 @@ require_once __DIR__ . '/../includes/header.php';
                 );
                 $diskUsage = $diskUsages[(int) $server['id']] ?? null;
                 $latency = $server['latency'] ?? null;
+                $latencyMin = $server['latency_min_ms'] ?? null;
+                $latencyMax = $server['latency_max_ms'] ?? null;
+                $pingLoss = $server['ping_loss_percent'] ?? null;
+                $packetsSent = $server['ping_packets_sent'] ?? null;
+                $packetsReceived = $server['ping_packets_received'] ?? null;
             ?>
                 <article class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                     <div class="mb-4 flex items-start justify-between gap-3">
@@ -249,21 +268,31 @@ require_once __DIR__ . '/../includes/header.php';
                     <dl class="grid grid-cols-2 gap-3 text-sm">
                         <div class="rounded border border-gray-200 bg-slate-50 p-3">
                             <dt class="text-xs font-semibold uppercase text-slate-500">Latence</dt>
-                            <dd class="mt-1 font-semibold text-slate-900"><?= $latency !== null ? (int) $latency . ' ms' : '-' ?></dd>
+                            <dd class="mt-1 font-semibold text-slate-900">
+                                <?= $latency !== null ? (int) $latency . ' ms' : '-' ?>
+                            </dd>
+                            <?php if ($latencyMin !== null || $latencyMax !== null): ?>
+                                <dd class="mt-1 text-xs text-slate-500">
+                                    min/max : <?= $latencyMin !== null ? (int) $latencyMin : '-' ?> / <?= $latencyMax !== null ? (int) $latencyMax : '-' ?> ms
+                                </dd>
+                            <?php endif; ?>
                         </div>
                         <div class="rounded border border-gray-200 bg-slate-50 p-3">
-                            <dt class="text-xs font-semibold uppercase text-slate-500">Disque</dt>
-                            <dd class="mt-1 font-semibold text-slate-900"><?= $diskUsage !== null ? (int) $diskUsage . ' %' : '-' ?></dd>
+                            <dt class="text-xs font-semibold uppercase text-slate-500">Perte ping</dt>
+                            <dd class="mt-1"><?= msmSupervisionPingLossBadge($pingLoss) ?></dd>
+                            <?php if ($packetsSent !== null || $packetsReceived !== null): ?>
+                                <dd class="mt-1 text-xs text-slate-500">
+                                    paquets : <?= $packetsReceived !== null ? (int) $packetsReceived : '-' ?> / <?= $packetsSent !== null ? (int) $packetsSent : '-' ?>
+                                </dd>
+                            <?php endif; ?>
                         </div>
                         <div class="rounded border border-gray-200 bg-slate-50 p-3">
                             <dt class="text-xs font-semibold uppercase text-slate-500">Dernier check</dt>
                             <dd class="mt-1 font-semibold text-slate-900"><?= htmlspecialchars($lastCheckStatus['detail']) ?></dd>
                         </div>
                         <div class="rounded border border-gray-200 bg-slate-50 p-3">
-                            <dt class="text-xs font-semibold uppercase text-slate-500">OS</dt>
-                            <dd class="mt-1 truncate font-semibold text-slate-900" title="<?= htmlspecialchars($server['os'] ?? 'OS inconnu') ?>">
-                                <?= htmlspecialchars($server['os'] ?? 'OS inconnu') ?>
-                            </dd>
+                            <dt class="text-xs font-semibold uppercase text-slate-500">Disque</dt>
+                            <dd class="mt-1 font-semibold text-slate-900"><?= $diskUsage !== null ? (int) $diskUsage . ' %' : '-' ?></dd>
                         </div>
                     </dl>
 

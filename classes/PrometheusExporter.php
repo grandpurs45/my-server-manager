@@ -19,6 +19,14 @@ class PrometheusExporter
             '# TYPE msm_ssh_ok gauge',
             '# HELP msm_server_latency_ms Last known ping latency in milliseconds.',
             '# TYPE msm_server_latency_ms gauge',
+            '# HELP msm_server_ping_loss_percent Last known ping packet loss percentage.',
+            '# TYPE msm_server_ping_loss_percent gauge',
+            '# HELP msm_server_ping_packets Last known ping packets grouped by result.',
+            '# TYPE msm_server_ping_packets gauge',
+            '# HELP msm_server_latency_min_ms Last known minimum ping latency in milliseconds.',
+            '# TYPE msm_server_latency_min_ms gauge',
+            '# HELP msm_server_latency_max_ms Last known maximum ping latency in milliseconds.',
+            '# TYPE msm_server_latency_max_ms gauge',
             '# HELP msm_server_disk_usage_percent Last known root disk usage percentage from MSM.',
             '# TYPE msm_server_disk_usage_percent gauge',
             '# HELP msm_server_last_check_timestamp Last known server check timestamp as Unix epoch seconds.',
@@ -108,6 +116,23 @@ class PrometheusExporter
 
             if ($server['latency'] !== null) {
                 $lines[] = "msm_server_latency_ms{{$labels}} " . (int) $server['latency'];
+            }
+            if ($server['latency_min_ms'] !== null) {
+                $lines[] = "msm_server_latency_min_ms{{$labels}} " . (int) $server['latency_min_ms'];
+            }
+            if ($server['latency_max_ms'] !== null) {
+                $lines[] = "msm_server_latency_max_ms{{$labels}} " . (int) $server['latency_max_ms'];
+            }
+            if ($server['ping_loss_percent'] !== null) {
+                $lines[] = "msm_server_ping_loss_percent{{$labels}} " . $this->formatFloat((float) $server['ping_loss_percent']);
+            }
+            if ($server['ping_packets_sent'] !== null) {
+                $sentLabels = $this->formatLabels($baseLabels + ['result' => 'sent']);
+                $lines[] = "msm_server_ping_packets{{$sentLabels}} " . (int) $server['ping_packets_sent'];
+            }
+            if ($server['ping_packets_received'] !== null) {
+                $receivedLabels = $this->formatLabels($baseLabels + ['result' => 'received']);
+                $lines[] = "msm_server_ping_packets{{$receivedLabels}} " . (int) $server['ping_packets_received'];
             }
 
             if ($server['last_check_timestamp'] !== null) {
@@ -303,7 +328,10 @@ class PrometheusExporter
     private function getServers(): array
     {
         $stmt = $this->pdo->query(
-            'SELECT id, name, hostname, target_type, hardware_profile, status, ssh_status, latency, last_check, UNIX_TIMESTAMP(last_check) AS last_check_timestamp
+            'SELECT id, name, hostname, target_type, hardware_profile, status, ssh_status,
+                    latency, latency_min_ms, latency_max_ms,
+                    ping_packets_sent, ping_packets_received, ping_loss_percent,
+                    last_check, UNIX_TIMESTAMP(last_check) AS last_check_timestamp
              FROM servers
              ORDER BY name ASC'
         );

@@ -25,18 +25,19 @@ function msmNormalizeHost(string $host): ?string {
     return $host;
 }
 
-function msmBuildPingCommand(string $host, int $timeoutSeconds = 1): ?string {
+function msmBuildPingCommand(string $host, int $timeoutSeconds = 1, int $count = 1): ?string {
     $normalizedHost = msmNormalizeHost($host);
     if ($normalizedHost === null) {
         return null;
     }
 
     $timeoutSeconds = max(1, $timeoutSeconds);
+    $count = max(1, min(10, $count));
     $target = escapeshellarg($normalizedHost);
 
     if (stripos(PHP_OS, 'WIN') === 0) {
-        return 'ping -n 1 -w ' . ($timeoutSeconds * 1000) . ' ' . $target;
+        return 'ping -n ' . $count . ' -w ' . ($timeoutSeconds * 1000) . ' ' . $target;
     }
 
-    return 'ping -c 1 -W ' . $timeoutSeconds . ' ' . $target;
+    return 'ping -c ' . $count . ' -W ' . $timeoutSeconds . ' ' . $target;
 }

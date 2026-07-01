@@ -9,6 +9,8 @@
 # Environnement local
 .env
 *.key
+scripts/*.local.ps1
+scripts/*.local.cmd
 
 # Fichiers système
 .DS_Store

@@ -40,6 +40,7 @@ class AlertEngine
         $candidates = [];
         $stmt = $this->pdo->query("
             SELECT id, name, hostname, status, ssh_enabled, ssh_status, last_check,
+                   latency, ping_loss_percent, ping_packets_sent, ping_packets_received,
                    TIMESTAMPDIFF(MINUTE, last_check, NOW()) AS last_check_age_minutes
             FROM servers
             ORDER BY name ASC
@@ -59,6 +60,45 @@ class AlertEngine
                     'Le dernier statut supervision indique que la cible est injoignable.',
                     'server_down:' . $serverId
                 );
+            }
+
+            if (($server['status'] ?? '') === 'up' && isset($rules['ping_packet_loss'])) {
+                $threshold = max(1, (int) ($rules['ping_packet_loss']['threshold_value'] ?? 25));
+                $loss = $server['ping_loss_percent'] !== null ? (float) $server['ping_loss_percent'] : null;
+                if ($loss !== null && $loss >= $threshold) {
+                    $received = $server['ping_packets_received'] !== null ? (int) $server['ping_packets_received'] : null;
+                    $sent = $server['ping_packets_sent'] !== null ? (int) $server['ping_packets_sent'] : null;
+                    $message = 'Le dernier check ping indique ' . number_format($loss, 1, ',', '')
+                        . ' % de perte, pour un seuil de ' . $threshold . ' %.';
+                    if ($received !== null && $sent !== null) {
+                        $message .= ' Paquets recus/envoyes : ' . $received . '/' . $sent . '.';
+                    }
+
+                    $candidates[] = $this->candidate(
+                        'ping_packet_loss',
+                        $serverId,
+                        $rules['ping_packet_loss']['severity'] ?? 'warning',
+                        'Perte de ping sur ' . $name,
+                        $message,
+                        'ping_packet_loss:' . $serverId
+                    );
+                }
+            }
+
+            if (($server['status'] ?? '') === 'up' && isset($rules['ping_latency_high'])) {
+                $threshold = max(1, (int) ($rules['ping_latency_high']['threshold_value'] ?? 100));
+                $latency = $server['latency'] !== null ? (int) $server['latency'] : null;
+                if ($latency !== null && $latency >= $threshold) {
+                    $candidates[] = $this->candidate(
+                        'ping_latency_high',
+                        $serverId,
+                        $rules['ping_latency_high']['severity'] ?? 'warning',
+                        'Latence ping elevee sur ' . $name,
+                        'La latence moyenne du dernier ping est de ' . $latency
+                            . ' ms, pour un seuil de ' . $threshold . ' ms.',
+                        'ping_latency_high:' . $serverId
+                    );
+                }
             }
 
             if (isset($rules['ssh_failed'])

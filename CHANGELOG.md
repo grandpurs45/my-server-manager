@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.1](https://github.com/grandpurs45/my-server-manager/compare/v1.10.0...v1.10.1) (2026-07-01)
+
+### Features
+
+* enrichissement du check ping avec plusieurs paquets, perte en pourcentage, paquets recus/envoyes et latences min/moyenne/max
+* ajout des alertes configurables `ping_packet_loss` et `ping_latency_high`
+* ajout des metriques Prometheus de perte ping, paquets ping et latences min/max
+
 ## [1.10.0](https://github.com/grandpurs45/my-server-manager/compare/v1.9.0...v1.10.0) (2026-07-01)
 
 ### Features

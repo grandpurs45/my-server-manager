@@ -5,7 +5,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 ## Fonctionnalites
 
 - Gestion des serveurs : ajout, modification, suppression.
-- Supervision : statut ping, etat SSH, latence, disque, modules actifs, refresh cible, fraicheur du dernier check et historique minimal des changements.
+- Supervision : statut ping, perte de paquets, latences min/moyenne/max, etat SSH, disque, modules actifs, refresh cible, fraicheur du dernier check et historique minimal des changements.
 - SSH : etat de connexion, detection OS, collecte disque.
 - Patch Management : collecte planifiee des mises a jour Linux/Proxmox via SSH, `apt` et `dnf`.
 - Cycle de vie OS : detection des fins de support, referentiel administrable, synchronisation endoflife.date et upgrades calcules pour les distributions Linux supportees.
@@ -221,6 +221,7 @@ Exemple de sortie :
 msm_server_up{server="server-01",hostname="server-01.example.local",type="linux"} 1
 msm_ssh_ok{server="server-01",hostname="server-01.example.local",type="linux"} 1
 msm_server_latency_ms{server="server-01",hostname="server-01.example.local",type="linux"} 4
+msm_server_ping_loss_percent{server="server-01",hostname="server-01.example.local",type="linux"} 0
 msm_server_disk_usage_percent{server="server-01",hostname="server-01.example.local",type="linux"} 67
 msm_server_last_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux"} 1780000000
 msm_check_success{server="server-01",hostname="server-01.example.local",type="linux"} 1

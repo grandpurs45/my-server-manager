@@ -31,6 +31,11 @@ Certaines familles ajoutent des labels specialises :
 msm_server_up{server="server-01",hostname="server-01.example.local",type="linux"} 1
 msm_ssh_ok{server="server-01",hostname="server-01.example.local",type="linux"} 1
 msm_server_latency_ms{server="server-01",hostname="server-01.example.local",type="linux"} 4
+msm_server_latency_min_ms{server="server-01",hostname="server-01.example.local",type="linux"} 3
+msm_server_latency_max_ms{server="server-01",hostname="server-01.example.local",type="linux"} 8
+msm_server_ping_loss_percent{server="server-01",hostname="server-01.example.local",type="linux"} 0
+msm_server_ping_packets{server="server-01",hostname="server-01.example.local",type="linux",result="sent"} 4
+msm_server_ping_packets{server="server-01",hostname="server-01.example.local",type="linux",result="received"} 4
 msm_server_disk_usage_percent{server="server-01",hostname="server-01.example.local",type="linux"} 67
 msm_server_last_check_timestamp{server="server-01",hostname="server-01.example.local",type="linux"} 1780000000
 msm_check_success{server="server-01",hostname="server-01.example.local",type="linux"} 1
@@ -126,6 +131,18 @@ Latence moyenne :
 avg(msm_server_latency_ms)
 ```
 
+Perte de ping :
+
+```promql
+msm_server_ping_loss_percent > 0
+```
+
+Latence maximale observee par dernier check :
+
+```promql
+msm_server_latency_max_ms
+```
+
 Disques a plus de 85 % :
 
 ```promql
@@ -204,7 +221,8 @@ Panneaux recommandes :
 
 - Stat : nombre de serveurs down avec `sum(1 - msm_server_up)`.
 - Table : etat par serveur avec `msm_server_up`, `msm_ssh_ok` et `msm_server_disk_usage_percent`.
-- Time series : latence avec `msm_server_latency_ms`.
+- Time series : latence avec `msm_server_latency_ms`, `msm_server_latency_min_ms` et `msm_server_latency_max_ms`.
+- Time series : perte ping avec `msm_server_ping_loss_percent`.
 - Gauge : disque avec `msm_server_disk_usage_percent`.
 - Stat : age du dernier check avec `time() - msm_server_last_check_timestamp`.
 - Table : patch management avec `msm_updates_available`, `msm_reboot_required` et `msm_patch_check_status`.

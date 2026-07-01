@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.10.0`.
+Version actuelle : `v1.10.1`.
 
 Socle valide :
 
@@ -19,7 +19,7 @@ Socle valide :
 - authentification locale avec utilisateurs, droits modules et politique de mots de passe ;
 - inventaire configurable des cibles ;
 - profil materiel des cibles : physique, machine virtuelle, conteneur, appliance ou inconnu ;
-- supervision ping / SSH / latence / disque avec refresh cible ;
+- supervision ping enrichie / SSH / latence / disque avec refresh cible ;
 - patch management Linux, Proxmox, `apt` et `dnf` ;
 - cycle de vie OS avec support / obsolescence / upgrade calcule, referentiel administrable et synchronisation endoflife.date ;
 - securite operationnelle de base ;
@@ -107,6 +107,16 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 - Analyse de mots de passe faibles ou compromis.
 
 ## Realise
+
+### v1.10.1 - Supervision Ping Enrichie
+
+- Ping multi-paquets configurable.
+- Statut ping OK / KO conserve.
+- Perte de paquets en pourcentage.
+- Paquets recus / envoyes.
+- Latences min, moyenne et max.
+- Alertes configurables de perte ping et latence elevee.
+- Metriques Prometheus dediees pour perte ping, paquets et latences min/max.
 
 ### v1.10 - Cycle de Vie OS Administrable
 

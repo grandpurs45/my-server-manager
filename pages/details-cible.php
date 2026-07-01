@@ -255,6 +255,11 @@ $environment = $server['environment'] ?? 'other';
 $criticality = $server['criticality'] ?? 'medium';
 $collectionMethod = $server['collection_method'] ?? 'manual';
 $latency = $server['latency'] ?? null;
+$latencyMin = $server['latency_min_ms'] ?? null;
+$latencyMax = $server['latency_max_ms'] ?? null;
+$pingLoss = $server['ping_loss_percent'] ?? null;
+$pingPacketsSent = $server['ping_packets_sent'] ?? null;
+$pingPacketsReceived = $server['ping_packets_received'] ?? null;
 $diskUsage = msmDetailMetricValue($metrics, 'disk');
 $canRefreshSupervision = $authManager->userCan('supervision');
 $canRefreshPatch = $authManager->userCan('patch_management') && !empty($server['patch_management_enabled']);
@@ -413,6 +418,22 @@ $canRefreshHomeAssistant = $authManager->userCan('supervision')
                 <div>
                     <div class="text-xs text-slate-500">Latence</div>
                     <div class="text-lg font-bold text-slate-900"><?= $latency !== null ? (int) $latency . ' ms' : '-' ?></div>
+                    <?php if ($latencyMin !== null || $latencyMax !== null): ?>
+                        <div class="text-xs text-slate-500">
+                            min/max : <?= $latencyMin !== null ? (int) $latencyMin : '-' ?> / <?= $latencyMax !== null ? (int) $latencyMax : '-' ?> ms
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-500">Perte ping</div>
+                    <div class="text-lg font-bold <?= $pingLoss !== null && (float) $pingLoss > 0 ? 'text-yellow-700' : 'text-slate-900' ?>">
+                        <?= $pingLoss !== null ? htmlspecialchars(number_format((float) $pingLoss, 1, ',', '')) . ' %' : '-' ?>
+                    </div>
+                    <?php if ($pingPacketsSent !== null || $pingPacketsReceived !== null): ?>
+                        <div class="text-xs text-slate-500">
+                            paquets : <?= $pingPacketsReceived !== null ? (int) $pingPacketsReceived : '-' ?> / <?= $pingPacketsSent !== null ? (int) $pingPacketsSent : '-' ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <div>
                     <div class="text-xs text-slate-500">Disque</div>

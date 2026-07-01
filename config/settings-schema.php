@@ -54,6 +54,23 @@ return [
             'default' => '6'
         ]
     ],
+    'supervision' => [
+        'check_interval_minutes' => [
+            'type' => 'number',
+            'label' => 'Intervalle des checks supervision (minutes)',
+            'default' => '10'
+        ],
+        'ping_packet_count' => [
+            'type' => 'number',
+            'label' => 'Nombre de paquets ping par check',
+            'default' => '4'
+        ],
+        'ping_timeout_seconds' => [
+            'type' => 'number',
+            'label' => 'Timeout ping par paquet (secondes)',
+            'default' => '1'
+        ]
+    ],
     'os_lifecycle' => [
         'check_interval_hours' => [
             'type' => 'number',

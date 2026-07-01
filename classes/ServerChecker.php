@@ -11,12 +11,17 @@ class ServerChecker
     private \PDO $pdo;
     private bool $withMetrics;
     private ServerCheckHistoryRepository $history;
+    private int $pingPacketCount;
+    private int $pingTimeoutSeconds;
 
     public function __construct(\PDO $pdo, bool $withMetrics = true)
     {
         $this->pdo = $pdo;
         $this->withMetrics = $withMetrics;
         $this->history = new ServerCheckHistoryRepository($pdo);
+        $settings = new SettingsManager($pdo);
+        $this->pingPacketCount = max(1, min(10, (int) ($settings->get('supervision', 'ping_packet_count') ?? 4)));
+        $this->pingTimeoutSeconds = max(1, min(10, (int) ($settings->get('supervision', 'ping_timeout_seconds') ?? 1)));
     }
 
     public function run(): void
@@ -46,36 +51,88 @@ class ServerChecker
     public function getPingStats(string $ip): array
     {
         if (!function_exists('exec')) {
-            return ['status' => 'down', 'latency' => null];
+            return $this->emptyPingStats('down');
         }
 
-        $pingCmd = \msmBuildPingCommand($ip, 1);
+        $pingCmd = \msmBuildPingCommand($ip, $this->pingTimeoutSeconds, $this->pingPacketCount);
         if ($pingCmd === null) {
-            return ['status' => 'down', 'latency' => null];
+            return $this->emptyPingStats('down');
         }
 
         $isWindows = stripos(PHP_OS, 'WIN') === 0;
 
         exec($pingCmd, $output, $resultCode);
 
-        if ($resultCode !== 0) {
-            return ['status' => 'down', 'latency' => null];
-        }
+        $latencies = [];
+        $packetsSent = $this->pingPacketCount;
+        $packetsReceived = null;
+        $packetLossPercent = null;
+        $summaryLatencyMin = null;
+        $summaryLatencyAvg = null;
+        $summaryLatencyMax = null;
 
-        $latency = null;
         foreach ($output as $line) {
-            if ($isWindows && preg_match('/temps[=<]?\s*(\d+)\s*ms/i', $line, $matches)) {
-                $latency = (int) $matches[1];
-                break;
+            if ($isWindows && preg_match('/(?:temps|time)[=<]?\s*(\d+)\s*ms/i', $line, $matches)) {
+                $latencies[] = (int) $matches[1];
+                continue;
             }
 
             if (!$isWindows && preg_match('/(?:time|temps)[=<]?(\d+\.?\d*)\s*ms/i', $line, $matches)) {
-                $latency = round((float) $matches[1]);
-                break;
+                $latencies[] = round((float) $matches[1]);
+                continue;
+            }
+
+            if ($isWindows && preg_match('/(?:Sent|envoy[^\d]*)\s*=\s*(\d+).*?(?:Received|re[çc]us?)\s*=\s*(\d+).*?\((?:perte\s*)?(\d+)\s*%/i', $line, $matches)) {
+                $packetsSent = (int) $matches[1];
+                $packetsReceived = (int) $matches[2];
+                $packetLossPercent = (float) $matches[3];
+                continue;
+            }
+
+            if (!$isWindows && preg_match('/(\d+)\s+packets transmitted,\s+(\d+)\s+(?:packets\s+)?received,.*?(\d+(?:\.\d+)?)%\s+packet loss/i', $line, $matches)) {
+                $packetsSent = (int) $matches[1];
+                $packetsReceived = (int) $matches[2];
+                $packetLossPercent = (float) $matches[3];
+                continue;
+            }
+
+            if ($isWindows && preg_match('/(?:Minimum|Minim(?:um|ale?))\s*=\s*(\d+)\s*ms.*?(?:Maximum|Maxim(?:um|ale?))\s*=\s*(\d+)\s*ms.*?(?:Average|Moyenne)\s*=\s*(\d+)\s*ms/i', $line, $matches)) {
+                $summaryLatencyMin = (int) $matches[1];
+                $summaryLatencyMax = (int) $matches[2];
+                $summaryLatencyAvg = (int) $matches[3];
+                continue;
+            }
+
+            if (!$isWindows && preg_match('/(?:rtt|round-trip).*?=\s*(\d+\.?\d*)\/(\d+\.?\d*)\/(\d+\.?\d*)\//i', $line, $matches)) {
+                $latencies = [
+                    round((float) $matches[1]),
+                    round((float) $matches[2]),
+                    round((float) $matches[3]),
+                ];
             }
         }
 
-        return ['status' => 'up', 'latency' => $latency];
+        if ($packetsReceived === null) {
+            $packetsReceived = count($latencies);
+        }
+
+        if ($packetLossPercent === null && $packetsSent > 0) {
+            $packetLossPercent = round((($packetsSent - $packetsReceived) / $packetsSent) * 100, 2);
+        }
+
+        $latencyMin = $summaryLatencyMin ?? ($latencies !== [] ? min($latencies) : null);
+        $latencyMax = $summaryLatencyMax ?? ($latencies !== [] ? max($latencies) : null);
+        $latencyAvg = $summaryLatencyAvg ?? ($latencies !== [] ? (int) round(array_sum($latencies) / count($latencies)) : null);
+
+        return [
+            'status' => $packetsReceived > 0 || $resultCode === 0 ? 'up' : 'down',
+            'latency' => $latencyAvg,
+            'latency_min' => $latencyMin,
+            'latency_max' => $latencyMax,
+            'packets_sent' => $packetsSent,
+            'packets_received' => $packetsReceived,
+            'packet_loss_percent' => $packetLossPercent,
+        ];
     }
 
     private function checkServer(array $server, string $now): void
@@ -94,11 +151,27 @@ class ServerChecker
             $now
         );
 
-        $update = $this->pdo->prepare("UPDATE servers SET status = :status, last_check = :last_check, latency = :latency WHERE id = :id");
+        $update = $this->pdo->prepare("
+            UPDATE servers
+            SET status = :status,
+                last_check = :last_check,
+                latency = :latency,
+                ping_packets_sent = :ping_packets_sent,
+                ping_packets_received = :ping_packets_received,
+                ping_loss_percent = :ping_loss_percent,
+                latency_min_ms = :latency_min_ms,
+                latency_max_ms = :latency_max_ms
+            WHERE id = :id
+        ");
         $update->execute([
             ':status' => $status,
             ':last_check' => $now,
             ':latency' => $latency,
+            ':ping_packets_sent' => $ping['packets_sent'],
+            ':ping_packets_received' => $ping['packets_received'],
+            ':ping_loss_percent' => $ping['packet_loss_percent'],
+            ':latency_min_ms' => $ping['latency_min'],
+            ':latency_max_ms' => $ping['latency_max'],
             ':id' => $server['id'],
         ]);
 
@@ -108,6 +181,9 @@ class ServerChecker
             }
 
             $this->insertMetric((int) $server['id'], 'availability', $availability, $now);
+            if ($ping['packet_loss_percent'] !== null) {
+                $this->insertMetric((int) $server['id'], 'ping_loss', (float) $ping['packet_loss_percent'], $now);
+            }
 
             $diskUsage = $this->getDiskUsageViaSSH($server);
             if ($diskUsage !== null) {
@@ -115,7 +191,9 @@ class ServerChecker
             }
         }
 
-        echo "[{$server['hostname']}] status=$status latency=" . ($latency ?? '-') . "\n";
+        echo "[{$server['hostname']}] status=$status latency=" . ($latency ?? '-')
+            . ' loss=' . ($ping['packet_loss_percent'] ?? '-')
+            . '% packets=' . ($ping['packets_received'] ?? 0) . '/' . ($ping['packets_sent'] ?? 0) . "\n";
 
         if (isset($server['ssh_enabled']) && !$server['ssh_enabled']) {
             echo "[{$server['hostname']}] SSH desactive\n";
@@ -133,6 +211,19 @@ class ServerChecker
             ':value' => $value,
             ':measured_at' => $datetime,
         ]);
+    }
+
+    private function emptyPingStats(string $status): array
+    {
+        return [
+            'status' => $status,
+            'latency' => null,
+            'latency_min' => null,
+            'latency_max' => null,
+            'packets_sent' => $this->pingPacketCount,
+            'packets_received' => 0,
+            'packet_loss_percent' => 100.0,
+        ];
     }
 
     private function getDiskUsageViaSSH(array $server): ?float
