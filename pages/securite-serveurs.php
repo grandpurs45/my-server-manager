@@ -152,7 +152,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <td class="px-4 py-3 text-sm text-slate-600">
                             <?= htmlspecialchars(msmSecurityDate($srv['checked_at'] ?? null)) ?>
                             <?php if (!empty($srv['error_message'])): ?>
-                                <div class="mt-1 max-w-md text-xs text-red-600"><?= htmlspecialchars($srv['error_message']) ?></div>
+                                <div class="mt-1 max-w-md text-xs <?= ($srv['security_status'] ?? null) === 'error' ? 'text-red-600' : 'text-yellow-700' ?>"><?= htmlspecialchars($srv['error_message']) ?></div>
                             <?php endif; ?>
                         </td>
                         <td class="px-4 py-3">

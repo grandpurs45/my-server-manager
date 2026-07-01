@@ -128,7 +128,8 @@ function msmSecurityExposureBadge(string $exposure): string
             </dl>
 
             <?php if (!empty($latestSecurityCheck['error_message'])): ?>
-                <p class="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <?php $messageIsCritical = ($latestSecurityCheck['status'] ?? null) === 'error'; ?>
+                <p class="mt-4 rounded border px-3 py-2 text-sm <?= $messageIsCritical ? 'border-red-200 bg-red-50 text-red-700' : 'border-yellow-200 bg-yellow-50 text-yellow-800' ?>">
                     <?= htmlspecialchars($latestSecurityCheck['error_message']) ?>
                 </p>
             <?php endif; ?>

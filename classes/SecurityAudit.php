@@ -15,9 +15,15 @@ class SecurityAudit
             $ports = self::getOpenPorts($server);
             $firewall = self::getFirewallStatus($server);
             $errors = [];
+            $warnings = [];
 
             if (isset($ports['error'])) {
                 $errors[] = $ports['error'];
+                $ports = [];
+            }
+
+            if (isset($ports['warning'])) {
+                $warnings[] = $ports['warning'];
                 $ports = [];
             }
 
@@ -38,6 +44,8 @@ class SecurityAudit
 
             if ($errors !== []) {
                 $status = 'error';
+            } elseif ($warnings !== []) {
+                $status = 'warning';
             } elseif (in_array($firewallStatus, ['inactif', 'not_installed', null], true) || $exposedPortsCount > 0) {
                 $status = 'warning';
             }
@@ -49,7 +57,7 @@ class SecurityAudit
                 firewallStatus: $firewallStatus,
                 checkedAt: $checkedAt,
                 durationMs: (int) round((microtime(true) - $startedAt) * 1000),
-                errorMessage: $errors !== [] ? implode(' | ', $errors) : null
+                errorMessage: $errors !== [] || $warnings !== [] ? implode(' | ', array_merge($errors, $warnings)) : null
             );
         } catch (\Throwable $e) {
             return new SecurityCheckResult(
@@ -74,16 +82,32 @@ class SecurityAudit
         }
 
         $path = trim($ssh->exec('command -v ss'));
-        if ($path === '') {
-            return ['error' => 'La commande ss est introuvable sur ce serveur.'];
+        if ($path !== '') {
+            $output = $ssh->exec($path . ' -tuln');
+
+            if (!$output) {
+                return ['error' => 'Echec lors de l execution de ss -tuln'];
+            }
+
+            return self::parseSsOutput($output);
         }
 
-        $output = $ssh->exec($path . ' -tuln');
+        $netstatPath = trim($ssh->exec('command -v netstat'));
+        if ($netstatPath !== '') {
+            $output = $ssh->exec($netstatPath . ' -tuln');
 
-        if (!$output) {
-            return ['error' => 'Echec lors de l execution de ss -tuln'];
+            if (!$output) {
+                return ['error' => 'Echec lors de l execution de netstat -tuln'];
+            }
+
+            return self::parseNetstatOutput($output);
         }
 
+        return ['warning' => 'Aucune commande compatible pour lister les ports ouverts (ss/netstat introuvables).'];
+    }
+
+    private static function parseSsOutput(string $output): array
+    {
         $ports = [];
         $lines = explode("\n", trim($output));
         unset($lines[0]);
@@ -101,17 +125,73 @@ class SecurityAudit
 
             $proto = strtolower($cols[0]);
             $local = $cols[4];
+            $parsed = self::parseLocalAddress($local);
 
-            if (preg_match('/^(.*):(\d+)$/', $local, $matches)) {
+            if ($parsed !== null) {
                 $ports[] = [
                     'proto' => strtoupper($proto),
-                    'addr' => $matches[1],
-                    'port' => $matches[2],
+                    'addr' => $parsed['addr'],
+                    'port' => $parsed['port'],
                 ];
             }
         }
 
         return $ports;
+    }
+
+    private static function parseNetstatOutput(string $output): array
+    {
+        $ports = [];
+        $lines = explode("\n", trim($output));
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '' || str_starts_with($line, 'Active ') || str_starts_with($line, 'Proto')) {
+                continue;
+            }
+
+            $cols = preg_split('/\s+/', $line);
+            if (!$cols || count($cols) < 4) {
+                continue;
+            }
+
+            $proto = strtolower($cols[0]);
+            if (!str_starts_with($proto, 'tcp') && !str_starts_with($proto, 'udp')) {
+                continue;
+            }
+
+            $parsed = self::parseLocalAddress($cols[3]);
+            if ($parsed === null) {
+                continue;
+            }
+
+            $ports[] = [
+                'proto' => strtoupper(str_starts_with($proto, 'udp') ? 'udp' : 'tcp'),
+                'addr' => $parsed['addr'],
+                'port' => $parsed['port'],
+            ];
+        }
+
+        return $ports;
+    }
+
+    private static function parseLocalAddress(string $local): ?array
+    {
+        $local = trim($local);
+        if ($local === '') {
+            return null;
+        }
+
+        if (preg_match('/^\[(.*)]:(\d+)$/', $local, $matches)) {
+            return ['addr' => $matches[1], 'port' => (int) $matches[2]];
+        }
+
+        if (preg_match('/^(.*):(\d+)$/', $local, $matches)) {
+            $address = $matches[1] !== '' ? $matches[1] : '*';
+            return ['addr' => $address, 'port' => (int) $matches[2]];
+        }
+
+        return null;
     }
 
     public static function getFirewallStatus(array $server): array
