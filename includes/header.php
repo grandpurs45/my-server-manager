@@ -117,6 +117,10 @@ if (ob_get_level() > 0) {
                 <i data-lucide="workflow" class="w-4 h-4 mr-2"></i>
                 Collecteurs
             </a>
+            <a href="<?= $baseUrl ?>pages/os-lifecycle.php" class="flex items-center pl-4 text-sm hover:text-gray-200">
+                <i data-lucide="calendar-clock" class="w-4 h-4 mr-2"></i>
+                Cycle OS
+            </a>
             <a href="<?= $baseUrl ?>pages/users.php" class="flex items-center pl-4 text-sm hover:text-gray-200">
                 <i data-lucide="users" class="w-4 h-4 mr-2"></i>
                 Utilisateurs

@@ -189,6 +189,7 @@ class AlertEngine
             $name = $target['name'] ?? 'Serveur inconnu';
             $osLabel = trim(($target['os_family'] ?? 'OS') . ' ' . ($target['os_version'] ?? ''));
             $supportStatus = $target['support_status'] ?? null;
+            $hasDetectedOs = !empty($target['os_family']) || !empty($target['os_version']);
 
             if ($supportStatus === 'eol' && isset($rules['os_eol'])) {
                 $candidates[] = $this->candidate(
@@ -214,6 +215,17 @@ class AlertEngine
                     'Fin de support proche sur ' . $name,
                     $message,
                     'os_eol_soon:' . $serverId
+                );
+            }
+
+            if ($supportStatus === 'unknown' && $hasDetectedOs && isset($rules['os_lifecycle_unknown'])) {
+                $candidates[] = $this->candidate(
+                    'os_lifecycle_unknown',
+                    $serverId,
+                    $rules['os_lifecycle_unknown']['severity'] ?? 'info',
+                    'Cycle de vie OS inconnu sur ' . $name,
+                    'Aucune date de fin de support connue pour ' . $osLabel . '.',
+                    'os_lifecycle_unknown:' . $serverId
                 );
             }
         }

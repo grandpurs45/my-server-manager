@@ -59,6 +59,11 @@ return [
             'type' => 'number',
             'label' => 'Intervalle des checks cycle de vie OS (heures)',
             'default' => '168'
+        ],
+        'external_products' => [
+            'type' => 'textarea',
+            'label' => 'Familles synchronisables endoflife.date',
+            'default' => "alpine=alpine\nubuntu=ubuntu\ndebian=debian\nrocky=rocky-linux"
         ]
     ],
     'security' => [

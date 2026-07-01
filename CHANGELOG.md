@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0](https://github.com/grandpurs45/my-server-manager/compare/v1.9.0...v1.10.0) (2026-07-01)
+
+### Features
+
+* ajout d'une page `Parametres > Cycle OS` pour administrer les references de fin de support OS
+* ajout de la synchronisation optionnelle depuis l'API endoflife.date avec familles configurables
+* ajout du calcul automatique des cibles d'upgrade OS quand une version plus recente supportee est connue
+* ajout d'un filtre homelab, du comptage des serveurs concernes et du tri sur les references Cycle OS
+* ajout d'une alerte informative pour les OS detectes sans date de fin de support connue
+
+### Changed
+
+* la cible d'upgrade OS manuelle reste prioritaire sur la cible calculee automatiquement
+
 ## [1.9.0](https://github.com/grandpurs45/my-server-manager/compare/v1.8.1...v1.9.0) (2026-06-28)
 
 ### Changed

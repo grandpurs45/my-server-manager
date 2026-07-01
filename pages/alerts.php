@@ -10,12 +10,18 @@ $repository = new AlertRepository($pdo);
 $allowedStatuses = ['active', 'resolved', 'all'];
 $allowedOperatorStates = ['visible', 'acknowledged', 'ignored', 'all'];
 $allowedSeverities = ['', 'critical', 'warning', 'info'];
-$allowedSources = ['', 'supervision', 'patch_management', 'os_lifecycle', 'security'];
+$allowedSources = ['', 'supervision', 'patch_management', 'os_lifecycle', 'security', 'hardware_health', 'home_assistant'];
+$alertTypeOptions = $repository->getAlertTypeOptions();
+$allowedRuleKeys = array_merge([''], array_map(
+    fn (array $rule): string => (string) ($rule['rule_key'] ?? ''),
+    $alertTypeOptions
+));
 
 $status = $_GET['status'] ?? 'active';
 $operatorState = $_GET['operator_state'] ?? 'visible';
 $severity = $_GET['severity'] ?? '';
 $source = $_GET['source'] ?? '';
+$ruleKey = $_GET['rule_key'] ?? '';
 
 if (!in_array($status, $allowedStatuses, true)) {
     $status = 'active';
@@ -29,12 +35,16 @@ if (!in_array($severity, $allowedSeverities, true)) {
 if (!in_array($source, $allowedSources, true)) {
     $source = '';
 }
+if (!in_array($ruleKey, $allowedRuleKeys, true)) {
+    $ruleKey = '';
+}
 
 $alerts = $repository->getAlerts([
     'status' => $status,
     'operator_state' => $operatorState,
     'severity' => $severity,
     'source' => $source,
+    'rule_key' => $ruleKey,
 ]);
 $eventsByAlert = $repository->getEventsForAlerts(array_map(
     fn (array $alert): int => (int) ($alert['id'] ?? 0),
@@ -46,6 +56,7 @@ $redirectQuery = http_build_query([
     'operator_state' => $operatorState,
     'severity' => $severity,
     'source' => $source,
+    'rule_key' => $ruleKey,
 ]);
 $redirect = 'alerts.php' . ($redirectQuery !== '' ? '?' . $redirectQuery : '');
 
@@ -97,6 +108,19 @@ function msmAlertEventLabel(string $eventType): string
         'ignored' => 'Ignoree',
         'reactivated' => 'Reactivee',
         default => $eventType,
+    };
+}
+
+function msmAlertSourceLabel(string $source): string
+{
+    return match ($source) {
+        'supervision' => 'Supervision',
+        'patch_management' => 'Patch Management',
+        'os_lifecycle' => 'Cycle de vie OS',
+        'security' => 'Securite',
+        'hardware_health' => 'Sante materielle',
+        'home_assistant' => 'Home Assistant',
+        default => $source,
     };
 }
 ?>
@@ -164,7 +188,7 @@ function msmAlertEventLabel(string $eventType): string
     </div>
 
     <form method="get" class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-5">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-6">
             <label class="text-sm font-semibold text-slate-700">
                 Statut
                 <select name="status" class="mt-1 w-full rounded border border-gray-300 px-3 py-2">
@@ -192,8 +216,27 @@ function msmAlertEventLabel(string $eventType): string
             <label class="text-sm font-semibold text-slate-700">
                 Source
                 <select name="source" class="mt-1 w-full rounded border border-gray-300 px-3 py-2">
-                    <?php foreach (['' => 'Toutes', 'supervision' => 'Supervision', 'patch_management' => 'Patch Management', 'os_lifecycle' => 'Cycle de vie OS', 'security' => 'Securite'] as $value => $label): ?>
+                    <?php foreach (['' => 'Toutes', 'supervision' => 'Supervision', 'patch_management' => 'Patch Management', 'os_lifecycle' => 'Cycle de vie OS', 'security' => 'Securite', 'hardware_health' => 'Sante materielle', 'home_assistant' => 'Home Assistant'] as $value => $label): ?>
                         <option value="<?= $value ?>" <?= $source === $value ? 'selected' : '' ?>><?= $label ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label class="text-sm font-semibold text-slate-700">
+                Type d'alerte
+                <select name="rule_key" class="mt-1 w-full rounded border border-gray-300 px-3 py-2">
+                    <option value="" <?= $ruleKey === '' ? 'selected' : '' ?>>Tous</option>
+                    <?php foreach ($alertTypeOptions as $option): ?>
+                        <?php
+                            $optionRuleKey = (string) ($option['rule_key'] ?? '');
+                            if ($optionRuleKey === '') {
+                                continue;
+                            }
+                            $optionSource = (string) ($option['source'] ?? '');
+                            $optionLabel = (string) ($option['name'] ?? $optionRuleKey);
+                        ?>
+                        <option value="<?= htmlspecialchars($optionRuleKey) ?>" <?= $ruleKey === $optionRuleKey ? 'selected' : '' ?>>
+                            <?= htmlspecialchars(msmAlertSourceLabel($optionSource) . ' - ' . $optionLabel) ?>
+                        </option>
                     <?php endforeach; ?>
                 </select>
             </label>

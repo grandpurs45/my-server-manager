@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.9.0`.
+Version actuelle : `v1.10.0`.
 
 Socle valide :
 
@@ -21,7 +21,7 @@ Socle valide :
 - profil materiel des cibles : physique, machine virtuelle, conteneur, appliance ou inconnu ;
 - supervision ping / SSH / latence / disque avec refresh cible ;
 - patch management Linux, Proxmox, `apt` et `dnf` ;
-- cycle de vie OS avec support / obsolescence / upgrade connu ;
+- cycle de vie OS avec support / obsolescence / upgrade calcule, referentiel administrable et synchronisation endoflife.date ;
 - securite operationnelle de base ;
 - alerting interne avec regles globales, mur d'alertes, vue backoffice et traitement manuel ;
 - sante materielle Linux/Proxmox avec temperatures, SMART, dashboard, alertes et export Prometheus ;
@@ -31,7 +31,7 @@ Socle valide :
 - export Prometheus stable ;
 - titre d'onglet navigateur personnalisable par environnement.
 
-## Priorite v1.10 - Collecteurs et Maintenance
+## Priorite v1.11 - Collecteurs et Maintenance
 
 Objectif : rendre les collecteurs administrables et reduire encore le diagnostic manuel en production.
 
@@ -90,15 +90,6 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 - Interface globale plus moderne.
 - Gestion des collecteurs depuis une interface : activation, desactivation, ordre, familles.
 
-### OS Lifecycle
-
-- Referentiel OS administrable depuis les parametres.
-- Synchronisation optionnelle depuis `endoflife.date` :
-  - script CLI dedie ;
-  - cache local en base ;
-  - aucune dependance API au chargement des pages ou de `/metrics.php` ;
-  - conservation de la source et de la date de synchronisation.
-
 ### Installation et Maintenance
 
 - Bootstrap pre-clone capable d'installer PHP/Git puis de cloner MSM.
@@ -116,6 +107,22 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 - Analyse de mots de passe faibles ou compromis.
 
 ## Realise
+
+### v1.10 - Cycle de Vie OS Administrable
+
+- Page `Parametres > Cycle OS` :
+  - ajout, modification et suppression des references OS ;
+  - comptage des serveurs concernes par reference ;
+  - filtre pour afficher uniquement les OS detectes dans le homelab ;
+  - tri des colonnes OS, serveurs, fin de support, statut, upgrade, source et derniere mise a jour.
+- Synchronisation optionnelle depuis `endoflife.date` :
+  - familles configurables depuis l'interface ;
+  - script CLI `scripts/sync-os-lifecycle.php` ;
+  - stockage local en base, sans appel API au chargement des pages ou de `/metrics.php`.
+- Calcul automatique de la cible d'upgrade :
+  - recherche de la prochaine version supportee connue dans la meme famille OS ;
+  - cible manuelle prioritaire quand elle est renseignee.
+- Alerte informative pour les OS detectes sans date de fin de support connue.
 
 ### v1.9 - Collecteurs, Logos OS et Alertes Home Assistant
 

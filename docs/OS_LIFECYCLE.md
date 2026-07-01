@@ -58,7 +58,55 @@ Les references initiales couvrent les versions courantes observees dans le homel
 - Debian 12 et 13 ;
 - Rocky Linux 9, 10, 10.1 et 10.2.
 
-Ces donnees sont versionnees par migration SQL. Elles pourront ensuite etre rendues administrables depuis les parametres si le besoin apparait.
+Ces donnees sont versionnees par migration SQL et administrables depuis `Parametres > Cycle OS`.
+
+## Gestion du referentiel
+
+La page `Parametres > Cycle OS` permet de :
+
+- consulter les familles, versions, codenames et dates de fin de support connues ;
+- ajouter ou modifier manuellement une reference ;
+- supprimer une reference qui n'est plus utile ;
+- conserver une cible d'upgrade manuelle si besoin ;
+- synchroniser les dates depuis `endoflife.date` pour les familles supportees ;
+- ajouter ou supprimer une famille synchronisable sans modifier le code.
+
+MSM conserve toujours les donnees en base locale. La synchronisation externe sert uniquement a alimenter ou rafraichir le referentiel local.
+
+La cible d'upgrade est calculee automatiquement quand aucune cible manuelle n'est renseignee : MSM cherche la prochaine version supportee connue dans la meme famille OS. Une cible saisie manuellement reste prioritaire.
+
+Synchronisation CLI :
+
+```bash
+php scripts/sync-os-lifecycle.php
+```
+
+Synchroniser une seule famille :
+
+```bash
+php scripts/sync-os-lifecycle.php --family=ubuntu
+```
+
+Familles synchronisables par defaut :
+
+- `alpine` -> `endoflife.date/api/alpine.json`
+- `ubuntu` -> `endoflife.date/api/ubuntu.json`
+- `debian` -> `endoflife.date/api/debian.json`
+- `rocky` -> `endoflife.date/api/rocky-linux.json`
+
+La configuration est stockee dans `os_lifecycle / external_products` au format :
+
+```text
+famille_msm=produit_endoflife_date
+```
+
+## Alertes
+
+Le moteur d'alerting expose maintenant trois cas OS lifecycle :
+
+- `os_eol` : OS obsolete ;
+- `os_eol_soon` : fin de support proche ;
+- `os_lifecycle_unknown` : alerte informative si un OS est detecte mais qu'aucune date de fin de support n'est connue localement.
 
 Sources principales :
 
@@ -67,6 +115,7 @@ Sources principales :
 - Ubuntu 18.04 LTS end of standard support : https://ubuntu.com/18-04
 - Debian bookworm release information : https://www.debian.org/releases/bookworm/
 - Rocky Linux Release and Version Guide : https://wiki.rockylinux.org/rocky/version/
+- endoflife.date API : https://endoflife.date/docs/api
 
 ## Planification
 
