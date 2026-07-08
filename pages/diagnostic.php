@@ -55,9 +55,16 @@ $projectRoot = realpath(__DIR__ . '/..') ?: dirname(__DIR__);
 $envPath = $projectRoot . DIRECTORY_SEPARATOR . '.env';
 $vendorAutoloadPath = $projectRoot . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 $logsPath = $projectRoot . DIRECTORY_SEPARATOR . 'logs';
+$sessionsPath = $logsPath . DIRECTORY_SEPARATOR . 'sessions';
 $migrationsPath = $projectRoot . DIRECTORY_SEPARATOR . 'migrations';
 $legacyKeyPath = $projectRoot . DIRECTORY_SEPARATOR . 'msm_secret.key';
 $secretConfigured = !empty(msmEnv('MSM_SECRET_KEY')) || is_readable($legacyKeyPath);
+$sessionTimeoutMinutes = (string) ($settings->get('auth', 'session_timeout_minutes') ?? '60');
+$sessionTimeoutLabel = $sessionTimeoutMinutes === '0'
+    ? '0 minute (expiration MSM desactivee)'
+    : $sessionTimeoutMinutes . ' minute(s)';
+$sessionSavePath = session_save_path() ?: ini_get('session.save_path') ?: 'indisponible';
+$sessionStorageOk = is_dir($sessionsPath) && is_writable($sessionsPath) && realpath($sessionSavePath) === realpath($sessionsPath);
 
 $expectedLogFiles = [
     'check-servers.log',
@@ -128,6 +135,8 @@ if (!is_dir($logsPath)) {
                 echo diagnosticRow('Dernier check serveur', $lastCheck, $lastCheck !== 'Jamais');
                 echo diagnosticRow('Fichier .env', $envPath, is_readable($envPath));
                 echo diagnosticRow('Cle de chiffrement', $secretConfigured ? 'Configuree' : 'Manquante', $secretConfigured);
+                echo diagnosticRow('Expiration session MSM', $sessionTimeoutLabel, true);
+                echo diagnosticRow('Stockage sessions PHP', $sessionSavePath, $sessionStorageOk ? 'ok' : 'warn');
                 echo diagnosticRow('Autoload Composer', $vendorAutoloadPath, is_readable($vendorAutoloadPath));
                 echo diagnosticRow('Dossier logs', $logsPath . ' (' . implode(' ; ', $logsDetails) . ')', $logsStatus);
                 echo diagnosticRow('Dossier migrations', $migrationsPath, is_dir($migrationsPath) && is_readable($migrationsPath));

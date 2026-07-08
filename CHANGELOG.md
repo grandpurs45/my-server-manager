@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.3](https://github.com/grandpurs45/my-server-manager/compare/v1.10.2...v1.10.3) (2026-07-08)
+
+### Fixed
+
+* centralisation du demarrage des sessions MSM pour eviter que les formulaires CSRF utilisent une session PHP non configuree
+* fiabilisation du mode session persistante quand la duree est configuree a `0`
+* ajout d'informations de diagnostic sur le timeout et le stockage des sessions
+
 ## [1.10.2](https://github.com/grandpurs45/my-server-manager/compare/v1.10.1...v1.10.2) (2026-07-08)
 
 ### Fixed

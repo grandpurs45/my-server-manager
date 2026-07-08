@@ -1,8 +1,18 @@
 <?php
 
+use MSM\AuthManager;
+use MSM\SessionManager;
+
 function msmEnsureSession(): void {
     if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
+        global $authManager;
+
+        if ($authManager instanceof AuthManager) {
+            $authManager->ensureSession();
+            return;
+        }
+
+        SessionManager::start();
     }
 }
 
