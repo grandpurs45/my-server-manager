@@ -203,17 +203,72 @@ class SecurityAudit
             return ['error' => 'Connexion SSH echouee'];
         }
 
-        $ufwPath = trim($ssh->exec('command -v ufw'));
+        if (($server['target_type'] ?? 'other') === 'proxmox') {
+            return self::getProxmoxFirewallStatus($ssh);
+        }
+
+        $ufwPath = self::findRemoteCommand($ssh, 'ufw', ['/usr/sbin/ufw', '/sbin/ufw', '/usr/bin/ufw']);
         if ($ufwPath === '') {
             return ['status' => 'not_installed', 'raw' => null];
         }
 
-        $status = trim($ssh->exec('ufw status'));
+        $status = trim($ssh->exec(escapeshellarg($ufwPath) . ' status 2>&1'));
         if (str_contains(strtolower($status), 'inactive')) {
             return ['status' => 'inactif', 'raw' => $status];
         }
 
         return ['status' => 'actif', 'raw' => $status];
+    }
+
+    private static function getProxmoxFirewallStatus(SSH2 $ssh): array
+    {
+        $pveFirewallPath = self::findRemoteCommand(
+            $ssh,
+            'pve-firewall',
+            ['/usr/sbin/pve-firewall', '/sbin/pve-firewall', '/usr/bin/pve-firewall']
+        );
+
+        if ($pveFirewallPath === '') {
+            return ['status' => 'not_installed', 'raw' => null];
+        }
+
+        $status = trim($ssh->exec(escapeshellarg($pveFirewallPath) . ' status 2>&1'));
+        $normalizedStatus = strtolower($status);
+
+        if (str_contains($normalizedStatus, 'disabled')
+            || str_contains($normalizedStatus, 'inactive')
+            || str_contains($normalizedStatus, 'stopped')
+        ) {
+            return ['status' => 'inactif', 'raw' => $status];
+        }
+
+        if (str_contains($normalizedStatus, 'enabled')
+            || str_contains($normalizedStatus, 'active')
+            || str_contains($normalizedStatus, 'running')
+        ) {
+            return ['status' => 'actif', 'raw' => $status];
+        }
+
+        return ['status' => 'unknown', 'raw' => $status];
+    }
+
+    private static function findRemoteCommand(SSH2 $ssh, string $command, array $fallbackPaths = []): string
+    {
+        $path = trim($ssh->exec('command -v ' . escapeshellarg($command) . ' 2>/dev/null'));
+        if ($path !== '') {
+            return strtok($path, "\r\n") ?: $path;
+        }
+
+        foreach ($fallbackPaths as $fallbackPath) {
+            $output = trim($ssh->exec(
+                'if [ -x ' . escapeshellarg($fallbackPath) . ' ]; then echo ' . escapeshellarg($fallbackPath) . '; fi'
+            ));
+            if ($output !== '') {
+                return strtok($output, "\r\n") ?: $output;
+            }
+        }
+
+        return '';
     }
 
     private static function connect(array $server): ?SSH2

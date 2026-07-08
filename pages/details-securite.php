@@ -55,17 +55,17 @@ function msmSecurityDetailStatusBadge(?string $status): string
 function msmSecurityDetailFirewallBadge(?string $status): string
 {
     return match ($status) {
-        'actif' => msmStatusBadge('ok', 'OK'),
-        'inactif' => msmStatusBadge('critical', 'Critical'),
-        'not_installed' => msmStatusBadge('warning', 'Warning'),
-        default => msmStatusBadge('unknown', 'Unknown'),
+        'actif' => msmStatusBadge('ok', 'Actif'),
+        'inactif' => msmStatusBadge('critical', 'Inactif'),
+        'not_installed' => msmStatusBadge('warning', 'Non detecte'),
+        default => msmStatusBadge('unknown', 'Inconnu'),
     };
 }
 
 function msmSecurityExposureBadge(string $exposure): string
 {
     return match ($exposure) {
-        'public' => msmStatusBadge('critical', 'Public'),
+        'public' => msmStatusBadge('critical', 'Toutes interfaces'),
         'local' => msmStatusBadge('neutral', 'Local'),
         'bound' => msmStatusBadge('info', 'Adresse liee'),
         default => msmStatusBadge('unknown', 'Unknown'),
@@ -96,7 +96,7 @@ function msmSecurityExposureBadge(string $exposure): string
             <div class="mt-2 text-2xl font-bold text-slate-900"><?= (int) ($latestSecurityCheck['open_ports_count'] ?? 0) ?></div>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <div class="text-xs font-semibold uppercase text-slate-500">Ports publics</div>
+            <div class="text-xs font-semibold uppercase text-slate-500">Toutes interfaces</div>
             <div class="mt-2 text-2xl font-bold text-red-700"><?= (int) ($latestSecurityCheck['exposed_ports_count'] ?? 0) ?></div>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -174,7 +174,12 @@ function msmSecurityExposureBadge(string $exposure): string
                 </p>
                 <?php if (($latestSecurityCheck['firewall_status'] ?? null) === 'not_installed'): ?>
                     <p class="mt-3 rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
-                        UFW n'est pas installe ou pas detecte. Ce n'est pas toujours une erreur si un autre pare-feu est utilise.
+                        Aucun pare-feu supporte n'est installe ou detecte pour ce type de cible.
+                        Ce n'est pas toujours une erreur si un autre pare-feu est utilise.
+                    </p>
+                <?php elseif (($latestSecurityCheck['firewall_status'] ?? null) === 'unknown'): ?>
+                    <p class="mt-3 rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+                        MSM a detecte un pare-feu potentiel, mais n'a pas pu interpreter clairement son statut.
                     </p>
                 <?php endif; ?>
             </section>

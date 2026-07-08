@@ -34,12 +34,15 @@ class AuthManager
         $gcLifetime = $timeoutMinutes === 0
             ? 315360000
             : max(1440, $timeoutMinutes * 60);
+        $cookieLifetime = $timeoutMinutes === 0 ? $gcLifetime : 0;
 
         ini_set('session.gc_maxlifetime', (string) $gcLifetime);
+        ini_set('session.cookie_lifetime', (string) $cookieLifetime);
+        $this->configureSessionStorage();
 
         $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
         session_set_cookie_params([
-            'lifetime' => 0,
+            'lifetime' => $cookieLifetime,
             'path' => $this->baseUrl(),
             'secure' => $secure,
             'httponly' => true,
@@ -438,6 +441,21 @@ class AuthManager
     private function sessionTimeoutMinutes(): int
     {
         return max(0, (int) ($this->settingsManager->get('auth', 'session_timeout_minutes') ?? 60));
+    }
+
+    private function configureSessionStorage(): void
+    {
+        $sessionDirectory = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'sessions';
+
+        if (!is_dir($sessionDirectory) && !@mkdir($sessionDirectory, 0775, true) && !is_dir($sessionDirectory)) {
+            return;
+        }
+
+        if (!is_writable($sessionDirectory)) {
+            return;
+        }
+
+        ini_set('session.save_path', $sessionDirectory);
     }
 
     private function clearSessionIdentity(): void

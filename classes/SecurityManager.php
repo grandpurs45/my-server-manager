@@ -5,6 +5,8 @@ use PDO;
 
 class SecurityManager
 {
+    private const SUPPORTED_TARGET_TYPES = ['linux', 'proxmox', 'docker'];
+
     private SecurityStatusRepository $repository;
     private SecurityAudit $audit;
 
@@ -50,6 +52,24 @@ class SecurityManager
 
     private function checkServer(array $server): SecurityCheckResult
     {
+        if (!in_array($server['target_type'] ?? 'other', self::SUPPORTED_TARGET_TYPES, true)) {
+            $result = new SecurityCheckResult(
+                serverId: (int) $server['id'],
+                status: 'unsupported',
+                openPorts: [],
+                firewallStatus: null,
+                checkedAt: date('Y-m-d H:i:s'),
+                durationMs: 0,
+                errorMessage: 'Type de cible non supporte par le collecteur securite generique.'
+            );
+            $this->repository->saveResult($result);
+
+            echo '[' . $server['hostname'] . '] security_status=unsupported reason=target_type'
+                . "\n";
+
+            return $result;
+        }
+
         $result = $this->audit->collect($server);
         $this->repository->saveResult($result);
 

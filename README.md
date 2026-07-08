@@ -392,7 +392,7 @@ MSM dispose d'une authentification locale stockee en base.
 - La duree d'expiration de session est configurable en minutes, avec `0` pour desactiver l'expiration.
 - L'interface `Parametres > Utilisateurs` permet de creer et administrer les comptes, avec recherche et tri sur la liste.
 
-La valeur `0` desactive l'expiration MSM pour inactivite. Le cookie reste lie a la session du navigateur : fermer completement le navigateur peut demander une nouvelle connexion.
+La valeur `0` desactive l'expiration MSM pour inactivite et utilise un cookie persistant. Les fichiers de session MSM sont stockes dans `logs/sessions` pour eviter le nettoyage systeme PHP trop agressif sur certaines distributions.
 
 Apres application des migrations, le compte initial est :
 

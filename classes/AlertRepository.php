@@ -132,6 +132,11 @@ class AlertRepository
             $params[':rule_key'] = $filters['rule_key'];
         }
 
+        if (!empty($filters['server_search'])) {
+            $where[] = '(s.name LIKE :server_search OR s.hostname LIKE :server_search)';
+            $params[':server_search'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], (string) $filters['server_search']) . '%';
+        }
+
         if ($where === []) {
             $where[] = '1 = 1';
         }

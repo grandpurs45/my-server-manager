@@ -14,17 +14,19 @@ $error = null;
 if (!$authManager->isInstalled()) {
     $error = 'Les tables d authentification ne sont pas encore installees. Lancez php apply_migrations.php.';
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    msmRequireValidCsrf();
+    if (!msmCsrfIsValid($_POST['csrf_token'] ?? null)) {
+        $error = 'Votre session de connexion a expire. Merci de ressaisir vos identifiants.';
+    } else {
+        $username = (string) ($_POST['username'] ?? '');
+        $password = (string) ($_POST['password'] ?? '');
 
-    $username = (string) ($_POST['username'] ?? '');
-    $password = (string) ($_POST['password'] ?? '');
+        if ($authManager->login($username, $password)) {
+            header('Location: ' . $next);
+            exit;
+        }
 
-    if ($authManager->login($username, $password)) {
-        header('Location: ' . $next);
-        exit;
+        $error = 'Identifiants invalides ou compte inactif.';
     }
-
-    $error = 'Identifiants invalides ou compte inactif.';
 }
 ?>
 <!DOCTYPE html>

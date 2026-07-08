@@ -68,7 +68,7 @@ function msmStatusStateFromSecurity(?string $status): string
 {
     return match ($status) {
         'ok' => 'ok',
-        'warning' => 'warning',
+        'warning', 'unsupported' => 'warning',
         'error' => 'critical',
         default => 'unknown',
     };
@@ -80,6 +80,7 @@ function msmStatusLabelFromSecurity(?string $status): string
         'ok' => 'OK',
         'warning' => 'Warning',
         'error' => 'Critical',
+        'unsupported' => 'Non supporte',
         default => 'Unknown',
     };
 }

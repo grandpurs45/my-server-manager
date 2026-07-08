@@ -230,6 +230,15 @@ class SetupAssistant
 
         $this->ok('logs directory', $this->pathForShell($logs));
 
+        $sessions = $logs . DIRECTORY_SEPARATOR . 'sessions';
+        if (!is_dir($sessions) && !mkdir($sessions, 0775, true)) {
+            $this->fail('sessions directory', 'creation impossible');
+        } elseif (!is_writable($sessions)) {
+            $this->fail('sessions directory', 'not writable by current user');
+        } else {
+            $this->ok('sessions directory', $this->pathForShell($sessions));
+        }
+
         foreach (self::CHECKS as $check) {
             $path = $logs . DIRECTORY_SEPARATOR . $check['log'];
             if (is_file($path)) {
@@ -663,6 +672,14 @@ class SetupAssistant
         } else {
             $this->fail('logs directory', 'not writable by current user');
             $this->addAction('Corriger les permissions de `logs/` pour l utilisateur qui lance les checks.');
+        }
+
+        $sessions = $logs . DIRECTORY_SEPARATOR . 'sessions';
+        if (is_dir($sessions) && is_writable($sessions)) {
+            $this->ok('sessions directory', 'writable');
+        } else {
+            $this->warn('sessions directory', 'absent ou non writable');
+            $this->addAction('Creer le dossier de sessions avec `php scripts/setup.php --init-logs`, puis verifier les droits pour Apache/PHP.');
         }
     }
 

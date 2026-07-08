@@ -20,6 +20,7 @@ Thumbs.db
 # Dossiers à ne pas versionner
 vendor/
 node_modules/
+logs/sessions/
 
 # Éditeur/IDE
 .vscode/

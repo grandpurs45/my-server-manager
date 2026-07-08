@@ -22,6 +22,7 @@ $operatorState = $_GET['operator_state'] ?? 'visible';
 $severity = $_GET['severity'] ?? '';
 $source = $_GET['source'] ?? '';
 $ruleKey = $_GET['rule_key'] ?? '';
+$serverSearch = trim((string) ($_GET['server_search'] ?? ''));
 
 if (!in_array($status, $allowedStatuses, true)) {
     $status = 'active';
@@ -45,6 +46,7 @@ $alerts = $repository->getAlerts([
     'severity' => $severity,
     'source' => $source,
     'rule_key' => $ruleKey,
+    'server_search' => $serverSearch,
 ]);
 $eventsByAlert = $repository->getEventsForAlerts(array_map(
     fn (array $alert): int => (int) ($alert['id'] ?? 0),
@@ -57,6 +59,7 @@ $redirectQuery = http_build_query([
     'severity' => $severity,
     'source' => $source,
     'rule_key' => $ruleKey,
+    'server_search' => $serverSearch,
 ]);
 $redirect = 'alerts.php' . ($redirectQuery !== '' ? '?' . $redirectQuery : '');
 
@@ -188,7 +191,15 @@ function msmAlertSourceLabel(string $source): string
     </div>
 
     <form method="get" class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-7">
+            <label class="text-sm font-semibold text-slate-700">
+                Serveur
+                <input type="search"
+                       name="server_search"
+                       value="<?= htmlspecialchars($serverSearch) ?>"
+                       class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+                       placeholder="Nom ou hostname">
+            </label>
             <label class="text-sm font-semibold text-slate-700">
                 Statut
                 <select name="status" class="mt-1 w-full rounded border border-gray-300 px-3 py-2">

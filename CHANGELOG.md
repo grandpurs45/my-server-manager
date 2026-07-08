@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.2](https://github.com/grandpurs45/my-server-manager/compare/v1.10.1...v1.10.2) (2026-07-08)
+
+### Fixed
+
+* correction des sessions persistantes quand la duree d'expiration est configuree a `0`
+* stockage des sessions MSM dans `logs/sessions` pour eviter le nettoyage systeme PHP trop agressif
+* correction des alertes securite pour les cibles non supportees comme Home Assistant
+* ajout d'une alerte dediee `security_check_error` quand le check securite echoue
+* detection du pare-feu Proxmox via `pve-firewall`
+* remplacement du libelle ambigu `Public` par `Toutes interfaces` pour les ports en ecoute
+* ajout d'une recherche par serveur dans la page Alertes
+* affichage plus propre du message de session de connexion expiree
+
+### Documentation
+
+* mise a jour de la documentation d'authentification pour les sessions persistantes
+
 ## [1.10.1](https://github.com/grandpurs45/my-server-manager/compare/v1.10.0...v1.10.1) (2026-07-01)
 
 ### Features

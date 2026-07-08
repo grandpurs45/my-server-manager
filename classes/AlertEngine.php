@@ -5,6 +5,8 @@ use PDO;
 
 class AlertEngine
 {
+    private const SECURITY_ALERT_TARGET_TYPES = ['linux', 'proxmox', 'docker'];
+
     public function __construct(
         private readonly PDO $pdo,
         private readonly AlertRepository $repository
@@ -284,8 +286,11 @@ class AlertEngine
             SELECT
                 s.id,
                 s.name,
+                s.target_type,
+                sc.status AS security_status,
                 sc.exposed_ports_count,
-                sc.firewall_status
+                sc.firewall_status,
+                sc.error_message
             FROM servers s
             INNER JOIN security_checks sc
                 ON sc.id = (
@@ -302,6 +307,38 @@ class AlertEngine
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $target) {
             $serverId = (int) $target['id'];
             $name = $target['name'] ?? 'Serveur inconnu';
+            $targetType = $target['target_type'] ?? 'other';
+            $securityStatus = $target['security_status'] ?? null;
+            $errorMessage = trim((string) ($target['error_message'] ?? ''));
+
+            if (!in_array($targetType, self::SECURITY_ALERT_TARGET_TYPES, true)) {
+                continue;
+            }
+
+            if ($securityStatus === 'error') {
+                if (isset($rules['security_check_error'])) {
+                    $message = 'Le dernier check securite est en erreur.';
+                    if ($errorMessage !== '') {
+                        $message .= ' Message: ' . $errorMessage;
+                    }
+
+                    $candidates[] = $this->candidate(
+                        'security_check_error',
+                        $serverId,
+                        $rules['security_check_error']['severity'] ?? 'warning',
+                        'Check securite en erreur sur ' . $name,
+                        $message,
+                        'security_check_error:' . $serverId
+                    );
+                }
+
+                continue;
+            }
+
+            if (!in_array($securityStatus, ['ok', 'warning'], true)) {
+                continue;
+            }
+
             $exposedPorts = (int) ($target['exposed_ports_count'] ?? 0);
             $firewallStatus = $target['firewall_status'] ?? null;
 
@@ -310,8 +347,8 @@ class AlertEngine
                     'security_exposed_ports',
                     $serverId,
                     $rules['security_exposed_ports']['severity'] ?? 'warning',
-                    'Ports exposes sur ' . $name,
-                    $exposedPorts . ' port(s) expose(s) detecte(s) par le dernier check securite.',
+                    'Ports sur toutes interfaces sur ' . $name,
+                    $exposedPorts . ' port(s) ecoute(nt) sur toutes les interfaces d apres le dernier check securite.',
                     'security_exposed_ports:' . $serverId
                 );
             }

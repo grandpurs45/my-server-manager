@@ -260,6 +260,13 @@ if (is_dir('logs')) {
         markWarning('logs directory', 'exists but is not writable by the current user');
         addRecommendedAction('Corriger les permissions de `logs/` pour l utilisateur qui lance les checks.');
     }
+
+    if (is_dir('logs/sessions') && is_writable('logs/sessions')) {
+        markOk('sessions directory', 'writable');
+    } else {
+        markWarning('sessions directory', 'missing or not writable; MSM will try to create it at runtime');
+        addRecommendedAction('Initialiser les logs et sessions avec `php scripts/setup.php --init-logs`.');
+    }
 } else {
     markWarning('logs directory', 'missing; create it before configuring scheduled checks');
     addRecommendedAction('Creer les fichiers de logs avec `php scripts/setup.php --init-logs`.');

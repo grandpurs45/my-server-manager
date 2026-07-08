@@ -15,10 +15,10 @@ function msmSecurityStatusBadge(?string $status): string
 function msmFirewallBadge(?string $status): string
 {
     return match ($status) {
-        'actif' => msmStatusBadge('ok', 'OK'),
-        'inactif' => msmStatusBadge('critical', 'Critical'),
-        'not_installed' => msmStatusBadge('warning', 'Warning'),
-        default => msmStatusBadge('unknown', 'Unknown'),
+        'actif' => msmStatusBadge('ok', 'Actif'),
+        'inactif' => msmStatusBadge('critical', 'Inactif'),
+        'not_installed' => msmStatusBadge('warning', 'Non detecte'),
+        default => msmStatusBadge('unknown', 'Inconnu'),
     };
 }
 
@@ -84,7 +84,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="mt-2 text-2xl font-bold text-yellow-700"><?= (int) $summary['warning'] ?></div>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <div class="text-xs font-semibold uppercase text-slate-500">Ports exposes</div>
+            <div class="text-xs font-semibold uppercase text-slate-500">Toutes interfaces</div>
             <div class="mt-2 text-2xl font-bold text-red-700"><?= (int) $summary['exposed_ports'] ?></div>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -142,10 +142,10 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                             <?php if ((int) ($srv['exposed_ports_count'] ?? 0) > 0): ?>
                                 <div class="mt-1 font-semibold text-red-700">
-                                    <?= (int) $srv['exposed_ports_count'] ?> expose<?= (int) $srv['exposed_ports_count'] > 1 ? 's' : '' ?>
+                                    <?= (int) $srv['exposed_ports_count'] ?> sur toutes interfaces
                                 </div>
                             <?php else: ?>
-                                <div class="mt-1 text-xs text-green-700">Aucun port public detecte</div>
+                                <div class="mt-1 text-xs text-green-700">Aucun port toutes interfaces</div>
                             <?php endif; ?>
                         </td>
                         <td class="px-4 py-3"><?= msmFirewallBadge($srv['firewall_status'] ?? null) ?></td>
