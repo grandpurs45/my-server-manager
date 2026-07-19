@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.10.1`.
+Version actuelle : `v1.11.0`.
 
 Socle valide :
 
@@ -34,6 +34,12 @@ Socle valide :
 ## Priorite v1.11 - Collecteurs et Maintenance
 
 Objectif : rendre les collecteurs administrables et reduire encore le diagnostic manuel en production.
+
+- Ordonnancement fiabilise (livre dans `v1.11.0`) :
+  - comparaison de la crontab chargee avec les lignes attendues ;
+  - detection des scripts absents, doublons, mauvaises frequences et mauvais chemins ;
+  - proposition d'une ligne corrective sans modification automatique ;
+  - alertes quand un collecteur ne donne plus signe de vie ou termine en erreur.
 
 - Gestion des collecteurs depuis l'interface :
   - activer ou desactiver un collecteur globalement ;
@@ -107,6 +113,14 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 - Analyse de mots de passe faibles ou compromis.
 
 ## Realise
+
+### v1.11 - Ordonnancement Fiabilise
+
+- Catalogue centralise des checks planifies.
+- Diagnostic CLI cible avec `php scripts/setup.php --check-scheduling`.
+- Detection des lignes cron absentes, dupliquees, mal cadencees ou utilisant de mauvais chemins.
+- Affichage de la configuration detectee et de la ligne corrective dans `Collecteurs / Checks`.
+- Alertes configurables pour collecteur inactif ou derniere execution en erreur.
 
 ### v1.10.1 - Supervision Ping Enrichie
 

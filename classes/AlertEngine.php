@@ -31,7 +31,8 @@ class AlertEngine
             $this->evaluateHardwareHealth($rules),
             $this->evaluateHardwareSmart($rules),
             $this->evaluateHardwareRuntime($rules),
-            $this->evaluateHomeAssistant($rules)
+            $this->evaluateHomeAssistant($rules),
+            $this->evaluateCollectorRuntime($rules)
         );
 
         return $this->repository->syncCandidates($candidates, array_keys($rules));
@@ -768,6 +769,85 @@ class AlertEngine
         }
 
         return $message;
+    }
+
+    private function evaluateCollectorRuntime(array $rules): array
+    {
+        $staleRule = $rules['collector_execution_stale'] ?? null;
+        $errorRule = $rules['collector_execution_error'] ?? null;
+        if ($staleRule === null && $errorRule === null) {
+            return [];
+        }
+
+        $stmt = $this->pdo->query("
+            SELECT category, setting_key, setting_value
+            FROM settings
+            WHERE setting_key IN ('check_last_attempt_at', 'check_last_status', 'check_last_message')
+        ");
+        $runtime = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $runtime[(string) $row['category']][(string) $row['setting_key']] = (string) $row['setting_value'];
+        }
+
+        $candidates = [];
+        foreach (CheckCatalog::all() as $check) {
+            $category = (string) ($check['settings_category'] ?? '');
+            if ($category === '' || $category === 'alerting') {
+                continue;
+            }
+
+            $thresholdMinutes = max(1, (int) ($check['log_stale_after_minutes'] ?? 30));
+            $lastAttempt = trim((string) ($runtime[$category]['check_last_attempt_at'] ?? ''));
+            $lastStatus = trim((string) ($runtime[$category]['check_last_status'] ?? ''));
+            $lastMessage = trim((string) ($runtime[$category]['check_last_message'] ?? ''));
+            $ageMinutes = null;
+
+            if ($lastAttempt !== '') {
+                try {
+                    $ageMinutes = (int) floor((time() - (new \DateTimeImmutable($lastAttempt))->getTimestamp()) / 60);
+                } catch (\Throwable) {
+                    $ageMinutes = $thresholdMinutes + 1;
+                }
+            }
+
+            $name = (string) ($check['name'] ?? $category);
+            if ($errorRule !== null && $lastStatus === 'error') {
+                $message = 'La derniere execution du collecteur a termine en erreur.';
+                if ($lastMessage !== '') {
+                    $message .= ' Message : ' . $lastMessage;
+                }
+
+                $candidates[] = $this->candidate(
+                    'collector_execution_error',
+                    null,
+                    $errorRule['severity'] ?? 'warning',
+                    'Collecteur ' . $name . ' en erreur',
+                    $message,
+                    'collector_execution_error:' . $category
+                );
+            }
+
+            if ($staleRule === null || ($lastAttempt !== '' && $ageMinutes !== null && $ageMinutes <= $thresholdMinutes)) {
+                continue;
+            }
+
+            $message = $lastAttempt === ''
+                ? 'Aucune execution du collecteur n est connue.'
+                : 'La derniere tentative date de ' . $ageMinutes . ' minutes.';
+            $message .= ' Seuil operationnel : ' . $thresholdMinutes
+                . ' minutes. Verifier la page Collecteurs / Checks et la crontab.';
+
+            $candidates[] = $this->candidate(
+                'collector_execution_stale',
+                null,
+                $staleRule['severity'] ?? 'warning',
+                'Collecteur ' . $name . ' inactif',
+                $message,
+                'collector_execution_stale:' . $category
+            );
+        }
+
+        return $candidates;
     }
 
     private function candidate(string $ruleKey, ?int $serverId, string $severity, string $title, string $message, string $fingerprint): AlertCandidate

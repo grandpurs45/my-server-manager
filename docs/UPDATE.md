@@ -146,18 +146,24 @@ Lancer ensuite le controle post-update MSM :
 php scripts/update-check.php
 ```
 
-Ce script verifie la version, les dependances, `.env`, la connexion base, les migrations, les logs et la presence des scripts dans la crontab quand elle est accessible.
+Ce script verifie la version, les dependances, `.env`, la connexion base, les migrations, les logs et la conformite des scripts dans la crontab quand elle est accessible. Il detecte les scripts absents, les doublons, les mauvaises frequences et les chemins qui ne correspondent pas au dossier courant.
 
 ### Corriger les warnings du controle post-update
 
-#### `Crontab MSM - scripts absents: ...`
+#### `Crontab MSM (...) - ...`
 
-Ce warning indique qu'un ou plusieurs scripts MSM existent dans le code, mais ne sont pas encore ajoutes a la crontab de l'utilisateur courant. Cela arrive typiquement apres l'ajout d'un nouveau collecteur, par exemple `check-hardware-health.php` ou `check-home-assistant.php`.
+Ce warning indique qu'une ligne cron est absente ou ne correspond pas a l'installation courante. Le message precise le compte Linux inspecte et la cause : ligne absente, dupliquee, mauvaise frequence, mauvais chemin de script ou mauvais chemin de log.
 
 Afficher la ligne adaptee au chemin reel de l'installation :
 
 ```bash
 php scripts/setup.php --cron
+```
+
+Le diagnostic cible peut ensuite etre relance avec :
+
+```bash
+php scripts/setup.php --check-scheduling
 ```
 
 Ouvrir ensuite la crontab :
@@ -166,7 +172,7 @@ Ouvrir ensuite la crontab :
 crontab -e
 ```
 
-Ajouter les lignes absentes affichees par l'assistant. Pour une installation standard dans `/var/www/html/msm` :
+Remplacer la ligne concernee par celle affichee dans les actions recommandees. Pour une installation standard dans `/var/www/html/msm` :
 
 ```cron
 */5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-hardware-health.php >> /var/www/html/msm/logs/check-hardware-health.log 2>&1

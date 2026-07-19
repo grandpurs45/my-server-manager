@@ -16,16 +16,18 @@ $dbSql = in_array('--db-sql', $options, true);
 $migrate = in_array('--migrate', $options, true);
 $installDeps = in_array('--install-deps', $options, true);
 $composerInstall = in_array('--composer-install', $options, true);
+$checkScheduling = in_array('--check-scheduling', $options, true);
 $yes = in_array('--yes', $options, true);
 $systemdUser = readOptionValue($options, '--systemd-user') ?? 'www-data';
 $systemdGroup = readOptionValue($options, '--systemd-group');
 
 if (in_array('--help', $options, true) || in_array('-h', $options, true)) {
     echo "MSM setup assistant\n";
-    echo "Usage: php scripts/setup.php [--cron] [--systemd] [--init-env] [--init-logs] [--db-sql] [--migrate]\n\n";
+    echo "Usage: php scripts/setup.php [--cron] [--systemd] [--check-scheduling] [--init-env] [--init-logs] [--db-sql] [--migrate]\n\n";
     echo "Options:\n";
     echo "  --cron       Affiche uniquement le bloc cron recommande pour ce dossier.\n";
     echo "  --systemd    Affiche les fichiers .service/.timer systemd recommandes.\n";
+    echo "  --check-scheduling Controle la crontab, les timers systemd et la fraicheur des logs.\n";
     echo "  --systemd-user=USER   Utilisateur systemd a utiliser, defaut www-data.\n";
     echo "  --systemd-group=GROUP Groupe systemd a utiliser, defaut identique a USER.\n";
     echo "  --init-env   Cree .env depuis .env.example si absent, avec une cle locale aleatoire.\n";
@@ -44,6 +46,10 @@ $assistant = new SetupAssistant(__DIR__ . '/..');
 if ($systemdOnly) {
     $assistant->printSystemdInstructions($systemdUser, $systemdGroup);
     exit(0);
+}
+
+if ($checkScheduling) {
+    exit($assistant->runSchedulingCheck());
 }
 
 if ($installDeps) {

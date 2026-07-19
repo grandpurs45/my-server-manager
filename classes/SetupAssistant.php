@@ -1,5 +1,8 @@
 <?php
 
+require_once __DIR__ . '/CheckCatalog.php';
+require_once __DIR__ . '/SchedulingInspector.php';
+
 class SetupAssistant
 {
     private const REQUIRED_EXTENSIONS = ['pdo_mysql', 'openssl', 'mbstring'];
@@ -7,114 +10,6 @@ class SetupAssistant
     private const REQUIRED_COMMANDS = ['git', 'composer', 'ping'];
     private const RECOMMENDED_COMMANDS = ['unzip', 'ssh'];
     private const REQUIRED_ENV = ['MSM_DB_HOST', 'MSM_DB_NAME', 'MSM_DB_USER', 'MSM_SECRET_KEY'];
-
-    private const CHECKS = [
-        [
-            'name' => 'Supervision',
-            'unit' => 'msm-check-servers',
-            'description' => 'MSM server supervision check',
-            'timer_description' => 'Run MSM server supervision check every minute',
-            'settings_category' => 'supervision',
-            'interval_key' => 'check_interval_minutes',
-            'interval_unit' => 'minutes',
-            'cron' => '* * * * *',
-            'log_stale_after_minutes' => 5,
-            'on_boot' => '1min',
-            'on_active' => '1min',
-            'script' => 'check-servers.php',
-            'log' => 'check-servers.log',
-        ],
-        [
-            'name' => 'Patch Management',
-            'unit' => 'msm-check-patches',
-            'description' => 'MSM patch management check',
-            'timer_description' => 'Run MSM patch management check every 10 minutes',
-            'settings_category' => 'patch_management',
-            'interval_key' => 'check_interval_hours',
-            'interval_unit' => 'hours',
-            'cron' => '*/10 * * * *',
-            'log_stale_after_minutes' => 30,
-            'on_boot' => '5min',
-            'on_active' => '10min',
-            'script' => 'check-patches.php',
-            'log' => 'check-patches.log',
-        ],
-        [
-            'name' => 'Cycle de vie OS',
-            'unit' => 'msm-check-os-lifecycle',
-            'description' => 'MSM OS lifecycle check',
-            'timer_description' => 'Run MSM OS lifecycle check hourly',
-            'settings_category' => 'os_lifecycle',
-            'interval_key' => 'check_interval_hours',
-            'interval_unit' => 'hours',
-            'cron' => '15 * * * *',
-            'log_stale_after_minutes' => 180,
-            'on_boot' => '10min',
-            'on_active' => '1h',
-            'script' => 'check-os-lifecycle.php',
-            'log' => 'check-os-lifecycle.log',
-        ],
-        [
-            'name' => 'Securite',
-            'unit' => 'msm-check-security',
-            'description' => 'MSM security check',
-            'timer_description' => 'Run MSM security check hourly',
-            'settings_category' => 'security',
-            'interval_key' => 'check_interval_hours',
-            'interval_unit' => 'hours',
-            'cron' => '30 * * * *',
-            'log_stale_after_minutes' => 180,
-            'on_boot' => '15min',
-            'on_active' => '1h',
-            'script' => 'check-security.php',
-            'log' => 'check-security.log',
-        ],
-        [
-            'name' => 'Sante materielle',
-            'unit' => 'msm-check-hardware-health',
-            'description' => 'MSM hardware health check',
-            'timer_description' => 'Run MSM hardware health check every 5 minutes',
-            'settings_category' => 'hardware_health',
-            'interval_key' => 'check_interval_minutes',
-            'interval_unit' => 'minutes',
-            'cron' => '*/5 * * * *',
-            'log_stale_after_minutes' => 20,
-            'on_boot' => '5min',
-            'on_active' => '5min',
-            'script' => 'check-hardware-health.php',
-            'log' => 'check-hardware-health.log',
-        ],
-        [
-            'name' => 'Home Assistant',
-            'unit' => 'msm-check-home-assistant',
-            'description' => 'MSM Home Assistant check',
-            'timer_description' => 'Run MSM Home Assistant check every 15 minutes',
-            'settings_category' => 'home_assistant',
-            'interval_key' => 'check_interval_minutes',
-            'interval_unit' => 'minutes',
-            'cron' => '*/15 * * * *',
-            'log_stale_after_minutes' => 45,
-            'on_boot' => '7min',
-            'on_active' => '15min',
-            'script' => 'check-home-assistant.php',
-            'log' => 'check-home-assistant.log',
-        ],
-        [
-            'name' => 'Alerting',
-            'unit' => 'msm-check-alerts',
-            'description' => 'MSM alerting evaluation',
-            'timer_description' => 'Run MSM alerting evaluation every 5 minutes',
-            'settings_category' => 'alerting',
-            'interval_key' => 'check_interval_minutes',
-            'interval_unit' => 'minutes',
-            'cron' => '*/5 * * * *',
-            'log_stale_after_minutes' => 20,
-            'on_boot' => '2min',
-            'on_active' => '5min',
-            'script' => 'check-alerts.php',
-            'log' => 'check-alerts.log',
-        ],
-    ];
 
     private string $root;
     private int $errors = 0;
@@ -131,7 +26,7 @@ class SetupAssistant
 
     public static function checks(): array
     {
-        return self::CHECKS;
+        return \MSM\CheckCatalog::all();
     }
 
     public function runSetup(bool $cronOnly = false): int
@@ -239,7 +134,7 @@ class SetupAssistant
             $this->ok('sessions directory', $this->pathForShell($sessions));
         }
 
-        foreach (self::CHECKS as $check) {
+        foreach (self::checks() as $check) {
             $path = $logs . DIRECTORY_SEPARATOR . $check['log'];
             if (is_file($path)) {
                 $this->ok($check['log'], 'deja present');
@@ -445,6 +340,20 @@ class SetupAssistant
         return $this->printSummary();
     }
 
+    public function runSchedulingCheck(): int
+    {
+        $this->header('MSM scheduling check');
+        $this->section('Configuration');
+        $this->checkCurrentCrontab();
+        $this->checkSystemdTimers();
+        $this->section('Execution des checks');
+        $this->checkLogs();
+        $this->checkCheckLogs();
+        $this->section('Resultat');
+
+        return $this->printSummary();
+    }
+
     public function printCronInstructions(): void
     {
         $php = $this->detectPhpBinary();
@@ -457,7 +366,7 @@ class SetupAssistant
         $this->line('');
         $this->line('Bloc cron recommande :');
 
-        foreach (self::CHECKS as $check) {
+        foreach (self::checks() as $check) {
             $this->line(sprintf(
                 '%s %s %s/scripts/%s >> %s/%s 2>&1',
                 $check['cron'],
@@ -487,7 +396,7 @@ class SetupAssistant
         $this->line('');
         $this->line('Creer les fichiers suivants dans /etc/systemd/system/ :');
 
-        foreach (self::CHECKS as $check) {
+        foreach (self::checks() as $check) {
             $unit = $check['unit'];
             $script = $root . '/scripts/' . $check['script'];
 
@@ -520,7 +429,7 @@ class SetupAssistant
         $this->line("Commandes d'activation :");
         $this->line('sudo systemctl daemon-reload');
 
-        foreach (self::CHECKS as $check) {
+        foreach (self::checks() as $check) {
             $this->line('sudo systemctl enable --now ' . $check['unit'] . '.timer');
         }
 
@@ -528,7 +437,7 @@ class SetupAssistant
         $this->line('Commandes de verification :');
         $this->line("systemctl list-timers 'msm-*'");
 
-        foreach (self::CHECKS as $check) {
+        foreach (self::checks() as $check) {
             $this->line('journalctl -u ' . $check['unit'] . '.service -n 50 --no-pager');
         }
 
@@ -761,53 +670,41 @@ class SetupAssistant
 
     private function checkCurrentCrontab(): void
     {
-        if (!$this->commandExists('crontab')) {
-            if (stripos(PHP_OS_FAMILY, 'Windows') === 0) {
-                $this->info('Crontab', 'non disponible sous Windows');
-                return;
-            }
+        $inspector = new \MSM\SchedulingInspector($this->root, $this->detectPhpBinary());
+        $inspection = $inspector->inspectCurrentUserCrontab(self::checks());
 
-            $this->warn('Crontab', 'commande crontab non disponible');
+        if (!$inspection['available']) {
+            if (PHP_OS_FAMILY === 'Windows') {
+                $this->info('Crontab', $inspection['message']);
+            } else {
+                $this->warn('Crontab', $inspection['message']);
+            }
             return;
         }
 
-        $output = [];
-        $code = 0;
-        exec('crontab -l 2>&1', $output, $code);
-        $content = implode("\n", $output);
+        $issues = [];
+        foreach (self::checks() as $check) {
+            $result = $inspection['checks'][$check['script']] ?? null;
+            if ($result === null || $result['status'] === 'ok') {
+                continue;
+            }
 
-        if ($code !== 0 && !str_contains(strtolower($content), 'no crontab')) {
-            $this->warn('Crontab', trim($content) !== '' ? trim($content) : 'lecture impossible');
+            $issues[] = $check['name'] . ': ' . ($result['message'] ?? 'configuration invalide');
+            $this->addAction(
+                'Correction cron pour ' . $check['name'] . ' : remplacer la ligne existante par `'
+                . ($result['expected_line'] ?? $this->formatCronLine($check))
+                . '` dans `crontab -e`.'
+            );
+        }
+
+        $account = (string) ($inspection['user'] ?? 'inconnu');
+        if ($issues === []) {
+            $this->ok('Crontab MSM', 'configuration conforme pour le compte ' . $account);
             return;
         }
 
-        if (trim($content) === '' || str_contains(strtolower($content), 'no crontab')) {
-            $this->warn('Crontab', 'aucune crontab utilisateur detectee');
-            return;
-        }
-
-        if (str_contains($content, '/var/log/msm-check-')) {
-            $this->warn('Crontab logs', 'ancienne redirection /var/log detectee; preferer logs/ dans le projet');
-        }
-
-        $missing = [];
-        foreach (self::CHECKS as $check) {
-            if (!str_contains($content, '/scripts/' . $check['script']) && !str_contains($content, '\\scripts\\' . $check['script'])) {
-                $missing[] = $check['script'];
-            }
-        }
-
-        if ($missing === []) {
-            $this->ok('Crontab MSM', 'tous les scripts sont presents');
-        } else {
-            $this->warn('Crontab MSM', 'scripts absents: ' . implode(', ', $missing));
-            $this->addAction('Generer les lignes adaptees avec `php scripts/setup.php --cron`, puis ajouter les scripts absents avec `crontab -e`.');
-            foreach (self::CHECKS as $check) {
-                if (in_array($check['script'], $missing, true)) {
-                    $this->addAction('Ligne cron manquante pour ' . $check['name'] . ' : `' . $this->formatCronLine($check) . '`.');
-                }
-            }
-        }
+        $this->warn('Crontab MSM (' . $account . ')', implode(' ; ', $issues));
+        $this->addAction('Afficher le bloc complet attendu avec `php scripts/setup.php --cron`.');
     }
 
     private function checkSystemdTimers(): void
@@ -833,7 +730,7 @@ class SetupAssistant
         }
 
         $missing = [];
-        foreach (self::CHECKS as $check) {
+        foreach (self::checks() as $check) {
             if (!str_contains($content, $check['unit'] . '.timer')) {
                 $missing[] = $check['unit'] . '.timer';
             }
@@ -850,7 +747,7 @@ class SetupAssistant
     {
         $logs = $this->root . DIRECTORY_SEPARATOR . 'logs';
 
-        foreach (self::CHECKS as $check) {
+        foreach (self::checks() as $check) {
             $path = $logs . DIRECTORY_SEPARATOR . $check['log'];
             if (!is_file($path)) {
                 $this->warn($check['name'] . ' log', 'absent: logs/' . $check['log']);

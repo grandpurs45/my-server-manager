@@ -2,7 +2,22 @@
 
 MSM ne lance pas les checks lourds pendant l'affichage des pages ni pendant le scrape Prometheus. Les scripts CLI collectent les donnees, les stockent en base, puis l'interface et `/metrics.php` lisent les derniers resultats connus.
 
-La page `Parametres > Collecteurs` permet de controler les scripts attendus, l'age des logs, le dernier statut stocke en base et la ligne cron recommandee pour chaque check. Elle ne modifie pas la crontab automatiquement.
+La page `Parametres > Collecteurs` permet de controler les scripts attendus, l'age des logs, le dernier statut stocke en base et la ligne cron recommandee pour chaque check. Quand la crontab est accessible au compte PHP, MSM detecte aussi les lignes absentes, dupliquees, les mauvaises frequences et les chemins qui pointent vers une autre installation ou un autre dossier de logs. Elle ne modifie pas la crontab automatiquement.
+
+La crontab est propre a chaque compte Linux. La page indique le compte qu'elle a pu inspecter. Si les checks sont executes par un autre compte que le serveur web, lancer le diagnostic CLI avec ce compte :
+
+```bash
+cd /chemin/vers/msm
+php scripts/setup.php
+```
+
+Pour limiter la sortie au diagnostic d'ordonnancement et aux logs :
+
+```bash
+php scripts/setup.php --check-scheduling
+```
+
+Les regles d'alerte `collector_execution_stale` et `collector_execution_error` surveillent respectivement les dernieres tentatives et le dernier statut enregistre. Elles detectent donc un collecteur qui ne s'execute plus ou qui termine en erreur alors que sa ligne cron semble correcte. Le collecteur Alerting ne peut pas s'alerter lui-meme lorsqu'il est arrete ; son retard reste visible sur le dashboard et dans `Parametres > Collecteurs`.
 
 ## Scripts a planifier
 
@@ -156,6 +171,14 @@ Verifier l'ensemble setup + ordonnancement :
 php scripts/setup.php
 ```
 
+Le controle compare chaque ligne active avec le chemin reel du projet. En cas d'ecart, la section `Actions recommandees` fournit la ligne complete a utiliser dans `crontab -e`. Les cas detectes sont :
+
+- script absent de la crontab ;
+- plusieurs lignes pour le meme script ;
+- chemin du script appartenant a une autre installation MSM ;
+- redirection vers un mauvais fichier de log ;
+- frequence cron differente de la frequence recommandee.
+
 Sur Debian / Ubuntu, verifier aussi les executions cron :
 
 ```bash
@@ -188,6 +211,7 @@ sudo systemctl enable --now msm-check-servers.timer
 sudo systemctl enable --now msm-check-patches.timer
 sudo systemctl enable --now msm-check-os-lifecycle.timer
 sudo systemctl enable --now msm-check-security.timer
+sudo systemctl enable --now msm-check-hardware-health.timer
 sudo systemctl enable --now msm-check-home-assistant.timer
 sudo systemctl enable --now msm-check-alerts.timer
 ```
@@ -200,6 +224,8 @@ journalctl -u msm-check-servers.service -n 50
 journalctl -u msm-check-patches.service -n 50
 journalctl -u msm-check-os-lifecycle.service -n 50
 journalctl -u msm-check-security.service -n 50
+journalctl -u msm-check-hardware-health.service -n 50
+journalctl -u msm-check-home-assistant.service -n 50
 journalctl -u msm-check-alerts.service -n 50
 ```
 

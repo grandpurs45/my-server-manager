@@ -36,7 +36,7 @@ La carte `Checks planifies` affiche uniquement l'etat global :
 - nombre de checks en retard ;
 - nombre de checks en erreur.
 
-Le detail par script est disponible dans `Parametres > Collecteurs` : script attendu, ligne cron, log, dernier statut et dernier message.
+Le detail par script est disponible dans `Parametres > Collecteurs` : script attendu, ligne cron, log, dernier statut et dernier message. MSM signale aussi les lignes cron absentes, dupliquees, mal cadencees ou utilisant un chemin d'une autre installation, puis propose la ligne corrective a copier.
 
 ## Perimetre v1
 

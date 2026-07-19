@@ -109,12 +109,18 @@ require_once __DIR__ . '/../includes/header.php';
                                 </select>
                             </td>
                             <td class="px-4 py-3 align-top">
-                                <input type="number"
-                                       name="threshold_value"
-                                       min="1"
-                                       value="<?= htmlspecialchars((string) ($rule['threshold_value'] ?? '')) ?>"
-                                       class="w-28 rounded border border-gray-300 px-3 py-2 text-sm"
-                                       placeholder="-">
+                                <?php if (($rule['rule_key'] ?? '') === 'collector_execution_stale'): ?>
+                                    <span class="text-xs text-slate-500">Seuil propre a chaque collecteur</span>
+                                <?php elseif (($rule['rule_key'] ?? '') === 'collector_execution_error'): ?>
+                                    <span class="text-xs text-slate-500">Sans seuil numerique</span>
+                                <?php else: ?>
+                                    <input type="number"
+                                           name="threshold_value"
+                                           min="1"
+                                           value="<?= htmlspecialchars((string) ($rule['threshold_value'] ?? '')) ?>"
+                                           class="w-28 rounded border border-gray-300 px-3 py-2 text-sm"
+                                           placeholder="-">
+                                <?php endif; ?>
                                 <?php if (($rule['rule_key'] ?? '') === 'stale_supervision_check'): ?>
                                     <div class="mt-1 text-xs text-slate-500">minutes</div>
                                 <?php elseif (($rule['rule_key'] ?? '') === 'home_assistant_check_stale'): ?>

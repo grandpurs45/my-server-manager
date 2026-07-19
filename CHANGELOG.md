@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0](https://github.com/grandpurs45/my-server-manager/compare/v1.10.3...v1.11.0) (2026-07-19)
+
+### Features
+
+* diagnostic renforce de la crontab avec detection des lignes absentes, dupliquees, mal cadencees ou pointant vers de mauvais chemins
+* affichage de la configuration cron detectee et de la ligne corrective dans la page Collecteurs / Checks
+* ajout des alertes `collector_execution_stale` et `collector_execution_error` pour les collecteurs qui ne sont plus executes ou terminent en erreur
+* ajout de `php scripts/setup.php --check-scheduling` pour un diagnostic CLI cible
+
+### Documentation
+
+* documentation du compte Linux inspecte, des corrections cron proposees et des limites de l'auto-surveillance du collecteur Alerting
+
 ## [1.10.3](https://github.com/grandpurs45/my-server-manager/compare/v1.10.2...v1.10.3) (2026-07-08)
 
 ### Fixed

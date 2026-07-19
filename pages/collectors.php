@@ -1,12 +1,11 @@
 <?php
 require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../classes/SetupAssistant.php';
 
 $settingsSchema = require __DIR__ . '/../config/settings-schema.php';
 $root = realpath(__DIR__ . '/..') ?: dirname(__DIR__);
 $logsDirectory = $root . DIRECTORY_SEPARATOR . 'logs';
-$checks = SetupAssistant::checks();
+$checks = \MSM\CheckCatalog::all();
 
 function msmCollectorsPhpBinary(): string
 {
@@ -20,22 +19,6 @@ function msmCollectorsPhpBinary(): string
 function msmCollectorsPath(string $path): string
 {
     return str_replace('\\', '/', $path);
-}
-
-function msmCollectorsCronLine(array $check, string $root, string $phpBinary): string
-{
-    $root = msmCollectorsPath($root);
-    $logs = $root . '/logs';
-
-    return sprintf(
-        '%s %s %s/scripts/%s >> %s/%s 2>&1',
-        $check['cron'],
-        $phpBinary,
-        $root,
-        $check['script'],
-        $logs,
-        $check['log']
-    );
 }
 
 function msmCollectorsIntervalLabel(array $check, \MSM\SettingsManager $settings, array $schema): string
@@ -160,6 +143,8 @@ function msmCollectorsDateAgeSeconds(?string $date): ?int
 }
 
 $phpBinary = msmCollectorsPhpBinary();
+$schedulingInspector = new \MSM\SchedulingInspector($root, $phpBinary);
+$cronInspection = $schedulingInspector->inspectCurrentUserCrontab($checks);
 $rows = [];
 $summary = ['ok' => 0, 'warning' => 0, 'critical' => 0, 'unknown' => 0];
 
@@ -171,7 +156,8 @@ foreach ($checks as $check) {
         'check' => $check,
         'state' => $state,
         'interval' => msmCollectorsIntervalLabel($check, $settings, $settingsSchema),
-        'cron_line' => msmCollectorsCronLine($check, $root, $phpBinary),
+        'cron_line' => $schedulingInspector->expectedCronLine($check),
+        'cron_state' => $cronInspection['checks'][$check['script']] ?? null,
     ];
 }
 
@@ -182,6 +168,16 @@ require_once __DIR__ . '/../includes/header.php';
     <div>
         <h1 class="text-2xl font-bold text-slate-900">Collecteurs / Checks</h1>
         <p class="mt-1 text-sm text-slate-600">Vue de controle des scripts planifies, logs et intervalles internes MSM.</p>
+    </div>
+
+    <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        <?php if ($cronInspection['available']): ?>
+            Crontab inspectee pour le compte <strong><?= htmlspecialchars((string) $cronInspection['user']) ?></strong>.
+            La crontab du compte de deploiement doit etre controlee en CLI si elle appartient a un autre utilisateur.
+        <?php else: ?>
+            Verification directe de la crontab indisponible : <?= htmlspecialchars((string) $cronInspection['message']) ?>
+            Utiliser <code>php scripts/setup.php</code> depuis le compte qui execute les checks.
+        <?php endif; ?>
     </div>
 
     <div class="grid gap-3 md:grid-cols-4">
@@ -252,6 +248,26 @@ require_once __DIR__ . '/../includes/header.php';
                             <div>Cron conseille : <span class="font-mono font-semibold"><?= htmlspecialchars($check['cron']) ?></span></div>
                             <div>Intervalle interne : <span class="font-semibold"><?= htmlspecialchars($row['interval']) ?></span></div>
                             <div class="mt-2 break-all text-slate-500"><?= htmlspecialchars(msmCollectorsPath($state['log_path'])) ?></div>
+                            <?php if ($row['cron_state'] !== null):
+                                $cronState = $row['cron_state'];
+                                $cronOk = ($cronState['status'] ?? '') === 'ok';
+                            ?>
+                                <div class="mt-3 rounded border px-2 py-2 <?= $cronOk ? 'border-green-200 bg-green-50 text-green-700' : 'border-yellow-200 bg-yellow-50 text-yellow-800' ?>">
+                                    <div class="font-semibold">
+                                        <?php if ($cronOk): ?>
+                                            Cron conforme
+                                        <?php elseif (($cronState['status'] ?? '') === 'missing'): ?>
+                                            Non trouve pour <?= htmlspecialchars((string) ($cronInspection['user'] ?? 'ce compte')) ?>
+                                        <?php else: ?>
+                                            Cron a corriger
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="mt-1"><?= htmlspecialchars((string) ($cronState['message'] ?? '')) ?></div>
+                                    <?php foreach (($cronState['configured_lines'] ?? []) as $configuredLine): ?>
+                                        <div class="mt-1 break-all font-mono text-[11px]"><?= htmlspecialchars($configuredLine) ?></div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                         </td>
                         <td class="px-4 py-4">
                             <pre class="max-w-xl overflow-x-auto rounded bg-slate-900 p-3 text-xs text-slate-100"><code><?= htmlspecialchars($row['cron_line']) ?></code></pre>
