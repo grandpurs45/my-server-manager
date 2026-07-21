@@ -175,21 +175,21 @@ function msmOsLogoRemoteSources(string $query): array
     $slug = msmOsLogoSlug($query);
     $familySlug = msmOsLogoFamilySlug($query);
     $sources = [
-        'alpine' => 'alpinelinux',
-        'debian' => 'debian',
-        'ubuntu' => 'ubuntu',
-        'windows' => 'windows',
-        'rocky' => 'rockylinux',
+        'alpine' => 'alpine-linux',
+        'debian' => 'debian-linux',
+        'ubuntu' => 'ubuntu-linux',
+        'windows' => 'microsoft-windows',
+        'rocky' => 'rocky-linux',
         'proxmox' => 'proxmox',
         'docker' => 'docker',
-        'home-assistant' => 'homeassistant',
+        'home-assistant' => 'home-assistant',
         'synology' => 'synology',
         'freebsd' => 'freebsd',
         'fedora' => 'fedora',
-        'redhat' => 'redhat',
+        'redhat' => 'redhat-linux',
         'centos' => 'centos',
-        'almalinux' => 'almalinux',
-        'archlinux' => 'archlinux',
+        'almalinux' => 'alma-linux',
+        'archlinux' => 'arch-linux',
         'opensuse' => 'opensuse',
     ];
     $candidates = [];
@@ -200,6 +200,14 @@ function msmOsLogoRemoteSources(string $query): array
         }
     }
 
+    $catalogMatch = $familySlug === null ? msmOsLogoFindDashboardIcon($query) : null;
+    if ($catalogMatch !== null) {
+        $localSlug = $familySlug ?: msmOsLogoSuggestedLocalSlug($slug);
+        if ($localSlug !== '') {
+            $candidates[$localSlug] ??= $catalogMatch;
+        }
+    }
+
     foreach (msmOsLogoRemoteGuessSlugs($slug) as $localSlug => $remoteSlug) {
         if ($localSlug !== '' && $remoteSlug !== '') {
             $candidates[$localSlug] ??= $remoteSlug;
@@ -207,6 +215,75 @@ function msmOsLogoRemoteSources(string $query): array
     }
 
     return $candidates;
+}
+
+function msmOsLogoSuggestedLocalSlug(string $slug): string
+{
+    $guesses = msmOsLogoRemoteGuessSlugs($slug);
+
+    return (string) (array_key_last($guesses) ?? $slug);
+}
+
+function msmOsLogoDashboardIconsBaseUrl(): string
+{
+    return 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons';
+}
+
+function msmOsLogoDashboardIconsMetadataUrl(): string
+{
+    return msmOsLogoDashboardIconsBaseUrl() . '/metadata.json';
+}
+
+function msmOsLogoFindDashboardIcon(string $query): ?string
+{
+    $content = msmOsLogoDownload(msmOsLogoDashboardIconsMetadataUrl(), 4 * 1024 * 1024);
+    if ($content === null) {
+        return null;
+    }
+
+    $metadata = json_decode($content, true);
+    if (!is_array($metadata)) {
+        return null;
+    }
+
+    $querySlug = msmOsLogoSlug($query);
+    $familySlug = msmOsLogoFamilySlug($query);
+    $searchSlugs = array_values(array_unique(array_filter(array_merge(
+        [$querySlug, $familySlug],
+        array_values(msmOsLogoRemoteGuessSlugs($querySlug))
+    ))));
+    $bestSlug = null;
+    $bestScore = 0;
+
+    foreach ($metadata as $iconSlug => $details) {
+        if (!is_string($iconSlug) || !is_array($details)) {
+            continue;
+        }
+
+        $normalizedIconSlug = msmOsLogoSlug($iconSlug);
+        $aliases = array_map('msmOsLogoSlug', is_array($details['aliases'] ?? null) ? $details['aliases'] : []);
+        $categories = array_map('msmOsLogoSlug', is_array($details['categories'] ?? null) ? $details['categories'] : []);
+        $isOperatingSystem = !empty(array_intersect($categories, ['operating-systems', 'linux-distributions']));
+        $score = 0;
+
+        foreach ($searchSlugs as $searchSlug) {
+            if ($normalizedIconSlug === $searchSlug) {
+                $score = max($score, 100);
+            } elseif (in_array($searchSlug, $aliases, true)) {
+                $score = max($score, 90);
+            } elseif ($isOperatingSystem && strlen($searchSlug) >= 4
+                && (str_starts_with($normalizedIconSlug, $searchSlug . '-') || str_ends_with($normalizedIconSlug, '-' . $searchSlug))) {
+                $score = max($score, 70);
+            }
+        }
+
+        if ($score > $bestScore) {
+            $bestScore = $score;
+            $bestSlug = $iconSlug;
+        }
+    }
+
+    return $bestScore >= 70 ? $bestSlug : null;
 }
 
 function msmOsLogoRemoteGuessSlugs(string $slug): array
@@ -248,7 +325,7 @@ function msmOsLogoRemoteGuessSlugs(string $slug): array
     return array_filter($guesses, static fn (string $remoteSlug): bool => $remoteSlug !== '');
 }
 
-function msmOsLogoDownload(string $url): ?string
+function msmOsLogoDownload(string $url, int $maximumBytes = 512 * 1024): ?string
 {
     if (function_exists('curl_init')) {
         $curl = curl_init($url);
@@ -264,7 +341,7 @@ function msmOsLogoDownload(string $url): ?string
             $statusCode = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
             curl_close($curl);
 
-            if ($statusCode >= 200 && $statusCode < 300 && is_string($content)) {
+            if ($statusCode >= 200 && $statusCode < 300 && is_string($content) && strlen($content) <= $maximumBytes) {
                 return $content;
             }
         }
@@ -283,7 +360,7 @@ function msmOsLogoDownload(string $url): ?string
     ]);
     $content = @file_get_contents($url, false, $context);
 
-    return is_string($content) ? $content : null;
+    return is_string($content) && strlen($content) <= $maximumBytes ? $content : null;
 }
 
 function msmOsLogoValidateSvg(string $content): bool
@@ -337,7 +414,22 @@ function msmOsLogoFetchFromInternet(string $query): array
     $downloadFailed = false;
     $validationFailed = false;
     foreach ($candidates as $localSlug => $remoteSlug) {
-        $url = 'https://cdn.simpleicons.org/' . rawurlencode($remoteSlug);
+        $existingCustomLogo = false;
+        foreach (['png', 'svg', 'webp'] as $extension) {
+            if (is_file($logoDirectory . '/' . $localSlug . '.' . $extension)) {
+                $existingCustomLogo = true;
+                break;
+            }
+        }
+
+        if ($existingCustomLogo) {
+            return [
+                'success' => false,
+                'message' => 'Un logo personnalise existe deja pour ' . $localSlug . '. Supprime-le ou remplace-le manuellement si necessaire.',
+            ];
+        }
+
+        $url = msmOsLogoDashboardIconsBaseUrl() . '/svg/' . rawurlencode($remoteSlug) . '.svg';
         $content = msmOsLogoDownload($url);
         if ($content === null) {
             $downloadFailed = true;
@@ -350,13 +442,6 @@ function msmOsLogoFetchFromInternet(string $query): array
         }
 
         $destination = $logoDirectory . '/' . $localSlug . '.svg';
-        if (is_file($destination)) {
-            return [
-                'success' => false,
-                'message' => 'Un logo personnalise existe deja pour ' . $localSlug . '. Supprime-le ou remplace-le manuellement si necessaire.',
-            ];
-        }
-
         if (file_put_contents($destination, $content) === false) {
             return [
                 'success' => false,
@@ -380,6 +465,6 @@ function msmOsLogoFetchFromInternet(string $query): array
 
     return [
         'success' => false,
-        'message' => 'Aucun logo valide trouve depuis la source distante.',
+        'message' => 'Aucun logo OS valide trouve dans Dashboard Icons.',
     ];
 }

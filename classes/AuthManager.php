@@ -362,10 +362,10 @@ class AuthManager
         return match ($base) {
             'index.php' => 'dashboard',
             'serveurs.php', 'add-server.php', 'details-cible.php', 'refresh-target.php' => 'serveurs',
-            'supervision.php', 'update-status.php' => 'supervision',
+            'supervision.php', 'update-status.php', 'securite-web.php' => 'supervision',
             'alerts.php', 'alerts-wall.php', 'alerts-wall-standalone.php', 'alert-rules.php', 'alert-action.php' => 'alertes',
             'patch-management.php' => 'patch_management',
-            'securite-serveurs.php', 'securite-web.php', 'details-securite.php' => 'securite',
+            'securite-serveurs.php', 'details-securite.php' => 'securite',
             'diagnostic.php' => 'diagnostic',
             'settings.php', 'users.php', 'collectors.php', 'os-lifecycle.php' => 'settings',
             default => 'dashboard',

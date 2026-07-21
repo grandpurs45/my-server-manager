@@ -25,6 +25,7 @@ Certaines familles ajoutent des labels specialises :
 - Securite : `status`.
 - Sante materielle : `hardware_profile`, `collector`, `sensor`, `sensor_label`, `sensor_type`, `device`, `protocol`, `model`.
 - Home Assistant : `collector`, `installation_type`, `component`.
+- Supervision URLs : `target`, `url`, `environment`, `criticality`.
 - Alerting : `rule`, `severity`.
 
 ```text
@@ -61,6 +62,12 @@ msm_hardware_disk_percentage_used{server="server-01",hostname="server-01.example
 msm_home_assistant_check_status{server="ha",hostname="ha.local",type="home_assistant",collector="ssh+ha_cli",installation_type="Home Assistant OS",status="ok"} 1
 msm_home_assistant_update_available{server="ha",hostname="ha.local",type="home_assistant",component="ha"} 0
 msm_home_assistant_last_check_timestamp{server="ha",hostname="ha.local",type="home_assistant",collector="ssh+ha_cli",installation_type="Home Assistant OS"} 1780000000
+msm_url_up{target="MSM",url="https://msm.example.local/",environment="production",criticality="high"} 1
+msm_url_http_status{target="MSM",url="https://msm.example.local/",environment="production",criticality="high"} 200
+msm_url_duration_seconds{target="MSM",url="https://msm.example.local/",environment="production",criticality="high"} 0.184
+msm_url_ssl_expiry_days{target="MSM",url="https://msm.example.local/",environment="production",criticality="high"} 42
+msm_url_content_match{target="MSM",url="https://msm.example.local/",environment="production",criticality="high"} 1
+msm_url_last_check_timestamp{target="MSM",url="https://msm.example.local/",environment="production",criticality="high"} 1780000000
 msm_alerts_active{severity="critical"} 1
 msm_alert_active{server="server-01",hostname="server-01.example.local",type="linux",rule="server_down",severity="critical"} 1
 ```
@@ -102,6 +109,7 @@ php scripts/check-os-lifecycle.php --force
 php scripts/check-security.php --force
 php scripts/check-hardware-health.php --force
 php scripts/check-home-assistant.php --force
+php scripts/check-web.php --force
 php scripts/check-alerts.php --force
 ```
 

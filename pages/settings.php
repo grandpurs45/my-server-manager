@@ -7,7 +7,7 @@ use MSM\SettingsManager;
 
 $settingsManager = new SettingsManager($pdo);
 
-$categories = ['reseau', 'supervision', 'inventaire', 'patch_management', 'os_lifecycle', 'security', 'hardware_health', 'home_assistant', 'alerting', 'auth', 'bdd', 'msm'];
+$categories = ['reseau', 'supervision', 'inventaire', 'patch_management', 'os_lifecycle', 'security', 'hardware_health', 'home_assistant', 'web_monitoring', 'alerting', 'auth', 'bdd', 'msm'];
 $labels = [
     'reseau' => 'Reseau',
     'supervision' => 'Supervision',
@@ -17,6 +17,7 @@ $labels = [
     'security' => 'Securite',
     'hardware_health' => 'Sante materielle',
     'home_assistant' => 'Home Assistant',
+    'web_monitoring' => 'Supervision URLs',
     'alerting' => 'Alerting',
     'auth' => 'Authentification',
     'bdd' => 'Base de donnees',
@@ -178,6 +179,9 @@ require_once __DIR__ . '/../includes/header.php';
                                 <p class="mt-1 text-sm text-slate-600">
                                     Convention : <code><?= htmlspecialchars(msmOsLogoRelativeDirectory()) ?>/identifiant.png</code>.
                                     Exemple : <code>alpine.png</code> pour Alpine Linux.
+                                    La recherche automatique utilise
+                                    <a href="https://dashboardicons.com/icons" target="_blank" rel="noopener noreferrer" class="font-semibold text-blue-600 hover:underline">Dashboard Icons</a>
+                                    puis conserve le SVG localement.
                                 </p>
                             </div>
                         </div>
@@ -189,7 +193,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <label class="block text-sm font-semibold text-blue-900" for="logo_query">Recherche automatique</label>
                                 <input id="logo_query" name="logo_query" type="text" placeholder="Alpine Linux 3.21, Rocky Linux 10.1, Home Assistant OS"
                                        class="mt-1 block w-full rounded border-gray-300 shadow-sm">
-                                <p class="mt-1 text-xs text-blue-800">MSM essaie d'abord les familles connues, puis un identifiant derive du texte saisi.</p>
+                                <p class="mt-1 text-xs text-blue-800">MSM cherche la famille OS dans Dashboard Icons, puis enregistre le SVG dans le depot local.</p>
                             </div>
                             <div class="flex items-end">
                                 <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">

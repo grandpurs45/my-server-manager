@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.0](https://github.com/grandpurs45/my-server-manager/compare/v1.11.0...v1.12.0) (2026-07-21)
+
+### Features
+
+* ajout de la supervision d URLs HTTP/HTTPS avec intervalles par cible, codes acceptes, timeout, redirections et contenu attendu
+* collecte des temps DNS, connexion, TLS, premier octet et duree totale ainsi que de l expiration des certificats
+* ajout du script planifie `scripts/check-web.php` et integration dans la page Collecteurs / Checks
+* ajout des alertes URL indisponible, code HTTP inattendu, latence, expiration TLS et contenu absent
+* ajout des metriques Prometheus `msm_url_*`
+* utilisation de Dashboard Icons comme catalogue distant pour rechercher les logos OS, avec validation et stockage local des SVG
+* prise en charge des cibles URL dans les filtres et la recherche de la page Alertes
+
+### Security
+
+* limitation des controles aux protocoles HTTP/HTTPS, redirections bornees, reponses limitees a 1 Mio et refus des identifiants dans les URLs
+
+### Documentation
+
+* ajout du guide `docs/WEB_MONITORING.md` et mise a jour des procedures d ordonnancement et Prometheus
+
 ## [1.11.0](https://github.com/grandpurs45/my-server-manager/compare/v1.10.3...v1.11.0) (2026-07-19)
 
 ### Features

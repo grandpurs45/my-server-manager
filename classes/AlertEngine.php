@@ -32,6 +32,7 @@ class AlertEngine
             $this->evaluateHardwareSmart($rules),
             $this->evaluateHardwareRuntime($rules),
             $this->evaluateHomeAssistant($rules),
+            $this->evaluateWebMonitoring($rules),
             $this->evaluateCollectorRuntime($rules)
         );
 
@@ -769,6 +770,113 @@ class AlertEngine
         }
 
         return $message;
+    }
+
+    private function evaluateWebMonitoring(array $rules): array
+    {
+        $ruleKeys = [
+            'url_unavailable',
+            'url_http_status',
+            'url_latency_high',
+            'url_tls_expiry',
+            'url_content_mismatch',
+        ];
+        if (!$this->tableExists('web_targets') || !$this->tableExists('web_check_results')) {
+            return [];
+        }
+        if (array_intersect($ruleKeys, array_keys($rules)) === []) {
+            return [];
+        }
+
+        $stmt = $this->pdo->query(
+            'SELECT wt.id, wt.name, wt.url, wt.failure_threshold, wt.consecutive_failures,
+                    wr.success, wr.http_status, wr.error_type, wr.error_message,
+                    wr.total_ms, wr.certificate_expiry_days, wr.content_matched
+             FROM web_targets wt
+             INNER JOIN web_check_results wr
+               ON wr.id = (
+                   SELECT wr2.id
+                   FROM web_check_results wr2
+                   WHERE wr2.web_target_id = wt.id
+                   ORDER BY wr2.checked_at DESC, wr2.id DESC
+                   LIMIT 1
+               )
+             WHERE wt.enabled = 1
+             ORDER BY wt.id ASC'
+        );
+
+        $candidates = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $target) {
+            $targetId = (int) $target['id'];
+            $name = (string) $target['name'];
+            $url = (string) $target['url'];
+            $failedEnough = (int) $target['consecutive_failures'] >= max(1, (int) $target['failure_threshold']);
+            $errorType = (string) ($target['error_type'] ?? '');
+
+            if ($failedEnough && $errorType === 'http_status' && isset($rules['url_http_status'])) {
+                $candidates[] = $this->candidate(
+                    'url_http_status',
+                    null,
+                    $rules['url_http_status']['severity'] ?? 'warning',
+                    'Code HTTP inattendu sur ' . $name,
+                    'La cible ' . $url . ' repond avec le code HTTP ' . (int) $target['http_status'] . '.',
+                    'url_http_status:' . $targetId
+                );
+            } elseif ($failedEnough && $errorType === 'content_mismatch' && isset($rules['url_content_mismatch'])) {
+                $candidates[] = $this->candidate(
+                    'url_content_mismatch',
+                    null,
+                    $rules['url_content_mismatch']['severity'] ?? 'warning',
+                    'Contenu absent sur ' . $name,
+                    'Le contenu attendu n a pas ete trouve dans la reponse de ' . $url . '.',
+                    'url_content_mismatch:' . $targetId
+                );
+            } elseif ($failedEnough && (int) $target['success'] !== 1 && isset($rules['url_unavailable'])) {
+                $message = 'La cible ' . $url . ' est indisponible depuis '
+                    . (int) $target['consecutive_failures'] . ' controle(s).';
+                if (!empty($target['error_message'])) {
+                    $message .= ' Erreur : ' . $target['error_message'];
+                }
+                $candidates[] = $this->candidate(
+                    'url_unavailable',
+                    null,
+                    $rules['url_unavailable']['severity'] ?? 'critical',
+                    'URL indisponible : ' . $name,
+                    $message,
+                    'url_unavailable:' . $targetId
+                );
+            }
+
+            if ((int) $target['success'] === 1 && isset($rules['url_latency_high']) && $target['total_ms'] !== null) {
+                $threshold = max(1, (int) ($rules['url_latency_high']['threshold_value'] ?? 2000));
+                if ((float) $target['total_ms'] >= $threshold) {
+                    $candidates[] = $this->candidate(
+                        'url_latency_high',
+                        null,
+                        $rules['url_latency_high']['severity'] ?? 'warning',
+                        'Latence elevee sur ' . $name,
+                        'La requete vers ' . $url . ' a dure ' . number_format((float) $target['total_ms'], 0, ',', ' ') . ' ms. Seuil : ' . $threshold . ' ms.',
+                        'url_latency_high:' . $targetId
+                    );
+                }
+            }
+
+            if (isset($rules['url_tls_expiry']) && $target['certificate_expiry_days'] !== null) {
+                $threshold = max(1, (int) ($rules['url_tls_expiry']['threshold_value'] ?? 30));
+                if ((int) $target['certificate_expiry_days'] <= $threshold) {
+                    $candidates[] = $this->candidate(
+                        'url_tls_expiry',
+                        null,
+                        $rules['url_tls_expiry']['severity'] ?? 'warning',
+                        'Certificat TLS a renouveler : ' . $name,
+                        'Le certificat de ' . $url . ' expire dans ' . (int) $target['certificate_expiry_days'] . ' jour(s).',
+                        'url_tls_expiry:' . $targetId
+                    );
+                }
+            }
+        }
+
+        return $candidates;
     }
 
     private function evaluateCollectorRuntime(array $rules): array

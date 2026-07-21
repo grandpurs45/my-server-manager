@@ -133,7 +133,7 @@ class AlertRepository
         }
 
         if (!empty($filters['server_search'])) {
-            $where[] = '(s.name LIKE :server_search OR s.hostname LIKE :server_search)';
+            $where[] = '(s.name LIKE :server_search OR s.hostname LIKE :server_search OR a.title LIKE :server_search OR a.message LIKE :server_search)';
             $params[':server_search'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], (string) $filters['server_search']) . '%';
         }
 

@@ -83,6 +83,18 @@ class PrometheusExporter
             '# TYPE msm_home_assistant_update_available gauge',
             '# HELP msm_home_assistant_last_check_timestamp Last known Home Assistant check timestamp as Unix epoch seconds.',
             '# TYPE msm_home_assistant_last_check_timestamp gauge',
+            '# HELP msm_url_up Last known URL availability status from MSM.',
+            '# TYPE msm_url_up gauge',
+            '# HELP msm_url_http_status Last known HTTP response status.',
+            '# TYPE msm_url_http_status gauge',
+            '# HELP msm_url_duration_seconds Last known total URL request duration in seconds.',
+            '# TYPE msm_url_duration_seconds gauge',
+            '# HELP msm_url_ssl_expiry_days Remaining days before the URL certificate expires.',
+            '# TYPE msm_url_ssl_expiry_days gauge',
+            '# HELP msm_url_content_match Last known expected content match status.',
+            '# TYPE msm_url_content_match gauge',
+            '# HELP msm_url_last_check_timestamp Last known URL check timestamp as Unix epoch seconds.',
+            '# TYPE msm_url_last_check_timestamp gauge',
             '# HELP msm_alerts_active Active MSM alerts count grouped by severity.',
             '# TYPE msm_alerts_active gauge',
             '# HELP msm_alert_active Active MSM alert. Value is always 1 for each active alert.',
@@ -95,6 +107,7 @@ class PrometheusExporter
         $latestSecurityChecks = $this->getLatestSecurityChecks();
         $latestHardwareChecks = $this->getLatestHardwareChecks();
         $latestHomeAssistantChecks = $this->getLatestHomeAssistantChecks();
+        $webTargets = $this->getLatestWebChecks();
         $activeAlerts = $this->getActiveAlerts();
         $activeAlertCounts = ['critical' => 0, 'warning' => 0, 'info' => 0];
 
@@ -297,6 +310,31 @@ class PrometheusExporter
                     $lines[] = "msm_home_assistant_update_available{{$componentLabels}} "
                         . ((int) $haCheck[$field] === 1 ? 1 : 0);
                 }
+            }
+        }
+
+        foreach ($webTargets as $target) {
+            $urlLabels = $this->formatLabels([
+                'target' => $target['name'] ?? '',
+                'url' => $target['url'] ?? '',
+                'environment' => $target['environment'] ?? 'other',
+                'criticality' => $target['criticality'] ?? 'medium',
+            ]);
+            $lines[] = "msm_url_up{{$urlLabels}} " . ((int) ($target['success'] ?? 0) === 1 ? 1 : 0);
+            if ($target['http_status'] !== null) {
+                $lines[] = "msm_url_http_status{{$urlLabels}} " . (int) $target['http_status'];
+            }
+            if ($target['total_ms'] !== null) {
+                $lines[] = "msm_url_duration_seconds{{$urlLabels}} " . $this->formatFloat((float) $target['total_ms'] / 1000);
+            }
+            if ($target['certificate_expiry_days'] !== null) {
+                $lines[] = "msm_url_ssl_expiry_days{{$urlLabels}} " . (int) $target['certificate_expiry_days'];
+            }
+            if ($target['content_matched'] !== null) {
+                $lines[] = "msm_url_content_match{{$urlLabels}} " . ((int) $target['content_matched'] === 1 ? 1 : 0);
+            }
+            if ($target['checked_at_timestamp'] !== null) {
+                $lines[] = "msm_url_last_check_timestamp{{$urlLabels}} " . (int) $target['checked_at_timestamp'];
             }
         }
 
@@ -543,6 +581,33 @@ class PrometheusExporter
         }
 
         return $checks;
+    }
+
+    private function getLatestWebChecks(): array
+    {
+        if (!$this->tableExists('web_targets') || !$this->tableExists('web_check_results')) {
+            return [];
+        }
+
+        $stmt = $this->pdo->query(
+            'SELECT wt.name, wt.url, wt.environment, wt.criticality,
+                    wr.success, wr.http_status, wr.total_ms,
+                    wr.certificate_expiry_days, wr.content_matched,
+                    UNIX_TIMESTAMP(wr.checked_at) AS checked_at_timestamp
+             FROM web_targets wt
+             INNER JOIN web_check_results wr
+               ON wr.id = (
+                   SELECT wr2.id
+                   FROM web_check_results wr2
+                   WHERE wr2.web_target_id = wt.id
+                   ORDER BY wr2.checked_at DESC, wr2.id DESC
+                   LIMIT 1
+               )
+             WHERE wt.enabled = 1
+             ORDER BY wt.name ASC, wt.id ASC'
+        );
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     private function getActiveAlerts(): array

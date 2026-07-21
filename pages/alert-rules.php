@@ -133,6 +133,10 @@ require_once __DIR__ . '/../includes/header.php';
                                     <div class="mt-1 text-xs text-slate-500">pourcentage utilise</div>
                                 <?php elseif (($rule['rule_key'] ?? '') === 'hardware_smart_media_errors'): ?>
                                     <div class="mt-1 text-xs text-slate-500">nombre d erreurs</div>
+                                <?php elseif (($rule['rule_key'] ?? '') === 'url_latency_high'): ?>
+                                    <div class="mt-1 text-xs text-slate-500">millisecondes</div>
+                                <?php elseif (($rule['rule_key'] ?? '') === 'url_tls_expiry'): ?>
+                                    <div class="mt-1 text-xs text-slate-500">jours avant expiration</div>
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3 align-top">

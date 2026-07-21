@@ -6,7 +6,7 @@ chdir(__DIR__ . '/..');
 
 $requiredPhpVersion = '8.0.0';
 $requiredExtensions = ['pdo_mysql', 'openssl', 'mbstring'];
-$recommendedExtensions = ['zip'];
+$recommendedExtensions = ['zip', 'curl'];
 $requiredCommands = ['git', 'composer', 'ping'];
 $recommendedCommands = ['unzip', 'ssh'];
 $recommendedMemoryMb = 900;

@@ -39,6 +39,7 @@ La consommation depend surtout du nombre de serveurs supervises, de la frequence
   - `pdo_mysql`
   - `openssl`
   - `mbstring`
+  - `curl` pour la supervision HTTP/HTTPS des URLs.
   - `zip` recommande pour Composer.
 - MariaDB ou MySQL.
 - Apache avec PHP active.

@@ -10,7 +10,7 @@ $repository = new AlertRepository($pdo);
 $allowedStatuses = ['active', 'resolved', 'all'];
 $allowedOperatorStates = ['visible', 'acknowledged', 'ignored', 'all'];
 $allowedSeverities = ['', 'critical', 'warning', 'info'];
-$allowedSources = ['', 'supervision', 'patch_management', 'os_lifecycle', 'security', 'hardware_health', 'home_assistant'];
+$allowedSources = ['', 'supervision', 'patch_management', 'os_lifecycle', 'security', 'hardware_health', 'home_assistant', 'web_monitoring', 'maintenance'];
 $alertTypeOptions = $repository->getAlertTypeOptions();
 $allowedRuleKeys = array_merge([''], array_map(
     fn (array $rule): string => (string) ($rule['rule_key'] ?? ''),
@@ -123,6 +123,8 @@ function msmAlertSourceLabel(string $source): string
         'security' => 'Securite',
         'hardware_health' => 'Sante materielle',
         'home_assistant' => 'Home Assistant',
+        'web_monitoring' => 'Supervision URLs',
+        'maintenance' => 'Maintenance',
         default => $source,
     };
 }
@@ -193,12 +195,12 @@ function msmAlertSourceLabel(string $source): string
     <form method="get" class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <div class="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-7">
             <label class="text-sm font-semibold text-slate-700">
-                Serveur
+                Cible
                 <input type="search"
                        name="server_search"
                        value="<?= htmlspecialchars($serverSearch) ?>"
                        class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
-                       placeholder="Nom ou hostname">
+                       placeholder="Serveur, URL ou message">
             </label>
             <label class="text-sm font-semibold text-slate-700">
                 Statut
@@ -227,7 +229,7 @@ function msmAlertSourceLabel(string $source): string
             <label class="text-sm font-semibold text-slate-700">
                 Source
                 <select name="source" class="mt-1 w-full rounded border border-gray-300 px-3 py-2">
-                    <?php foreach (['' => 'Toutes', 'supervision' => 'Supervision', 'patch_management' => 'Patch Management', 'os_lifecycle' => 'Cycle de vie OS', 'security' => 'Securite', 'hardware_health' => 'Sante materielle', 'home_assistant' => 'Home Assistant'] as $value => $label): ?>
+                    <?php foreach (['' => 'Toutes', 'supervision' => 'Supervision', 'patch_management' => 'Patch Management', 'os_lifecycle' => 'Cycle de vie OS', 'security' => 'Securite', 'hardware_health' => 'Sante materielle', 'home_assistant' => 'Home Assistant', 'web_monitoring' => 'Supervision URLs', 'maintenance' => 'Maintenance'] as $value => $label): ?>
                         <option value="<?= $value ?>" <?= $source === $value ? 'selected' : '' ?>><?= $label ?></option>
                     <?php endforeach; ?>
                 </select>

@@ -6,7 +6,7 @@ require_once __DIR__ . '/SchedulingInspector.php';
 class SetupAssistant
 {
     private const REQUIRED_EXTENSIONS = ['pdo_mysql', 'openssl', 'mbstring'];
-    private const RECOMMENDED_EXTENSIONS = ['zip'];
+    private const RECOMMENDED_EXTENSIONS = ['zip', 'curl'];
     private const REQUIRED_COMMANDS = ['git', 'composer', 'ping'];
     private const RECOMMENDED_COMMANDS = ['unzip', 'ssh'];
     private const REQUIRED_ENV = ['MSM_DB_HOST', 'MSM_DB_NAME', 'MSM_DB_USER', 'MSM_SECRET_KEY'];

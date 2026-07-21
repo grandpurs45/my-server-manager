@@ -29,6 +29,7 @@ Les regles d'alerte `collector_execution_stale` et `collector_execution_error` s
 | `scripts/check-security.php` | ports ouverts et pare-feu | toutes les heures ou tous les jours | `security / check_interval_hours` |
 | `scripts/check-hardware-health.php` | temperatures et SMART des equipements physiques | toutes les 5 minutes | `hardware_health / check_interval_minutes` |
 | `scripts/check-home-assistant.php` | versions et etat Home Assistant via SSH | toutes les 15 minutes | `home_assistant / check_interval_minutes` |
+| `scripts/check-web.php` | disponibilite, performances et certificats des URLs | toutes les minutes | intervalle propre a chaque URL |
 | `scripts/check-alerts.php` | evaluation des alertes actives | toutes les 1 a 5 minutes | `alerting / check_interval_minutes` |
 
 Les scripts peuvent etre appeles plus souvent que necessaire : chacun respecte son intervalle interne et saute l'execution si le dernier check est trop recent.
@@ -44,6 +45,7 @@ php scripts/check-os-lifecycle.php
 php scripts/check-security.php
 php scripts/check-hardware-health.php
 php scripts/check-home-assistant.php
+php scripts/check-web.php
 php scripts/check-alerts.php
 ```
 
@@ -56,6 +58,7 @@ php scripts/check-os-lifecycle.php --force
 php scripts/check-security.php --force
 php scripts/check-hardware-health.php --force
 php scripts/check-home-assistant.php --force
+php scripts/check-web.php --force
 php scripts/check-alerts.php --force
 ```
 
@@ -67,7 +70,7 @@ Creer un dossier de logs accessible par l'utilisateur qui execute les scripts :
 
 ```bash
 mkdir -p /var/www/html/msm/logs
-touch /var/www/html/msm/logs/check-{servers,patches,os-lifecycle,security,hardware-health,home-assistant,alerts}.log
+touch /var/www/html/msm/logs/check-{servers,patches,os-lifecycle,security,hardware-health,home-assistant,web,alerts}.log
 chmod 775 /var/www/html/msm/logs
 ```
 
@@ -90,6 +93,7 @@ logs/check-os-lifecycle.log
 logs/check-security.log
 logs/check-hardware-health.log
 logs/check-home-assistant.log
+logs/check-web.log
 logs/check-alerts.log
 ```
 
@@ -124,6 +128,7 @@ Exemple :
 30 * * * * /usr/bin/php /var/www/html/msm/scripts/check-security.php >> /var/www/html/msm/logs/check-security.log 2>&1
 */5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-hardware-health.php >> /var/www/html/msm/logs/check-hardware-health.log 2>&1
 */15 * * * * /usr/bin/php /var/www/html/msm/scripts/check-home-assistant.php >> /var/www/html/msm/logs/check-home-assistant.log 2>&1
+* * * * * /usr/bin/php /var/www/html/msm/scripts/check-web.php >> /var/www/html/msm/logs/check-web.log 2>&1
 */5 * * * * /usr/bin/php /var/www/html/msm/scripts/check-alerts.php >> /var/www/html/msm/logs/check-alerts.log 2>&1
 ```
 
@@ -134,6 +139,7 @@ Recommandations :
 - lancer `check-os-lifecycle.php` au moins une fois par jour ou par heure, sans `--force`.
 - lancer `check-security.php` au moins une fois par jour ou par heure, sans `--force`.
 - lancer `check-home-assistant.php` regulierement si des cibles Home Assistant existent.
+- lancer `check-web.php` chaque minute ; il ne controle que les URLs arrivees a echeance.
 - lancer `check-alerts.php` plus frequemment, car il lit uniquement la base.
 
 Avec l'exemple ci-dessus :
@@ -143,6 +149,7 @@ Avec l'exemple ci-dessus :
 - cycle de vie OS : cron appelle le script a la minute 15 de chaque heure, MSM execute par defaut toutes les 168 heures ;
 - securite : cron appelle le script a la minute 30 de chaque heure, MSM execute par defaut toutes les 24 heures ;
 - Home Assistant : cron appelle le script toutes les 15 minutes, MSM execute selon son intervalle configure ;
+- supervision URLs : cron appelle le script chaque minute, chaque URL conserve son propre intervalle ;
 - alerting : cron appelle le script toutes les 5 minutes, MSM execute selon son intervalle configure.
 
 Une ligne `Verification ... sautee` dans un log confirme que cron fonctionne : l'intervalle interne MSM n'etait simplement pas encore atteint.

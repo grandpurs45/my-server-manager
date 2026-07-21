@@ -104,6 +104,13 @@ return [
             'default' => '15'
         ]
     ],
+    'web_monitoring' => [
+        'check_interval_minutes' => [
+            'type' => 'number',
+            'label' => 'Frequence ordonnanceur supervision URLs (minutes)',
+            'default' => '1'
+        ]
+    ],
     'alerting' => [
         'check_interval_minutes' => [
             'type' => 'number',

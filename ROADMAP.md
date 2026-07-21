@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.11.0`.
+Version actuelle : `v1.12.0`.
 
 Socle valide :
 
@@ -26,12 +26,13 @@ Socle valide :
 - alerting interne avec regles globales, mur d'alertes, vue backoffice et traitement manuel ;
 - sante materielle Linux/Proxmox avec temperatures, SMART, dashboard, alertes et export Prometheus ;
 - connecteur Home Assistant SSH avec versions Core, Supervisor, OS, statut d'update et export Prometheus ;
-- logos OS extensibles avec upload manuel et recuperation automatique depuis une source connue ;
+- supervision HTTP/HTTPS avec disponibilite, performances, TLS, contenu attendu, alertes et export Prometheus ;
+- logos OS extensibles avec upload manuel et recuperation automatique depuis Dashboard Icons ;
 - page Collecteurs / Checks pour controler scripts, logs, intervalles internes et lignes cron attendues ;
 - export Prometheus stable ;
 - titre d'onglet navigateur personnalisable par environnement.
 
-## Priorite v1.11 - Collecteurs et Maintenance
+## Suite Collecteurs et Maintenance
 
 Objectif : rendre les collecteurs administrables et reduire encore le diagnostic manuel en production.
 
@@ -114,6 +115,16 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 
 ## Realise
 
+### v1.12 - Supervision URLs et Logos OS
+
+- Gestion de cibles HTTP/HTTPS independantes des serveurs.
+- Intervalles, timeout, redirections, codes HTTP, contenu attendu et seuil d echecs configurables.
+- Collecte des performances reseau et de l expiration TLS sans check lourd au chargement des pages.
+- Alertes URL, latence, code HTTP, contenu et certificat.
+- Export Prometheus `msm_url_*`.
+- Script `check-web.php` integre au diagnostic des collecteurs, a cron et aux timers systemd.
+- Dashboard Icons utilise comme catalogue distant des logos OS, avec validation et stockage local du SVG.
+
 ### v1.11 - Ordonnancement Fiabilise
 
 - Catalogue centralise des checks planifies.
@@ -158,7 +169,7 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 - Logos OS extensibles :
   - convention `assets/logos/os/<identifiant>.png|svg|webp` ;
   - upload manuel depuis les parametres MSM ;
-  - recuperation automatique depuis une source connue avec validation du SVG.
+  - recuperation automatique depuis Dashboard Icons avec validation et stockage local du SVG.
 - Alertes Home Assistant :
   - check en erreur ;
   - check trop ancien ;

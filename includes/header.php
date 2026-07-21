@@ -76,6 +76,10 @@ if (ob_get_level() > 0) {
                 <i data-lucide="activity" class="w-5 h-5 mr-2"></i>
                 Supervision
             </a>
+            <a href="<?= $baseUrl ?>pages/securite-web.php" class="flex items-center pl-4 text-sm hover:text-gray-200">
+                <i data-lucide="globe-2" class="w-4 h-4 mr-2"></i>
+                URLs
+            </a>
             <?php endif; ?>
             <?php if ($authManager->userCan('alertes')): ?>
             <a href="<?= $baseUrl ?>pages/alerts.php" class="flex items-center hover:text-gray-200">
@@ -101,10 +105,6 @@ if (ob_get_level() > 0) {
             <a href="<?= $baseUrl ?>pages/securite-serveurs.php" class="flex items-center pl-4 hover:text-gray-200">
                 <i data-lucide="terminal-square" class="w-5 h-5 mr-2"></i>
                 Serveurs
-            </a>
-            <a href="<?= $baseUrl ?>pages/securite-web.php" class="flex items-center pl-4 hover:text-gray-200">
-                <i data-lucide="globe" class="w-5 h-5 mr-2"></i>
-                Web
             </a>
             <?php endif; ?>
 

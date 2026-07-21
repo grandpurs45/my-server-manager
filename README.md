@@ -12,13 +12,14 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Securite operationnelle : ports ouverts, exposition reseau, firewall, dernier controle et erreurs de collecte.
 - Sante materielle : temperatures Linux/Proxmox, etat SMART, usure et erreurs media des disques physiques.
 - Home Assistant : collecte SSH dediee, versions disponibles et etat d'update quand la CLI `ha` est exposee.
+- Supervision URLs : disponibilite HTTP/HTTPS, codes attendus, performances, certificats TLS et contenu attendu.
 - Alerting : regles globales, alertes actives, mur d'alertes et vue backoffice.
 - Collecteurs / Checks : controle des scripts planifies, logs, intervalles internes et lignes cron attendues.
 - Etats operationnels homogenes : `OK`, `Warning`, `Critical`, `Unknown`.
 - Notification de nouvelle version disponible avec lien vers les notes de release et le guide de mise a jour.
 - Titre d'onglet navigateur personnalisable pour distinguer les environnements.
 - Format d'affichage des dates configurable dans les parametres MSM.
-- Logos OS extensibles via la convention `assets/logos/os/<identifiant>.png`, l'upload manuel et la recuperation automatique depuis une source connue.
+- Logos OS extensibles via la convention `assets/logos/os/<identifiant>.png|svg|webp`, l'upload manuel et la recuperation automatique depuis [Dashboard Icons](https://dashboardicons.com/icons), avec stockage local.
 - Parametres dynamiques : debug, supervision, reseau.
 - Migrations SQL versionnees.
 - Export Prometheus pour Grafana.
@@ -48,6 +49,8 @@ La v1 cible un usage homelab / petite infrastructure avec un support principal L
 - Docker : hors v1, prevu en v1.x.
 
 Le detail du support et des limites est documente dans [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+
+La configuration et l'ordonnancement de la supervision HTTP sont documentes dans [docs/WEB_MONITORING.md](docs/WEB_MONITORING.md).
 
 ## Installation
 
