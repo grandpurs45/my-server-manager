@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.12.0`.
+Version actuelle : `v1.12.1`.
 
 Socle valide :
 

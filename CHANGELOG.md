@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.1](https://github.com/grandpurs45/my-server-manager/compare/v1.12.0...v1.12.1) (2026-07-25)
+
+### Changed
+
+* reorganisation du menu principal par domaines : infrastructure, exploitation, securite et alertes, administration
+* ajout d'un etat actif visible et harmonisation des icones, espacements et libelles de navigation
+
 ## [1.12.0](https://github.com/grandpurs45/my-server-manager/compare/v1.11.0...v1.12.0) (2026-07-21)
 
 ### Features

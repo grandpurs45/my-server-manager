@@ -13,6 +13,14 @@ if (basename($scriptDirectory) === 'pages') {
 }
 
 $baseUrl = ($scriptDirectory === '' || $scriptDirectory === '.') ? '/' : $scriptDirectory . '/';
+$currentPage = basename($scriptName);
+$navItemClass = static function (array $pages) use ($currentPage): string {
+    $baseClass = 'flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors';
+
+    return in_array($currentPage, $pages, true)
+        ? $baseClass . ' bg-white text-blue-700 shadow-sm'
+        : $baseClass . ' text-blue-50 hover:bg-blue-600 hover:text-white';
+};
 $updateStatus = null;
 $browserTitle = trim((string) ($settings->get('msm', 'browser_title') ?? ''));
 if ($browserTitle === '') {
@@ -50,87 +58,111 @@ if (ob_get_level() > 0) {
 }
 ?>
 <div class="flex h-screen">
-    <aside class="w-60 bg-blue-700 text-white p-6">
-        <a href="<?= $baseUrl ?>index.php" class="flex flex-col items-center gap-2 mb-10">
+    <aside class="w-60 shrink-0 overflow-y-auto bg-blue-700 px-4 py-5 text-white">
+        <a href="<?= $baseUrl ?>index.php" class="mb-7 flex flex-col items-center gap-2">
             <div class="bg-white rounded-xl p-2 shadow-md">
                 <img src="<?= $baseUrl ?>assets/logos/logo_msm.png" alt="Logo MSM" class="w-16 h-16">
             </div>
             <span class="text-2xl font-bold">MSM</span>
         </a>
 
-        <nav class="space-y-4">
+        <nav class="space-y-5" aria-label="Navigation principale">
             <?php if ($authManager->userCan('dashboard')): ?>
-            <a href="<?= $baseUrl ?>index.php" class="flex items-center hover:text-gray-200">
-                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2"></i>
-                Dashboard
-            </a>
-            <?php endif; ?>
-            <?php if ($authManager->userCan('serveurs')): ?>
-            <a href="<?= $baseUrl ?>pages/serveurs.php" class="flex items-center hover:text-gray-200">
-                <i data-lucide="server" class="w-5 h-5 mr-2"></i>
-                Serveurs
-            </a>
-            <?php endif; ?>
-            <?php if ($authManager->userCan('supervision')): ?>
-            <a href="<?= $baseUrl ?>pages/supervision.php" class="flex items-center hover:text-gray-200">
-                <i data-lucide="activity" class="w-5 h-5 mr-2"></i>
-                Supervision
-            </a>
-            <a href="<?= $baseUrl ?>pages/securite-web.php" class="flex items-center pl-4 text-sm hover:text-gray-200">
-                <i data-lucide="globe-2" class="w-4 h-4 mr-2"></i>
-                URLs
-            </a>
-            <?php endif; ?>
-            <?php if ($authManager->userCan('alertes')): ?>
-            <a href="<?= $baseUrl ?>pages/alerts.php" class="flex items-center hover:text-gray-200">
-                <i data-lucide="bell" class="w-5 h-5 mr-2"></i>
-                Alertes
-            </a>
-            <a href="<?= $baseUrl ?>pages/alert-rules.php" class="flex items-center pl-4 text-sm hover:text-gray-200">
-                <i data-lucide="sliders-horizontal" class="w-4 h-4 mr-2"></i>
-                Regles alertes
-            </a>
+            <section class="space-y-1">
+                <div class="px-3 text-[11px] font-bold uppercase text-blue-200">Vue d'ensemble</div>
+                <a href="<?= $baseUrl ?>index.php" class="<?= $navItemClass(['index.php']) ?>">
+                    <i data-lucide="layout-dashboard" class="h-5 w-5 shrink-0"></i>
+                    Dashboard
+                </a>
+            </section>
             <?php endif; ?>
 
-            <?php if ($authManager->userCan('patch_management')): ?>
-            <div class="text-white uppercase text-sm font-bold mt-6 mb-2">Exploitation</div>
-            <a href="<?= $baseUrl ?>pages/patch-management.php" class="flex items-center pl-4 hover:text-gray-200">
-                <i data-lucide="package-check" class="w-5 h-5 mr-2"></i>
-                Patch management
-            </a>
+            <?php if ($authManager->userCan('serveurs') || $authManager->userCan('supervision')): ?>
+            <section class="space-y-1">
+                <div class="px-3 text-[11px] font-bold uppercase text-blue-200">Infrastructure</div>
+                <?php if ($authManager->userCan('serveurs')): ?>
+                <a href="<?= $baseUrl ?>pages/serveurs.php" class="<?= $navItemClass(['serveurs.php', 'add-server.php', 'details-cible.php']) ?>">
+                    <i data-lucide="server" class="h-5 w-5 shrink-0"></i>
+                    Serveurs
+                </a>
+                <?php endif; ?>
+                <?php if ($authManager->userCan('supervision')): ?>
+                <a href="<?= $baseUrl ?>pages/supervision.php" class="<?= $navItemClass(['supervision.php']) ?>">
+                    <i data-lucide="activity" class="h-5 w-5 shrink-0"></i>
+                    Supervision
+                </a>
+                <a href="<?= $baseUrl ?>pages/securite-web.php" class="<?= $navItemClass(['securite-web.php']) ?>">
+                    <i data-lucide="globe-2" class="h-5 w-5 shrink-0"></i>
+                    Supervision URLs
+                </a>
+                <?php endif; ?>
+            </section>
             <?php endif; ?>
 
-            <?php if ($authManager->userCan('securite')): ?>
-            <div class="text-white uppercase text-sm font-bold mt-6 mb-2">Securite</div>
-            <a href="<?= $baseUrl ?>pages/securite-serveurs.php" class="flex items-center pl-4 hover:text-gray-200">
-                <i data-lucide="terminal-square" class="w-5 h-5 mr-2"></i>
-                Serveurs
-            </a>
+            <?php if ($authManager->userCan('patch_management') || $authManager->userCan('settings')): ?>
+            <section class="space-y-1">
+                <div class="px-3 text-[11px] font-bold uppercase text-blue-200">Exploitation</div>
+                <?php if ($authManager->userCan('patch_management')): ?>
+                <a href="<?= $baseUrl ?>pages/patch-management.php" class="<?= $navItemClass(['patch-management.php']) ?>">
+                    <i data-lucide="package-check" class="h-5 w-5 shrink-0"></i>
+                    Patch management
+                </a>
+                <?php endif; ?>
+                <?php if ($authManager->userCan('settings')): ?>
+                <a href="<?= $baseUrl ?>pages/os-lifecycle.php" class="<?= $navItemClass(['os-lifecycle.php']) ?>">
+                    <i data-lucide="calendar-clock" class="h-5 w-5 shrink-0"></i>
+                    Cycle de vie OS
+                </a>
+                <a href="<?= $baseUrl ?>pages/collectors.php" class="<?= $navItemClass(['collectors.php']) ?>">
+                    <i data-lucide="workflow" class="h-5 w-5 shrink-0"></i>
+                    Collecteurs
+                </a>
+                <?php endif; ?>
+            </section>
             <?php endif; ?>
 
-            <?php if ($authManager->userCan('settings')): ?>
-            <a href="<?= $baseUrl ?>pages/settings.php" class="flex items-center hover:text-gray-200">
-                <i data-lucide="settings" class="w-5 h-5 mr-2"></i>
-                Parametres
-            </a>
-            <a href="<?= $baseUrl ?>pages/collectors.php" class="flex items-center pl-4 text-sm hover:text-gray-200">
-                <i data-lucide="workflow" class="w-4 h-4 mr-2"></i>
-                Collecteurs
-            </a>
-            <a href="<?= $baseUrl ?>pages/os-lifecycle.php" class="flex items-center pl-4 text-sm hover:text-gray-200">
-                <i data-lucide="calendar-clock" class="w-4 h-4 mr-2"></i>
-                Cycle OS
-            </a>
-            <a href="<?= $baseUrl ?>pages/users.php" class="flex items-center pl-4 text-sm hover:text-gray-200">
-                <i data-lucide="users" class="w-4 h-4 mr-2"></i>
-                Utilisateurs
-            </a>
+            <?php if ($authManager->userCan('securite') || $authManager->userCan('alertes')): ?>
+            <section class="space-y-1">
+                <div class="px-3 text-[11px] font-bold uppercase text-blue-200">Securite et alertes</div>
+                <?php if ($authManager->userCan('securite')): ?>
+                <a href="<?= $baseUrl ?>pages/securite-serveurs.php" class="<?= $navItemClass(['securite-serveurs.php', 'details-securite.php']) ?>">
+                    <i data-lucide="shield-check" class="h-5 w-5 shrink-0"></i>
+                    Securite serveurs
+                </a>
+                <?php endif; ?>
+                <?php if ($authManager->userCan('alertes')): ?>
+                <a href="<?= $baseUrl ?>pages/alerts.php" class="<?= $navItemClass(['alerts.php']) ?>">
+                    <i data-lucide="bell" class="h-5 w-5 shrink-0"></i>
+                    Alertes
+                </a>
+                <a href="<?= $baseUrl ?>pages/alert-rules.php" class="<?= $navItemClass(['alert-rules.php']) ?>">
+                    <i data-lucide="sliders-horizontal" class="h-5 w-5 shrink-0"></i>
+                    Regles d'alertes
+                </a>
+                <?php endif; ?>
+            </section>
             <?php endif; ?>
-            <?php if ($authManager->userCan('diagnostic')): ?>
-            <a href="<?= $baseUrl ?>pages/diagnostic.php" class="flex items-center hover:text-gray-200">
-                <i data-lucide="stethoscope" class="w-5 h-5 mr-2"></i>
-                Diagnostic
-            </a>
+
+            <?php if ($authManager->userCan('settings') || $authManager->userCan('diagnostic')): ?>
+            <section class="space-y-1">
+                <div class="px-3 text-[11px] font-bold uppercase text-blue-200">Administration</div>
+                <?php if ($authManager->userCan('settings')): ?>
+                <a href="<?= $baseUrl ?>pages/settings.php" class="<?= $navItemClass(['settings.php']) ?>">
+                    <i data-lucide="settings" class="h-5 w-5 shrink-0"></i>
+                    Parametres
+                </a>
+                <a href="<?= $baseUrl ?>pages/users.php" class="<?= $navItemClass(['users.php']) ?>">
+                    <i data-lucide="users" class="h-5 w-5 shrink-0"></i>
+                    Utilisateurs
+                </a>
+                <?php endif; ?>
+                <?php if ($authManager->userCan('diagnostic')): ?>
+                <a href="<?= $baseUrl ?>pages/diagnostic.php" class="<?= $navItemClass(['diagnostic.php']) ?>">
+                    <i data-lucide="stethoscope" class="h-5 w-5 shrink-0"></i>
+                    Diagnostic
+                </a>
+                <?php endif; ?>
+            </section>
             <?php endif; ?>
         </nav>
     </aside>
