@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.0](https://github.com/grandpurs45/my-server-manager/compare/v1.12.1...v1.13.0) (2026-07-26)
+
+### Features
+
+* ajout des canaux de notification Discord et webhook JSON generique
+* notifications configurables a l'ouverture et a la resolution selon une severite minimale
+* file d'envoi persistante avec anti-doublon, nouvelles tentatives et historique des livraisons
+* chiffrement des URLs de webhook avec la cle MSM et bouton de test depuis l'interface
+* reservation atomique des livraisons pour eviter les doubles envois en cas de chevauchement du cron
+
+### Documentation
+
+* ajout du guide `docs/NOTIFICATIONS.md` et mise a jour des guides Alerting et Update
+
 ## [1.12.1](https://github.com/grandpurs45/my-server-manager/compare/v1.12.0...v1.12.1) (2026-07-25)
 
 ### Changed

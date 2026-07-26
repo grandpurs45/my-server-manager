@@ -139,6 +139,11 @@ function msmAlertSourceLabel(string $source): string
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
+            <a href="<?= $baseUrl ?>pages/notifications.php"
+               class="inline-flex items-center gap-2 rounded border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50">
+                <i data-lucide="send" class="h-4 w-4"></i>
+                Notifications
+            </a>
             <a href="<?= $baseUrl ?>pages/alert-rules.php"
                class="inline-flex items-center gap-2 rounded border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50">
                 <i data-lucide="sliders-horizontal" class="h-4 w-4"></i>

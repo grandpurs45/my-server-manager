@@ -4,6 +4,8 @@ require_once __DIR__ . '/../includes/bootstrap.php';
 use MSM\AlertEngine;
 use MSM\AlertRepository;
 use MSM\CheckRunTracker;
+use MSM\NotificationManager;
+use MSM\NotificationRepository;
 use MSM\SettingsManager;
 
 $force = in_array('--force', $argv ?? [], true);
@@ -35,13 +37,20 @@ try {
     $repository = new AlertRepository($pdo);
     $engine = new AlertEngine($pdo, $repository);
     $summary = $engine->run();
+    $notificationSummary = (new NotificationManager(
+        new NotificationRepository($pdo),
+        $settingsManager
+    ))->dispatchPending();
 
     $message = 'Alerting: '
         . 'opened=' . (int) ($summary['opened'] ?? 0)
         . ' updated=' . (int) ($summary['updated'] ?? 0)
         . ' refreshed=' . (int) ($summary['refreshed'] ?? 0)
         . ' resolved=' . (int) ($summary['resolved'] ?? 0)
-        . ' active=' . (int) ($summary['active'] ?? 0);
+        . ' active=' . (int) ($summary['active'] ?? 0)
+        . ' notifications_queued=' . (int) ($notificationSummary['queued'] ?? 0)
+        . ' notifications_sent=' . (int) ($notificationSummary['sent'] ?? 0)
+        . ' notifications_failed=' . (int) ($notificationSummary['failed'] ?? 0);
 
     $tracker->success($message);
     echo '[' . date('Y-m-d H:i:s') . '] ' . $message . "\n";

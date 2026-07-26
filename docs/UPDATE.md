@@ -348,4 +348,7 @@ Si la mise a jour pose probleme :
 - Verifier les permissions de `logs/`, `vendor/` et du dossier projet apres un deploiement.
 - Appliquer les migrations avant de tester les nouvelles pages.
 - Les nouvelles metriques Prometheus peuvent necessiter une mise a jour des dashboards Grafana.
-- Les alertes MSM sont internes ; les notifications sortantes sont prevues pour une version v1.x.
+- Apres une mise a jour ajoutant les notifications, verifier les canaux depuis
+  `Securite et alertes > Notifications`, puis utiliser leur bouton de test.
+- Les notifications sont envoyees par `scripts/check-alerts.php` : aucun cron
+  supplementaire n'est necessaire.

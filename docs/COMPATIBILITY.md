@@ -89,7 +89,8 @@ La roadmap v1.x prevoit un inventaire Docker via l'hote, avec containers, images
 ## Limites connues v1
 
 - Pas d'authentification applicative.
-- Pas de notifications sortantes.
+- Notifications sortantes Discord et webhook generique disponibles. Les emails,
+  escalades et fenetres de maintenance ne sont pas encore pris en charge.
 - Pas de silences ou fenetres de maintenance.
 - Pas de refresh cible par module.
 - Pas de setup interactif d'installation.

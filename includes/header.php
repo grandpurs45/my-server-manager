@@ -139,6 +139,10 @@ if (ob_get_level() > 0) {
                     <i data-lucide="sliders-horizontal" class="h-5 w-5 shrink-0"></i>
                     Regles d'alertes
                 </a>
+                <a href="<?= $baseUrl ?>pages/notifications.php" class="<?= $navItemClass(['notifications.php']) ?>">
+                    <i data-lucide="send" class="h-5 w-5 shrink-0"></i>
+                    Notifications
+                </a>
                 <?php endif; ?>
             </section>
             <?php endif; ?>

@@ -14,6 +14,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Home Assistant : collecte SSH dediee, versions disponibles et etat d'update quand la CLI `ha` est exposee.
 - Supervision URLs : disponibilite HTTP/HTTPS, codes attendus, performances, certificats TLS et contenu attendu.
 - Alerting : regles globales, alertes actives, mur d'alertes et vue backoffice.
+- Notifications : canaux Discord et webhook JSON, filtres de severite, ouvertures/resolutions, retries et historique.
 - Collecteurs / Checks : controle des scripts planifies, logs, intervalles internes et lignes cron attendues.
 - Etats operationnels homogenes : `OK`, `Warning`, `Critical`, `Unknown`.
 - Notification de nouvelle version disponible avec lien vers les notes de release et le guide de mise a jour.
@@ -371,6 +372,7 @@ MSM dispose d'un moteur d'alerting interne base sur les derniers resultats stock
 - Backoffice des alertes : `pages/alerts.php`
 - Mur d'alertes pour affichage dedie : `pages/alerts-wall.php`
 - Regles globales d'alertes : `pages/alert-rules.php`
+- Notifications Discord et webhook : `pages/notifications.php`
 
 Le backoffice permet de filtrer les alertes, de les acquitter ou de les ignorer avec un commentaire optionnel. Les alertes acquittees ou ignorees restent consultables, mais ne sont plus comptees comme alertes a traiter dans le dashboard, le mur d'alertes et les metriques Prometheus actives. La liste affiche aussi l'historique recent des evenements de chaque alerte.
 
@@ -382,7 +384,13 @@ Difference entre acquitter et ignorer :
 
 Quand une regle d'alerte est desactivee, les alertes actives rattachees a cette regle sont automatiquement resolues et historisees.
 
-La v1 couvre les regles globales, la severite, les seuils simples et le traitement manuel des alertes. Les notifications sortantes, les silences et les desactivations par hote ou par item sont prevus pour la roadmap v1.x.
+Les canaux Discord et webhook generique notifient les ouvertures et resolutions selon
+une severite minimale. Les URLs sont chiffrees, les envois sont historises et les
+echecs sont retentes sans dupliquer une notification deja livree. Voir
+[`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md).
+
+Les silences, les fenetres de maintenance et les desactivations par hote ou par item
+restent prevus pour la roadmap v1.x.
 
 ## Authentification locale
 

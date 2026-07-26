@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.12.1`.
+Version actuelle : `v1.13.0`.
 
 Socle valide :
 
@@ -24,6 +24,7 @@ Socle valide :
 - cycle de vie OS avec support / obsolescence / upgrade calcule, referentiel administrable et synchronisation endoflife.date ;
 - securite operationnelle de base ;
 - alerting interne avec regles globales, mur d'alertes, vue backoffice et traitement manuel ;
+- notifications Discord et webhook avec filtres de severite, historique et nouvelles tentatives ;
 - sante materielle Linux/Proxmox avec temperatures, SMART, dashboard, alertes et export Prometheus ;
 - connecteur Home Assistant SSH avec versions Core, Supervisor, OS, statut d'update et export Prometheus ;
 - supervision HTTP/HTTPS avec disponibilite, performances, TLS, contenu attendu, alertes et export Prometheus ;
@@ -83,7 +84,7 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
   - afficher l'heritage entre regle globale et exception cible ;
   - resoudre automatiquement les alertes actives quand une regle est desactivee pour une cible.
 - Silences et fenetres de maintenance.
-- Notifications sortantes : email, webhook, Discord ou autre canal.
+- Notifications email et autres canaux ; Discord et webhook generique sont disponibles.
 - Historique des silences, desactivations et notifications.
 
 ### Inventaire et UX
@@ -114,6 +115,15 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 - Analyse de mots de passe faibles ou compromis.
 
 ## Realise
+
+### v1.13 - Notifications
+
+- Canaux Discord et webhook JSON generique.
+- Filtres de severite et choix des evenements d'ouverture / resolution.
+- URLs de webhook chiffrees avec la cle MSM.
+- File d'envoi persistante avec anti-doublon, retries et reservation atomique.
+- Historique des livraisons, erreurs HTTP et bouton de test.
+- Integration au script `check-alerts.php` sans cron supplementaire.
 
 ### v1.12 - Supervision URLs et Logos OS
 
