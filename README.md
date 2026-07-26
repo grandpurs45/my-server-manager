@@ -8,7 +8,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Supervision : statut ping, perte de paquets, latences min/moyenne/max, etat SSH, disque, modules actifs, refresh cible, fraicheur du dernier check et historique minimal des changements.
 - SSH : etat de connexion, detection OS, collecte disque.
 - Patch Management : collecte planifiee des mises a jour Linux/Proxmox via SSH, `apt` et `dnf`.
-- Cycle de vie OS : detection des fins de support, referentiel administrable, synchronisation endoflife.date et upgrades calcules pour les distributions Linux supportees.
+- Cycle de vie OS : detection des fins de support Linux et Proxmox VE, referentiel administrable, synchronisation endoflife.date et upgrades calcules.
 - Securite operationnelle : ports ouverts, exposition reseau, firewall, dernier controle et erreurs de collecte.
 - Sante materielle : temperatures Linux/Proxmox, etat SMART, usure et erreurs media des disques physiques.
 - Home Assistant : collecte SSH dediee, versions disponibles et etat d'update quand la CLI `ha` est exposee.
@@ -44,7 +44,7 @@ Le detail par script est disponible dans `Parametres > Collecteurs` : script att
 
 La v1 cible un usage homelab / petite infrastructure avec un support principal Linux et Proxmox.
 
-- Linux / Proxmox : supervision, SSH, patch management, cycle de vie OS, securite operationnelle et metriques Prometheus.
+- Linux / Proxmox : supervision, SSH, patch management, detection Proxmox via `pveversion`, cycle de vie OS, securite operationnelle et metriques Prometheus.
 - Home Assistant : inventaire, supervision de base, collecte SSH dediee des versions et export Prometheus.
 - Windows / Synology : inventaire et supervision de base, support avance reporte en v1.x.
 - Docker : hors v1, prevu en v1.x.

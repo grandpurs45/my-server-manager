@@ -241,7 +241,7 @@ class ServerChecker
             }
 
             $this->updateSshOk((int) $server['id'], true);
-            $detectedOs = $this->detectOsViaSSH($ssh);
+            $detectedOs = $this->detectOsViaSSH($ssh, $server);
             if ($detectedOs !== null) {
                 $this->updateOsIfChanged((int) $server['id'], $server['os'] ?? null, $detectedOs);
             }
@@ -277,8 +277,17 @@ class ServerChecker
         return null;
     }
 
-    private function detectOsViaSSH(SSH2 $ssh): ?string
+    private function detectOsViaSSH(SSH2 $ssh, array $server): ?string
     {
+        if (($server['target_type'] ?? '') === 'proxmox') {
+            $proxmox = ProxmoxOsDetector::parse(
+                trim((string) $ssh->exec(ProxmoxOsDetector::command()))
+            );
+            if ($proxmox !== null) {
+                return $proxmox['pretty_name'];
+            }
+        }
+
         $output = trim((string) $ssh->exec('cat /etc/os-release 2>/dev/null'));
         if ($output !== '') {
             $values = [];

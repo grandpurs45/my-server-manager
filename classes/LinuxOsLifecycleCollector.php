@@ -28,6 +28,10 @@ class LinuxOsLifecycleCollector
                 return $this->error($serverId, $checkedAt, 'Connexion SSH echouee.');
             }
 
+            if (($server['target_type'] ?? '') === 'proxmox') {
+                return $this->collectProxmox($ssh, $serverId, $checkedAt);
+            }
+
             $output = trim($ssh->exec('cat /etc/os-release 2>/dev/null'));
             if ($output === '') {
                 return $this->error($serverId, $checkedAt, '/etc/os-release introuvable ou illisible.');
@@ -54,6 +58,41 @@ class LinuxOsLifecycleCollector
         } catch (\Throwable $e) {
             return $this->error($serverId, $checkedAt, $e->getMessage());
         }
+    }
+
+    private function collectProxmox(SSH2 $ssh, int $serverId, string $checkedAt): array
+    {
+        $detected = ProxmoxOsDetector::parse(
+            trim((string) $ssh->exec(ProxmoxOsDetector::command()))
+        );
+
+        if ($detected === null) {
+            return $this->error(
+                $serverId,
+                $checkedAt,
+                'Version Proxmox introuvable via pveversion.',
+                [
+                    'os_family' => ProxmoxOsDetector::FAMILY,
+                    'os_pretty_name' => 'Proxmox VE',
+                ]
+            );
+        }
+
+        $reference = $this->repository->findReference(
+            $detected['family'],
+            $detected['version'],
+            null
+        );
+
+        return $this->result(
+            $serverId,
+            $detected['family'],
+            $detected['version'],
+            null,
+            $detected['pretty_name'],
+            $reference,
+            $checkedAt
+        );
     }
 
     private function parseOsRelease(string $output): array
@@ -98,7 +137,10 @@ class LinuxOsLifecycleCollector
             'os_version' => $version,
             'os_codename' => $codename,
             'os_pretty_name' => $prettyName,
-            'support_status' => $this->supportStatus($supportEndsAt),
+            'support_status' => $this->supportStatus(
+                $supportEndsAt,
+                $reference['support_state'] ?? 'unknown'
+            ),
             'support_ends_at' => $supportEndsAt,
             'upgrade_available' => $upgradeTargetVersion !== null && $upgradeTargetVersion !== '',
             'upgrade_target_version' => $upgradeTargetVersion,
@@ -108,21 +150,28 @@ class LinuxOsLifecycleCollector
         ];
     }
 
-    private function error(int $serverId, string $checkedAt, string $message): array
+    private function error(
+        int $serverId,
+        string $checkedAt,
+        string $message,
+        array $identity = []
+    ): array
     {
-        return [
+        return array_merge($identity, [
             'server_id' => $serverId,
             'support_status' => 'unknown',
             'upgrade_available' => false,
             'checked_at' => $checkedAt,
             'error_message' => $message,
-        ];
+        ]);
     }
 
-    private function supportStatus(?string $supportEndsAt): string
+    private function supportStatus(?string $supportEndsAt, string $referenceState = 'unknown'): string
     {
         if ($supportEndsAt === null || $supportEndsAt === '') {
-            return 'unknown';
+            return in_array($referenceState, ['supported', 'eol'], true)
+                ? $referenceState
+                : 'unknown';
         }
 
         try {
@@ -155,6 +204,7 @@ class LinuxOsLifecycleCollector
             'ubuntu' => 'ubuntu',
             'debian' => 'debian',
             'rocky', 'rocky_linux' => 'rocky',
+            'proxmox', 'proxmox_ve', 'pve' => ProxmoxOsDetector::FAMILY,
             default => str_replace('-', '_', $family),
         };
     }

@@ -32,7 +32,7 @@ Support v1 base sur le socle Linux/Debian.
 - supervision ping ;
 - statut SSH ;
 - patch management via `apt` ;
-- cycle de vie OS lorsque l'OS est reconnu ;
+- cycle de vie Proxmox VE via `pveversion` et referentiel `proxmox_ve` ;
 - securite operationnelle de base.
 
 Les integrations Proxmox avancees, comme l'inventaire des VM/LXC via API, sont hors v1.

@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.1](https://github.com/grandpurs45/my-server-manager/compare/v1.13.0...v1.13.1) (2026-07-26)
+
+### Fixed
+
+* detection de Proxmox VE via `pveversion` dans l'inventaire et le cycle de vie OS, sans repli errone vers Debian
+* utilisation de la version majeure Proxmox comme cycle compatible avec le referentiel endoflife.date
+* distinction entre une date de fin inconnue et un support actif sans date de fin annoncee
+
+### Documentation
+
+* ajout de Proxmox VE aux familles de cycle de vie synchronisables et mise a jour de la documentation de compatibilite
+
 ## [1.13.0](https://github.com/grandpurs45/my-server-manager/compare/v1.12.1...v1.13.0) (2026-07-26)
 
 ### Features

@@ -8,6 +8,7 @@ class OsLifecycleExternalSync
         'ubuntu' => 'ubuntu',
         'debian' => 'debian',
         'rocky' => 'rocky-linux',
+        'proxmox_ve' => 'proxmox-ve',
     ];
 
     public function __construct(
@@ -139,6 +140,11 @@ class OsLifecycleExternalSync
         } else {
             $supportEndsAt = (string) $eol;
         }
+        $supportState = match ($eol) {
+            false => 'supported',
+            true => 'eol',
+            default => 'unknown',
+        };
 
         $codename = trim((string) ($cycle['codename'] ?? ''));
         $latest = trim((string) ($cycle['latest'] ?? ''));
@@ -148,6 +154,7 @@ class OsLifecycleExternalSync
             'os_version' => $version,
             'os_codename' => $codename !== '' ? $codename : null,
             'support_ends_at' => $supportEndsAt,
+            'support_state' => $supportState,
             'source' => 'endoflife.date/' . $product,
             'notes' => $latest !== '' ? 'Derniere version connue: ' . $latest : null,
         ];

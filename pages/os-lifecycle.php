@@ -24,9 +24,17 @@ function msmOsLifecycleDate(?string $date): string
     }
 }
 
-function msmOsLifecycleSupportState(?string $date): array
+function msmOsLifecycleSupportState(?string $date, string $referenceState = 'unknown'): array
 {
     if ($date === null || trim($date) === '') {
+        if ($referenceState === 'supported') {
+            return ['ok', 'Supporte'];
+        }
+
+        if ($referenceState === 'eol') {
+            return ['critical', 'Obsolete'];
+        }
+
         return ['unknown', 'Inconnu'];
     }
 
@@ -65,7 +73,10 @@ function msmOsLifecycleSortHeader(string $key, string $label, string $currentSor
 
 function msmOsLifecycleSortValue(array $reference, string $sort): int|string
 {
-    [$state] = msmOsLifecycleSupportState($reference['support_ends_at'] ?? null);
+    [$state] = msmOsLifecycleSupportState(
+        $reference['support_ends_at'] ?? null,
+        $reference['support_state'] ?? 'unknown'
+    );
 
     return match ($sort) {
         'os' => strtolower((string) ($reference['os_family'] ?? '') . ' ' . (string) ($reference['os_version'] ?? '')),
@@ -369,7 +380,10 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php endif; ?>
 
                 <?php foreach ($references as $reference): ?>
-                    <?php [$state, $label] = msmOsLifecycleSupportState($reference['support_ends_at'] ?? null); ?>
+                    <?php [$state, $label] = msmOsLifecycleSupportState(
+                        $reference['support_ends_at'] ?? null,
+                        $reference['support_state'] ?? 'unknown'
+                    ); ?>
                     <tr>
                         <td class="px-4 py-3">
                             <div class="font-semibold text-slate-900">

@@ -80,7 +80,7 @@ return [
         'external_products' => [
             'type' => 'textarea',
             'label' => 'Familles synchronisables endoflife.date',
-            'default' => "alpine=alpine\nubuntu=ubuntu\ndebian=debian\nrocky=rocky-linux"
+            'default' => "alpine=alpine\nubuntu=ubuntu\ndebian=debian\nrocky=rocky-linux\nproxmox_ve=proxmox-ve"
         ]
     ],
     'security' => [

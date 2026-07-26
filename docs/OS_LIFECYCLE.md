@@ -13,13 +13,16 @@ Le check ne s'execute pas pendant l'affichage d'une page. Le script collecte les
 
 - Ubuntu LTS ;
 - Debian ;
-- Rocky Linux.
+- Rocky Linux ;
+- Proxmox VE.
 
 Les autres distributions sont enregistrees en statut `unknown` tant qu'aucune reference n'est disponible dans `os_lifecycle_references`.
 
 ## Fonctionnement
 
-Le collecteur se connecte en SSH sur les cibles Linux/Proxmox avec SSH actif, lit `/etc/os-release`, puis compare la famille et la version avec la table `os_lifecycle_references`.
+Le collecteur se connecte en SSH sur les cibles Linux/Proxmox avec SSH actif. Il lit `/etc/os-release` pour Linux et utilise `pveversion` pour une cible de type `proxmox`, puis compare la famille et la version avec la table `os_lifecycle_references`.
+
+Pour Proxmox VE, MSM conserve la version majeure comme cycle de vie (`8`, `9`, etc.) et affiche la version complete detectee dans l'inventaire. La cible doit donc avoir le type `Proxmox` dans sa fiche.
 
 ```bash
 php scripts/check-os-lifecycle.php
@@ -36,6 +39,7 @@ Exemple de sortie :
 ```text
 [srv-web.lan] os_lifecycle=supported os=ubuntu 22.04 upgrade=24.04
 [srv-docker.lan] os_lifecycle=supported os=rocky 10.1 upgrade=10.2
+[srv-proxmox.lan] os_lifecycle=supported os=proxmox_ve 8 upgrade=9
 [2026-06-07 15:20:00] Verification cycle de vie OS terminee.
 ```
 
@@ -73,6 +77,8 @@ La page `Parametres > Cycle OS` permet de :
 
 MSM conserve toujours les donnees en base locale. La synchronisation externe sert uniquement a alimenter ou rafraichir le referentiel local.
 
+Quand `endoflife.date` indique qu'une version est encore supportee sans annoncer de date de fin, MSM conserve le statut `Supporte` avec une date de fin vide. Une reference manuelle sans date reste en statut `Inconnu`.
+
 La cible d'upgrade est calculee automatiquement quand aucune cible manuelle n'est renseignee : MSM cherche la prochaine version supportee connue dans la meme famille OS. Une cible saisie manuellement reste prioritaire.
 
 Synchronisation CLI :
@@ -93,6 +99,7 @@ Familles synchronisables par defaut :
 - `ubuntu` -> `endoflife.date/api/ubuntu.json`
 - `debian` -> `endoflife.date/api/debian.json`
 - `rocky` -> `endoflife.date/api/rocky-linux.json`
+- `proxmox_ve` -> `endoflife.date/api/proxmox-ve.json`
 
 La configuration est stockee dans `os_lifecycle / external_products` au format :
 

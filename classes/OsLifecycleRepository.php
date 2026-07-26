@@ -197,6 +197,7 @@ class OsLifecycleRepository
                 os_version,
                 os_codename,
                 support_ends_at,
+                support_state,
                 upgrade_target_version,
                 upgrade_target_label,
                 source,
@@ -206,6 +207,7 @@ class OsLifecycleRepository
                 :os_version,
                 :os_codename,
                 :support_ends_at,
+                :support_state,
                 :upgrade_target_version,
                 :upgrade_target_label,
                 :source,
@@ -214,6 +216,7 @@ class OsLifecycleRepository
             ON DUPLICATE KEY UPDATE
                 os_codename = VALUES(os_codename),
                 support_ends_at = VALUES(support_ends_at),
+                support_state = VALUES(support_state),
                 upgrade_target_version = VALUES(upgrade_target_version),
                 upgrade_target_label = VALUES(upgrade_target_label),
                 source = VALUES(source),
@@ -224,6 +227,7 @@ class OsLifecycleRepository
             ':os_version' => $version,
             ':os_codename' => $this->normalize($reference['os_codename'] ?? null),
             ':support_ends_at' => $supportEndsAt,
+            ':support_state' => $reference['support_state'] ?? 'unknown',
             ':upgrade_target_version' => $upgradeTargetVersion !== '' ? $upgradeTargetVersion : null,
             ':upgrade_target_label' => $upgradeTargetLabel !== '' ? $upgradeTargetLabel : null,
             ':source' => $source !== '' ? $source : null,
@@ -254,6 +258,7 @@ class OsLifecycleRepository
                 os_version,
                 os_codename,
                 support_ends_at,
+                support_state,
                 source,
                 notes
             ) VALUES (
@@ -261,12 +266,14 @@ class OsLifecycleRepository
                 :os_version,
                 :os_codename,
                 :support_ends_at,
+                :support_state,
                 :source,
                 :notes
             )
             ON DUPLICATE KEY UPDATE
                 os_codename = COALESCE(VALUES(os_codename), os_codename),
                 support_ends_at = VALUES(support_ends_at),
+                support_state = VALUES(support_state),
                 source = VALUES(source),
                 notes = VALUES(notes)
         ");
@@ -275,6 +282,7 @@ class OsLifecycleRepository
             ':os_version' => $version,
             ':os_codename' => $this->normalize($reference['os_codename'] ?? null),
             ':support_ends_at' => $this->normalizeDate($reference['support_ends_at'] ?? null),
+            ':support_state' => $reference['support_state'] ?? 'unknown',
             ':source' => $reference['source'] ?? null,
             ':notes' => $reference['notes'] ?? null,
         ]);
