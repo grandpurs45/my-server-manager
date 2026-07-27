@@ -12,7 +12,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Securite operationnelle : ports ouverts, exposition reseau, firewall, dernier controle et erreurs de collecte.
 - Sante materielle : temperatures Linux/Proxmox, etat SMART, usure et erreurs media des disques physiques.
 - Home Assistant : collecte SSH dediee, versions disponibles et etat d'update quand la CLI `ha` est exposee.
-- Supervision URLs : disponibilite HTTP/HTTPS, codes attendus, performances, certificats TLS et contenu attendu.
+- Supervision URLs : disponibilite HTTP/HTTPS, codes attendus, performances, certificats TLS, contenu attendu et transitions d alertes stabilisees.
 - Alerting : regles globales, alertes actives, mur d'alertes et vue backoffice.
 - Notifications : canaux Discord et webhook JSON, filtres de severite, ouvertures/resolutions, retries et historique.
 - Collecteurs / Checks : controle des scripts planifies, logs, intervalles internes et lignes cron attendues.

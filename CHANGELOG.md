@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.2](https://github.com/grandpurs45/my-server-manager/compare/v1.13.1...v1.13.2) (2026-07-27)
+
+### Fixed
+
+* suppression du flapping des alertes URL quand une cible alterne entre timeout et code HTTP inattendu
+* conservation des alertes impossibles a reevaluer tant qu aucun controle concluant ne confirme leur resolution
+* resolution des incidents URL uniquement apres une execution entierement reussie
+* comptage des alertes actives base sur l etat reel stocke, y compris les alertes differees
+
+### Documentation
+
+* clarification des transitions entre indisponibilite, code HTTP, contenu, latence et TLS
+
 ## [1.13.1](https://github.com/grandpurs45/my-server-manager/compare/v1.13.0...v1.13.1) (2026-07-26)
 
 ### Fixed

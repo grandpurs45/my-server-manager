@@ -6,6 +6,7 @@ use PDO;
 class AlertEngine
 {
     private const SECURITY_ALERT_TARGET_TYPES = ['linux', 'proxmox', 'docker'];
+    private array $deferredAlerts = [];
 
     public function __construct(
         private readonly PDO $pdo,
@@ -15,6 +16,7 @@ class AlertEngine
 
     public function run(): array
     {
+        $this->deferredAlerts = [];
         $rules = $this->repository->getEnabledRules();
         $candidates = [];
 
@@ -36,7 +38,11 @@ class AlertEngine
             $this->evaluateCollectorRuntime($rules)
         );
 
-        return $this->repository->syncCandidates($candidates, array_keys($rules));
+        return $this->repository->syncCandidates(
+            $candidates,
+            array_keys($rules),
+            $this->deferredAlerts
+        );
     }
 
     private function evaluateSupervision(array $rules): array
@@ -789,7 +795,8 @@ class AlertEngine
         }
 
         $stmt = $this->pdo->query(
-            'SELECT wt.id, wt.name, wt.url, wt.failure_threshold, wt.consecutive_failures,
+            'SELECT wt.id, wt.name, wt.url, wt.expected_content,
+                    wt.failure_threshold, wt.consecutive_failures,
                     wr.success, wr.http_status, wr.error_type, wr.error_message,
                     wr.total_ms, wr.certificate_expiry_days, wr.content_matched
              FROM web_targets wt
@@ -812,6 +819,9 @@ class AlertEngine
             $url = (string) $target['url'];
             $failedEnough = (int) $target['consecutive_failures'] >= max(1, (int) $target['failure_threshold']);
             $errorType = (string) ($target['error_type'] ?? '');
+            $successful = (int) $target['success'] === 1;
+            $expectsContent = trim((string) ($target['expected_content'] ?? '')) !== '';
+            $applicationFailure = in_array($errorType, ['http_status', 'content_mismatch'], true);
 
             if ($failedEnough && $errorType === 'http_status' && isset($rules['url_http_status'])) {
                 $candidates[] = $this->candidate(
@@ -822,7 +832,14 @@ class AlertEngine
                     'La cible ' . $url . ' repond avec le code HTTP ' . (int) $target['http_status'] . '.',
                     'url_http_status:' . $targetId
                 );
-            } elseif ($failedEnough && $errorType === 'content_mismatch' && isset($rules['url_content_mismatch'])) {
+            }
+
+            if ($failedEnough
+                && $expectsContent
+                && $target['content_matched'] !== null
+                && (int) $target['content_matched'] === 0
+                && isset($rules['url_content_mismatch'])
+            ) {
                 $candidates[] = $this->candidate(
                     'url_content_mismatch',
                     null,
@@ -831,7 +848,9 @@ class AlertEngine
                     'Le contenu attendu n a pas ete trouve dans la reponse de ' . $url . '.',
                     'url_content_mismatch:' . $targetId
                 );
-            } elseif ($failedEnough && (int) $target['success'] !== 1 && isset($rules['url_unavailable'])) {
+            }
+
+            if ($failedEnough && !$successful && !$applicationFailure && isset($rules['url_unavailable'])) {
                 $message = 'La cible ' . $url . ' est indisponible depuis '
                     . (int) $target['consecutive_failures'] . ' controle(s).';
                 if (!empty($target['error_message'])) {
@@ -845,9 +864,23 @@ class AlertEngine
                     $message,
                     'url_unavailable:' . $targetId
                 );
+            } elseif (!$successful && $applicationFailure && isset($rules['url_unavailable'])) {
+                // Une reponse HTTP non conforme ne prouve pas que l'incident de transport precedent est resolu.
+                $this->deferAlert('url_unavailable', 'url_unavailable:' . $targetId);
             }
 
-            if ((int) $target['success'] === 1 && isset($rules['url_latency_high']) && $target['total_ms'] !== null) {
+            if (isset($rules['url_http_status']) && $target['http_status'] === null) {
+                $this->deferAlert('url_http_status', 'url_http_status:' . $targetId);
+            }
+
+            if (isset($rules['url_content_mismatch'])
+                && $expectsContent
+                && $target['content_matched'] === null
+            ) {
+                $this->deferAlert('url_content_mismatch', 'url_content_mismatch:' . $targetId);
+            }
+
+            if ($successful && isset($rules['url_latency_high']) && $target['total_ms'] !== null) {
                 $threshold = max(1, (int) ($rules['url_latency_high']['threshold_value'] ?? 2000));
                 if ((float) $target['total_ms'] >= $threshold) {
                     $candidates[] = $this->candidate(
@@ -859,6 +892,8 @@ class AlertEngine
                         'url_latency_high:' . $targetId
                     );
                 }
+            } elseif (!$successful && isset($rules['url_latency_high'])) {
+                $this->deferAlert('url_latency_high', 'url_latency_high:' . $targetId);
             }
 
             if (isset($rules['url_tls_expiry']) && $target['certificate_expiry_days'] !== null) {
@@ -873,6 +908,11 @@ class AlertEngine
                         'url_tls_expiry:' . $targetId
                     );
                 }
+            } elseif (isset($rules['url_tls_expiry'])
+                && str_starts_with(strtolower($url), 'https://')
+                && !$successful
+            ) {
+                $this->deferAlert('url_tls_expiry', 'url_tls_expiry:' . $targetId);
             }
         }
 
@@ -961,6 +1001,15 @@ class AlertEngine
     private function candidate(string $ruleKey, ?int $serverId, string $severity, string $title, string $message, string $fingerprint): AlertCandidate
     {
         return new AlertCandidate($ruleKey, $serverId, $severity, $title, $message, $fingerprint);
+    }
+
+    private function deferAlert(string $ruleKey, string $fingerprint): void
+    {
+        $this->deferredAlerts[] = [
+            'rule_key' => $ruleKey,
+            'server_id' => null,
+            'fingerprint' => $fingerprint,
+        ];
     }
 
     private function tableExists(string $tableName): bool

@@ -76,6 +76,8 @@ Les regles sont administrables depuis `Alertes > Regles` :
 
 Les alertes d indisponibilite, code HTTP et contenu respectent le nombre d echecs consecutifs configure sur la cible. Une execution reussie remet ce compteur a zero et permet la resolution automatique.
 
+Un controle qui ne permet pas d evaluer une condition ne la resout pas. Par exemple, un timeout conserve une alerte de code HTTP deja active, car aucun nouveau code n a ete recu. Inversement, une reponse HTTP 500 ou 503 ne resout pas une indisponibilite de transport precedente : seule une execution entierement reussie confirme le retour a la normale. Cela evite les alternances artificielles d ouvertures et de resolutions quand une cible instable passe de timeout a code HTTP inattendu.
+
 ## Securite et limites
 
 - seuls `http://` et `https://` sont acceptes ;

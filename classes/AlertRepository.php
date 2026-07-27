@@ -372,18 +372,37 @@ class AlertRepository
         return count($alerts);
     }
 
-    public function syncCandidates(array $candidates, array $managedRuleKeys): array
+    public function syncCandidates(
+        array $candidates,
+        array $managedRuleKeys,
+        array $deferredAlerts = []
+    ): array
     {
         $now = date('Y-m-d H:i:s');
         $seen = [];
+        $deferred = [];
         $opened = 0;
         $updated = 0;
         $refreshed = 0;
         $resolved = 0;
+        $active = 0;
 
         $this->pdo->beginTransaction();
 
         try {
+            foreach ($deferredAlerts as $alert) {
+                if (!isset($alert['rule_key'], $alert['fingerprint'])) {
+                    continue;
+                }
+
+                $key = $this->candidateKey(
+                    (string) $alert['rule_key'],
+                    isset($alert['server_id']) ? (int) $alert['server_id'] : null,
+                    (string) $alert['fingerprint']
+                );
+                $deferred[$key] = true;
+            }
+
             foreach ($candidates as $candidate) {
                 $key = $this->candidateKey($candidate->ruleKey, $candidate->serverId, $candidate->fingerprint);
                 $seen[$key] = true;
@@ -407,7 +426,7 @@ class AlertRepository
 
             foreach ($this->getActiveAlertsForRules($managedRuleKeys) as $alert) {
                 $key = $this->candidateKey($alert['rule_key'], $alert['server_id'] !== null ? (int) $alert['server_id'] : null, $alert['fingerprint']);
-                if (isset($seen[$key])) {
+                if (isset($seen[$key]) || isset($deferred[$key])) {
                     continue;
                 }
 
@@ -416,6 +435,7 @@ class AlertRepository
                 $resolved++;
             }
 
+            $active = count($this->getActiveAlertsForRules($managedRuleKeys));
             $this->pdo->commit();
         } catch (\Throwable $e) {
             $this->pdo->rollBack();
@@ -427,7 +447,7 @@ class AlertRepository
             'updated' => $updated,
             'refreshed' => $refreshed,
             'resolved' => $resolved,
-            'active' => count($candidates),
+            'active' => $active,
         ];
     }
 

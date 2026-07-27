@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.13.1`.
+Version actuelle : `v1.13.2`.
 
 Socle valide :
 
@@ -115,6 +115,12 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 - Analyse de mots de passe faibles ou compromis.
 
 ## Realise
+
+### v1.13.2 - Stabilite des Alertes URL
+
+- Conservation d une alerte quand le dernier controle ne permet pas de reevaluer sa condition.
+- Suppression des alternances ouverture / resolution entre timeout et code HTTP inattendu.
+- Confirmation du retour a la normale uniquement apres un controle entierement reussi.
 
 ### v1.13.1 - Cycle de Vie Proxmox
 
