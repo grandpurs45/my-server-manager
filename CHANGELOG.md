@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [1.13.3](https://github.com/grandpurs45/my-server-manager/compare/v1.13.2...v1.13.3) (2026-07-31)
 
 ### Added
 

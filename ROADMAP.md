@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.13.2`.
+Version actuelle : `v1.13.3`.
 
 Socle valide :
 
@@ -116,6 +116,14 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 - Analyse de mots de passe faibles ou compromis.
 
 ## Realise
+
+### v1.13.3 - Suspension des Cibles et Maintenance
+
+- Suspension et reactivation des serveurs et URLs sans perte de configuration ni d historique.
+- Exclusion des cibles suspendues des collecteurs, alertes et metriques operationnelles.
+- Resolution immediate des alertes actives lors d une suspension.
+- Initialisation des logs plus robuste pendant les mises a jour.
+- Suppression du faux diagnostic cron lorsque l interface Web s execute sous `www-data`.
 
 ### v1.13.2 - Stabilite des Alertes URL
 
