@@ -449,18 +449,24 @@ Le dossier `logs/` doit etre accessible en ecriture par l'utilisateur qui lance 
 Debian / Ubuntu :
 
 ```bash
-sudo chown -R www-data:www-data logs
-sudo chmod -R 750 logs
+DEPLOY_USER="$(id -un)"
+WEB_GROUP=www-data
+sudo chown -R "$DEPLOY_USER":"$WEB_GROUP" logs
+sudo find logs -type d -exec chmod 2770 {} \;
+sudo find logs -type f -exec chmod 0660 {} \;
 ```
 
 RHEL / Rocky Linux / AlmaLinux / Fedora :
 
 ```bash
-sudo chown -R apache:apache logs
-sudo chmod -R 750 logs
+DEPLOY_USER="$(id -un)"
+WEB_GROUP=apache
+sudo chown -R "$DEPLOY_USER":"$WEB_GROUP" logs
+sudo find logs -type d -exec chmod 2770 {} \;
+sudo find logs -type f -exec chmod 0660 {} \;
 ```
 
-Pendant une installation manuelle, si le script est lance avec votre utilisateur courant, il est aussi possible de donner temporairement les droits a cet utilisateur, puis d'ajuster les droits pour Apache avant la mise en service.
+Le code applicatif reste sous le compte de deploiement. Seul `logs/` est partage avec le groupe Web, avec des droits d'ecriture limites au proprietaire et au groupe.
 
 #### `detected dubious ownership in repository`
 

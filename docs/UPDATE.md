@@ -45,6 +45,27 @@ php scripts/update.php --apply --target=v1.8.0 --backup-dir=/srv/backups/msm
 
 Le script ne restaure jamais automatiquement la base ou `.env`. En cas d'echec, il affiche la revision Git precedente et l'emplacement exact des sauvegardes.
 
+### Droits des logs
+
+L'initialisation des logs est idempotente. Un dossier ou un fichier deja present mais gere par le compte Web produit un avertissement sans interrompre la mise a jour. En revanche, un nouveau fichier de log ne peut pas etre cree si le compte de deploiement n'a aucun droit d'ecriture sur `logs/`.
+
+Le modele recommande conserve le code applicatif sous le compte de deploiement et partage uniquement `logs/` avec le groupe Web :
+
+```bash
+cd /var/www/html/msm
+DEPLOY_USER="$(id -un)"
+WEB_GROUP=www-data
+
+sudo chown -R "$DEPLOY_USER":"$WEB_GROUP" logs
+sudo find logs -type d -exec chmod 2770 {} \;
+sudo find logs -type f -exec chmod 0660 {} \;
+php scripts/setup.php --init-logs
+```
+
+Sur RHEL, Rocky Linux, AlmaLinux ou Fedora, utiliser generalement `WEB_GROUP=apache`. Adapter aussi `/var/www/html/msm` au chemin reel de l'installation.
+
+Le bit `2` de `2770` conserve le groupe Web sur les nouveaux sous-dossiers. Ces droits permettent au compte de deploiement, aux checks planifies et a PHP/Apache d'utiliser les journaux sans donner l'ecriture a tous les utilisateurs.
+
 ## 0. Se placer dans le dossier d'installation MSM
 
 Toutes les commandes de ce guide doivent etre executees depuis la racine du projet MSM.

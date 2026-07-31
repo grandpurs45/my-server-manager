@@ -118,18 +118,25 @@ class SetupAssistant
             return $this->printSummary();
         }
 
-        if (!is_writable($logs)) {
-            $this->fail('logs directory', 'not writable by current user');
-            return $this->printSummary();
+        $logsWritable = is_writable($logs);
+        if (!$logsWritable) {
+            $this->warn('logs directory', 'present but not writable by current user');
+            $this->addLogPermissionsAction();
+        } else {
+            $this->ok('logs directory', $this->pathForShell($logs));
         }
 
-        $this->ok('logs directory', $this->pathForShell($logs));
-
         $sessions = $logs . DIRECTORY_SEPARATOR . 'sessions';
-        if (!is_dir($sessions) && !mkdir($sessions, 0775, true)) {
-            $this->fail('sessions directory', 'creation impossible');
+        if (!is_dir($sessions)) {
+            if (!$logsWritable || !mkdir($sessions, 0775, true)) {
+                $this->fail('sessions directory', 'absent et creation impossible');
+                $this->addLogPermissionsAction();
+            } else {
+                $this->ok('sessions directory', $this->pathForShell($sessions));
+            }
         } elseif (!is_writable($sessions)) {
-            $this->fail('sessions directory', 'not writable by current user');
+            $this->warn('sessions directory', 'present but not writable by current user');
+            $this->addLogPermissionsAction();
         } else {
             $this->ok('sessions directory', $this->pathForShell($sessions));
         }
@@ -137,14 +144,20 @@ class SetupAssistant
         foreach (self::checks() as $check) {
             $path = $logs . DIRECTORY_SEPARATOR . $check['log'];
             if (is_file($path)) {
-                $this->ok($check['log'], 'deja present');
+                if (is_writable($path)) {
+                    $this->ok($check['log'], 'deja present');
+                } else {
+                    $this->warn($check['log'], 'present but not writable by current user');
+                    $this->addLogPermissionsAction();
+                }
                 continue;
             }
 
-            if (touch($path)) {
+            if ($logsWritable && touch($path)) {
                 $this->ok($check['log'], 'cree');
             } else {
-                $this->fail($check['log'], 'creation impossible');
+                $this->fail($check['log'], 'absent et creation impossible');
+                $this->addLogPermissionsAction();
             }
         }
 
@@ -579,8 +592,8 @@ class SetupAssistant
         if (is_writable($logs)) {
             $this->ok('logs directory', 'writable');
         } else {
-            $this->fail('logs directory', 'not writable by current user');
-            $this->addAction('Corriger les permissions de `logs/` pour l utilisateur qui lance les checks.');
+            $this->warn('logs directory', 'present but not writable by current user');
+            $this->addLogPermissionsAction();
         }
 
         $sessions = $logs . DIRECTORY_SEPARATOR . 'sessions';
@@ -589,7 +602,20 @@ class SetupAssistant
         } else {
             $this->warn('sessions directory', 'absent ou non writable');
             $this->addAction('Creer le dossier de sessions avec `php scripts/setup.php --init-logs`, puis verifier les droits pour Apache/PHP.');
+            $this->addLogPermissionsAction();
         }
+    }
+
+    private function addLogPermissionsAction(): void
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            $this->addAction('Verifier les droits du dossier `logs/` pour PHP et le compte qui lance les checks.');
+            return;
+        }
+
+        $this->addAction(
+            'Verifier le proprietaire et le groupe de `logs/`. Voir la section "Droits des logs" de `docs/UPDATE.md`.'
+        );
     }
 
     private function checkDatabase(array $env): ?PDO

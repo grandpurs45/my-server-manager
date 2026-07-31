@@ -165,7 +165,7 @@ class UpdateAssistant
             return $this->abortApply('Echec des migrations.', $sessionDir, $previousRef);
         }
 
-        if (!$this->runStep(
+        if (!$this->runAdvisoryStep(
             'Initialisation des logs',
             escapeshellarg(PHP_BINARY)
             . ' '
@@ -173,7 +173,9 @@ class UpdateAssistant
             . ' --init-logs',
             $logPath
         )) {
-            return $this->abortApply('Echec de l initialisation des logs.', $sessionDir, $previousRef);
+            $this->addAction(
+                'Corriger les droits de `logs/`, puis relancer `php scripts/setup.php --init-logs` apres la mise a jour.'
+            );
         }
 
         $this->captureSchedulingRecommendations($sessionDir, $logPath);
@@ -691,6 +693,29 @@ class UpdateAssistant
         if ($code !== 0) {
             $this->writeLog($logPath, 'FAIL ' . $label . ' exit=' . $code);
             $this->fail($label, 'code ' . $code);
+            return false;
+        }
+
+        $this->writeLog($logPath, 'OK ' . $label);
+        $this->ok($label);
+        return true;
+    }
+
+    private function runAdvisoryStep(string $label, string $command, string $logPath): bool
+    {
+        $this->writeLog($logPath, 'START ' . $label);
+        [$code, $output] = $this->runCommand($command);
+
+        if ($output !== '') {
+            foreach (explode("\n", $output) as $line) {
+                $this->line('  ' . $line);
+                $this->writeLog($logPath, $line);
+            }
+        }
+
+        if ($code !== 0) {
+            $this->writeLog($logPath, 'WARN ' . $label . ' exit=' . $code);
+            $this->warn($label, 'code ' . $code . '; la mise a jour continue');
             return false;
         }
 
