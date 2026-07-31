@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+* la page Collecteurs ne signale plus chaque ligne cron absente dans la crontab de `www-data` quand l ordonnancement appartient au compte de deploiement
 * l'initialisation de logs deja presents mais detenus par le compte Web ne bloque plus une mise a jour
 * une creation de log impossible reste visible et documentee sans laisser l'application au milieu du processus de mise a jour
 * le controle post-update distingue maintenant un probleme de droits sur les logs d'une erreur applicative bloquante

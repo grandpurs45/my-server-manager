@@ -28,6 +28,16 @@ final class SchedulingInspector
         $content = implode("\n", $output);
         $noCrontab = str_contains(strtolower($content), 'no crontab');
 
+        if ($noCrontab && PHP_SAPI !== 'cli') {
+            return [
+                'available' => false,
+                'message' => 'Le compte Web ' . $this->currentUserName()
+                    . ' ne possede pas de crontab. Les checks peuvent etre planifies dans celle du compte de deploiement ; controle requis en CLI.',
+                'user' => $this->currentUserName(),
+                'checks' => [],
+            ];
+        }
+
         if ($code !== 0 && !$noCrontab) {
             return [
                 'available' => false,

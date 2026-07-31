@@ -29,6 +29,8 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Assistant CLI de setup / maintenance pour verifier l'installation, la base, les migrations, les logs et l'ordonnancement.
 - Assistant de prevalidation des mises a jour avec `php scripts/update.php --check`.
 
+La page Collecteurs controle directement la crontab uniquement lorsqu elle est lisible par le compte PHP courant. En production, Apache utilise souvent `www-data` tandis que les checks appartiennent au compte de deploiement. Dans ce cas, la conformite cron se verifie en CLI avec `php scripts/setup.php --check-scheduling` sous le compte qui possede la crontab ; l interface continue de suivre les executions reelles via les logs et la base.
+
 ## Dashboard et checks planifies
 
 Le dashboard affiche une synthese des derniers resultats connus et ne lance aucun check lourd.

@@ -176,7 +176,7 @@ require_once __DIR__ . '/../includes/header.php';
             La crontab du compte de deploiement doit etre controlee en CLI si elle appartient a un autre utilisateur.
         <?php else: ?>
             Verification directe de la crontab indisponible : <?= htmlspecialchars((string) $cronInspection['message']) ?>
-            Utiliser <code>php scripts/setup.php</code> depuis le compte qui execute les checks.
+            Utiliser <code>php scripts/setup.php --check-scheduling</code> depuis le compte qui execute les checks.
         <?php endif; ?>
     </div>
 
