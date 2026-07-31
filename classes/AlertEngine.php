@@ -6,7 +6,17 @@ use PDO;
 class AlertEngine
 {
     private const SECURITY_ALERT_TARGET_TYPES = ['linux', 'proxmox', 'docker'];
+    private const SERVER_DOWN_DEPENDENT_RULES = [
+        'ssh_failed',
+        'ping_packet_loss',
+        'ping_latency_high',
+        'stale_supervision_check',
+        'security_check_error',
+        'home_assistant_check_error',
+        'home_assistant_check_stale',
+    ];
     private array $deferredAlerts = [];
+    private array $unavailableServerIds = [];
 
     public function __construct(
         private readonly PDO $pdo,
@@ -17,6 +27,7 @@ class AlertEngine
     public function run(): array
     {
         $this->deferredAlerts = [];
+        $this->unavailableServerIds = [];
         $rules = $this->repository->getEnabledRules();
         $candidates = [];
 
@@ -37,6 +48,7 @@ class AlertEngine
             $this->evaluateWebMonitoring($rules),
             $this->evaluateCollectorRuntime($rules)
         );
+        $candidates = $this->applyAlertDependencies($candidates, $rules);
 
         return $this->repository->syncCandidates(
             $candidates,
@@ -63,6 +75,7 @@ class AlertEngine
             $hostname = $server['hostname'] ?? '';
 
             if (isset($rules['server_down']) && ($server['status'] ?? '') !== 'up') {
+                $this->unavailableServerIds[$serverId] = true;
                 $candidates[] = $this->candidate(
                     'server_down',
                     $serverId,
@@ -1011,11 +1024,42 @@ class AlertEngine
         return new AlertCandidate($ruleKey, $serverId, $severity, $title, $message, $fingerprint);
     }
 
-    private function deferAlert(string $ruleKey, string $fingerprint): void
+    private function applyAlertDependencies(array $candidates, array $rules): array
+    {
+        if ($this->unavailableServerIds === []) {
+            return $candidates;
+        }
+
+        foreach (array_keys($this->unavailableServerIds) as $serverId) {
+            foreach (self::SERVER_DOWN_DEPENDENT_RULES as $ruleKey) {
+                if (!isset($rules[$ruleKey])) {
+                    continue;
+                }
+
+                $this->deferAlert($ruleKey, $ruleKey . ':' . $serverId, $serverId);
+            }
+        }
+
+        $filtered = [];
+        foreach ($candidates as $candidate) {
+            if ($candidate->serverId !== null
+                && isset($this->unavailableServerIds[$candidate->serverId])
+                && in_array($candidate->ruleKey, self::SERVER_DOWN_DEPENDENT_RULES, true)
+            ) {
+                continue;
+            }
+
+            $filtered[] = $candidate;
+        }
+
+        return $filtered;
+    }
+
+    private function deferAlert(string $ruleKey, string $fingerprint, ?int $serverId = null): void
     {
         $this->deferredAlerts[] = [
             'rule_key' => $ruleKey,
-            'server_id' => null,
+            'server_id' => $serverId,
             'fingerprint' => $fingerprint,
         ];
     }

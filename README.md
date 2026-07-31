@@ -71,8 +71,10 @@ php scripts/update.php --check
 Appliquer une release taguee avec sauvegardes et controles :
 
 ```bash
-php scripts/update.php --apply --target=v1.8.0
+php scripts/update.php --apply
 ```
+
+Sans `--target`, l assistant propose automatiquement la derniere release stable du depot distant. `--target=vX.Y.Z` reste disponible pour figer une version precise.
 
 Le connecteur Home Assistant est documente dans [docs/HOME_ASSISTANT.md](docs/HOME_ASSISTANT.md).
 
@@ -386,6 +388,8 @@ Difference entre acquitter et ignorer :
 - Reactiver : une alerte ignoree redevient une alerte a traiter.
 
 Quand une regle d'alerte est desactivee, les alertes actives rattachees a cette regle sont automatiquement resolues et historisees.
+
+Le moteur applique une dependance entre `server_down` et les alertes techniques qui necessitent une cible joignable. Tant que le serveur est down, MSM n ouvre pas d alerte SSH, qualite ping, anciennete de supervision, erreur de collecte securite ou erreur/retard Home Assistant pour cette cible. Une alerte enfant deja active reste suspendue sans resolution artificielle jusqu au retour du serveur. Les alertes metier independantes, comme le cycle de vie OS ou les mises a jour disponibles, restent evaluees.
 
 Les canaux Discord et webhook generique notifient les ouvertures et resolutions selon
 une severite minimale. Les URLs sont chiffrees, les envois sont historises et les

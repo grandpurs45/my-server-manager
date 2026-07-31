@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.4](https://github.com/grandpurs45/my-server-manager/compare/v1.13.3...v1.13.4) (2026-07-31)
+
+### Added
+
+* dependance d alertes : `server_down` suspend les alertes techniques qui exigent un serveur joignable
+
+### Changed
+
+* `scripts/update.php` detecte automatiquement la derniere release stable quand `--target` n est pas fourni
+
 ## [1.13.3](https://github.com/grandpurs45/my-server-manager/compare/v1.13.2...v1.13.3) (2026-07-31)
 
 ### Added

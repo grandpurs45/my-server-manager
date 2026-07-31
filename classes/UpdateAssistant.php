@@ -16,6 +16,42 @@ class UpdateAssistant
         $this->colorsEnabled = $this->detectColorSupport();
     }
 
+    public function findLatestReleaseTag(): ?string
+    {
+        if (!$this->commandExists('git')) {
+            return null;
+        }
+
+        [$code, $output] = $this->runCommand(
+            'git -C ' . escapeshellarg($this->root) . ' ls-remote --tags --refs origin'
+        );
+        if ($code !== 0) {
+            return null;
+        }
+
+        return self::selectLatestStableTag(preg_split('/\R/', $output) ?: []);
+    }
+
+    public static function selectLatestStableTag(array $lines): ?string
+    {
+        $versions = [];
+        foreach ($lines as $line) {
+            if (!preg_match('~refs/tags/(v(\d+\.\d+\.\d+))$~', trim((string) $line), $matches)) {
+                continue;
+            }
+
+            $versions[$matches[2]] = $matches[1];
+        }
+
+        if ($versions === []) {
+            return null;
+        }
+
+        uksort($versions, static fn (string $left, string $right): int => version_compare($right, $left));
+
+        return reset($versions) ?: null;
+    }
+
     public function runCheck(?string $target = null, ?string $backupDir = null): int
     {
         $this->title('MSM update assistant');

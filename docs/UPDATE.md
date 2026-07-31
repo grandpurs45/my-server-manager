@@ -10,6 +10,8 @@ Le developpement v1.7 introduit un assistant non destructif pour verifier une in
 php scripts/update.php --check
 ```
 
+Sans `--target`, l assistant interroge les tags du depot distant et propose automatiquement la derniere release stable. La version detectee est affichee avant toute verification ou modification. Si le depot distant est injoignable, le script s arrete et demande une cible explicite.
+
 Pour verifier la preparation d'une release precise :
 
 ```bash
@@ -23,13 +25,13 @@ Le mode `--check` n'effectue aucune modification.
 Pour appliquer une release taguee apres une prevalidation reussie :
 
 ```bash
-php scripts/update.php --apply --target=v1.8.0
+php scripts/update.php --apply
 ```
 
 Le mode `--apply` :
 
 - refuse les fichiers Git versionnes modifies localement ;
-- exige une cible explicite ;
+- utilise la derniere release stable detectee ou la cible explicite fournie avec `--target` ;
 - demande une confirmation, sauf avec `--yes` ;
 - sauvegarde `.env`, la base et le contexte d'execution hors du dossier web ;
 - recupere le tag, installe les dependances, applique les migrations et initialise les logs ;

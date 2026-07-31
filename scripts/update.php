@@ -25,7 +25,7 @@ if (in_array('--help', $options, true) || in_array('-h', $options, true)) {
     echo "Usage: php scripts/update.php [--check|--apply] [--target=vX.Y.Z] [--backup-dir=PATH] [--yes]\n\n";
     echo "Options:\n";
     echo "  --check             Verifie l instance et affiche le plan sans rien modifier.\n";
-    echo "  --target=vX.Y.Z     Fixe la release cible attendue.\n";
+    echo "  --target=vX.Y.Z     Fixe la release cible attendue; sinon la derniere release stable est detectee.\n";
     echo "  --backup-dir=PATH   Utilise un dossier de sauvegarde externe personnalise.\n";
     echo "  --apply             Sauvegarde puis applique la release cible.\n";
     echo "  --yes               Confirme le mode --apply sans question interactive.\n";
@@ -51,12 +51,17 @@ if ($yes && !$apply) {
     exit(2);
 }
 
-if ($apply) {
+if ($target === null) {
+    $target = $assistant->findLatestReleaseTag();
     if ($target === null) {
-        fwrite(STDERR, "Le mode --apply exige --target=vX.Y.Z.\n");
-        exit(2);
+        fwrite(STDERR, "Impossible de detecter la derniere release stable. Verifier l acces Git distant ou utiliser --target=vX.Y.Z.\n");
+        exit(1);
     }
 
+    echo 'Version cible detectee automatiquement : ' . $target . PHP_EOL . PHP_EOL;
+}
+
+if ($apply) {
     exit($assistant->runApply($target, $backupDir, $yes));
 }
 
