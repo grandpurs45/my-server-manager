@@ -21,7 +21,8 @@ class PatchManager
         $stmt = $this->pdo->query("
             SELECT *
             FROM servers
-            WHERE patch_management_enabled = 1
+            WHERE enabled = 1
+              AND patch_management_enabled = 1
             ORDER BY name ASC
         ");
 
@@ -36,13 +37,14 @@ class PatchManager
             SELECT *
             FROM servers
             WHERE id = :id
+              AND enabled = 1
               AND patch_management_enabled = 1
         ");
         $stmt->execute([':id' => $serverId]);
         $server = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$server) {
-            throw new \RuntimeException('Cible introuvable ou patch management desactive.');
+            throw new \RuntimeException('Cible introuvable, desactivee ou patch management desactive.');
         }
 
         return $this->checkServer($server);

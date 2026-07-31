@@ -36,7 +36,8 @@ class SecurityStatusRepository
                     ORDER BY sc2.checked_at DESC, sc2.id DESC
                     LIMIT 1
                 )
-            WHERE s.security_enabled = 1
+            WHERE s.enabled = 1
+              AND s.security_enabled = 1
             ORDER BY s.name ASC
         ");
 
@@ -46,7 +47,7 @@ class SecurityStatusRepository
     public function countDisabledTargets(): int
     {
         return (int) $this->pdo
-            ->query("SELECT COUNT(*) FROM servers WHERE security_enabled = 0")
+            ->query("SELECT COUNT(*) FROM servers WHERE enabled = 1 AND security_enabled = 0")
             ->fetchColumn();
     }
 

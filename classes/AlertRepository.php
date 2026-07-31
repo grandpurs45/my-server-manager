@@ -372,6 +372,53 @@ class AlertRepository
         return count($alerts);
     }
 
+    public function resolveActiveAlertsForServer(int $serverId, string $message): int
+    {
+        $now = date('Y-m-d H:i:s');
+        $stmt = $this->pdo->prepare("
+            SELECT id, severity
+            FROM alerts
+            WHERE status = 'active'
+              AND server_id = :server_id
+        ");
+        $stmt->execute([':server_id' => $serverId]);
+        $alerts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($alerts as $alert) {
+            $alertId = (int) $alert['id'];
+            $this->resolveAlert($alertId, $now);
+            $this->createEvent($alertId, 'resolved', $alert['severity'] ?? 'info', $message, $now);
+        }
+
+        return count($alerts);
+    }
+
+    public function resolveActiveAlertsForWebTarget(int $targetId, string $message): int
+    {
+        $fingerprints = array_map(
+            static fn (string $ruleKey): string => $ruleKey . ':' . $targetId,
+            ['url_unavailable', 'url_http_status', 'url_latency_high', 'url_tls_expiry', 'url_content_mismatch']
+        );
+        $placeholders = implode(', ', array_fill(0, count($fingerprints), '?'));
+        $stmt = $this->pdo->prepare("
+            SELECT id, severity
+            FROM alerts
+            WHERE status = 'active'
+              AND fingerprint IN ({$placeholders})
+        ");
+        $stmt->execute($fingerprints);
+        $alerts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $now = date('Y-m-d H:i:s');
+
+        foreach ($alerts as $alert) {
+            $alertId = (int) $alert['id'];
+            $this->resolveAlert($alertId, $now);
+            $this->createEvent($alertId, 'resolved', $alert['severity'] ?? 'info', $message, $now);
+        }
+
+        return count($alerts);
+    }
+
     public function syncCandidates(
         array $candidates,
         array $managedRuleKeys,

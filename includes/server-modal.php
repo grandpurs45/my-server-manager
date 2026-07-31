@@ -18,6 +18,15 @@ $formAction = $editMode ? 'serveurs.php' : $baseUrl . 'pages/add-server.php';
                 <input type="hidden" name="id" id="server-id" value="<?= htmlspecialchars($editData['id']) ?>">
             <?php endif; ?>
 
+            <div class="rounded border border-blue-200 bg-blue-50 px-4 py-3">
+                <label class="inline-flex items-center gap-2 font-semibold text-slate-900">
+                    <input type="checkbox" id="enabled" name="enabled" class="form-checkbox"
+                        <?= !isset($editData['enabled']) || (int) $editData['enabled'] === 1 ? 'checked' : '' ?>>
+                    Cible active
+                </label>
+                <p class="mt-1 text-xs text-slate-600">Une cible desactivee reste dans l'inventaire mais aucun check, alerte ou metrique operationnelle n'est produit.</p>
+            </div>
+
             <div>
                 <label class="block font-medium mb-1" for="server-name">Nom du serveur</label>
                 <input type="text" id="server-name" name="name"

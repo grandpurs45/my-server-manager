@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+* suspension et reactivation d un serveur depuis l inventaire sans supprimer sa configuration ni son historique
+* filtre des serveurs actifs ou desactives dans la liste d inventaire
+
+### Changed
+
+* exclusion des serveurs suspendus de tous les collecteurs, dashboards operationnels et metriques Prometheus
+* resolution immediate des alertes actives lors de la suspension d un serveur ou d une URL
+
+### Fixed
+
+* l'initialisation de logs deja presents mais detenus par le compte Web ne bloque plus une mise a jour
+* une creation de log impossible reste visible et documentee sans laisser l'application au milieu du processus de mise a jour
+* le controle post-update distingue maintenant un probleme de droits sur les logs d'une erreur applicative bloquante
+
+### Documentation
+
+* ajout d'un modele de permissions partage entre le compte de deploiement et le groupe Web pour le dossier `logs/`
+
 ## [1.13.2](https://github.com/grandpurs45/my-server-manager/compare/v1.13.1...v1.13.2) (2026-07-27)
 
 ### Fixed

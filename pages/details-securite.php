@@ -74,6 +74,16 @@ function msmSecurityExposureBadge(string $exposure): string
 ?>
 
 <div class="p-6">
+    <?php if (empty($serveur['enabled'])): ?>
+        <div class="mb-6 flex items-start gap-3 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900">
+            <i data-lucide="pause-circle" class="mt-0.5 h-5 w-5 shrink-0"></i>
+            <div>
+                <div class="font-semibold">Cible desactivee</div>
+                <div class="text-sm">Les informations ci-dessous sont historiques. Aucun nouveau controle de securite n est execute.</div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <div class="mb-6">
         <a href="<?= $baseUrl ?>pages/securite-serveurs.php"
            class="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:underline">

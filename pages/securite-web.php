@@ -4,9 +4,11 @@ require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/inventory_options.php';
 
+use MSM\AlertRepository;
 use MSM\WebTargetRepository;
 
 $repository = new WebTargetRepository($pdo);
+$alertRepository = new AlertRepository($pdo);
 
 function msmRedirectWebMonitoring(): never
 {
@@ -26,8 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $repository->update((int) ($_POST['target_id'] ?? 0), $_POST);
             $_SESSION['success'] = 'Cible URL mise a jour.';
         } elseif ($action === 'toggle') {
-            $repository->setEnabled((int) ($_POST['target_id'] ?? 0), ($_POST['enabled'] ?? '0') === '1');
-            $_SESSION['success'] = 'Etat de la cible URL mis a jour.';
+            $targetId = (int) ($_POST['target_id'] ?? 0);
+            $enabled = ($_POST['enabled'] ?? '0') === '1';
+            $repository->setEnabled($targetId, $enabled);
+            $resolved = $enabled ? 0 : $alertRepository->resolveActiveAlertsForWebTarget(
+                $targetId,
+                'Alerte resolue automatiquement car la cible URL a ete desactivee.'
+            );
+            $_SESSION['success'] = $enabled
+                ? 'Cible URL reactivee. Elle sera controlee au prochain passage du collecteur.'
+                : 'Cible URL desactivee. ' . $resolved . ' alerte(s) active(s) resolue(s).';
         } elseif ($action === 'delete') {
             $repository->delete((int) ($_POST['target_id'] ?? 0));
             $_SESSION['success'] = 'Cible URL et son historique supprimes.';
@@ -69,9 +79,11 @@ $form = $editTarget ?? [
 
 $summary = ['total' => count($targets), 'enabled' => 0, 'up' => 0, 'down' => 0, 'tls_warning' => 0];
 foreach ($targets as $target) {
-    if ((int) $target['enabled'] === 1) {
-        $summary['enabled']++;
+    if ((int) $target['enabled'] !== 1) {
+        continue;
     }
+
+    $summary['enabled']++;
     if ($target['last_success'] !== null) {
         $summary[(int) $target['last_success'] === 1 ? 'up' : 'down']++;
     }

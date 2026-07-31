@@ -37,6 +37,7 @@ $serverStats = $pdo->query("
         SUM(CASE WHEN ssh_enabled = 1 AND ssh_status <> 'success' THEN 1 ELSE 0 END) AS ssh_error_count,
         MAX(last_check) AS last_supervision_check
     FROM servers
+    WHERE enabled = 1
 ")->fetch(PDO::FETCH_ASSOC) ?: [];
 
 $hardwareTargets = $pdo->query("
@@ -58,7 +59,8 @@ $hardwareTargets = $pdo->query("
             ORDER BY hc2.checked_at DESC, hc2.id DESC
             LIMIT 1
         )
-    WHERE s.hardware_profile IN ('physical', 'appliance')
+    WHERE s.enabled = 1
+      AND s.hardware_profile IN ('physical', 'appliance')
     ORDER BY s.name ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -106,7 +108,8 @@ $smartDisks = $pdo->query("
         )
     INNER JOIN hardware_smart_disks d
         ON d.hardware_check_id = hc.id
-    WHERE s.hardware_profile = 'physical'
+    WHERE s.enabled = 1
+      AND s.hardware_profile = 'physical'
     ORDER BY s.name ASC, d.device_name ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -185,8 +188,11 @@ $priorities = [];
 $serverStmt = $pdo->query("
     SELECT id, name, hostname, target_type, status, ssh_enabled, ssh_status, last_check
     FROM servers
-    WHERE status = 'down'
-       OR (ssh_enabled = 1 AND ssh_status <> 'success')
+    WHERE enabled = 1
+      AND (
+          status = 'down'
+          OR (ssh_enabled = 1 AND ssh_status <> 'success')
+      )
     ORDER BY name ASC
 ");
 

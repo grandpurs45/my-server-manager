@@ -371,6 +371,7 @@ class PrometheusExporter
                     ping_packets_sent, ping_packets_received, ping_loss_percent,
                     last_check, UNIX_TIMESTAMP(last_check) AS last_check_timestamp
              FROM servers
+             WHERE enabled = 1
              ORDER BY name ASC'
         );
 
@@ -628,6 +629,7 @@ class PrometheusExporter
              WHERE a.status = 'active'
                AND a.acknowledged_at IS NULL
                AND a.ignored_at IS NULL
+               AND (a.server_id IS NULL OR s.enabled = 1)
              ORDER BY a.id ASC"
         );
 

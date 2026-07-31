@@ -18,6 +18,8 @@ La page `Supervision > URLs` permet de definir :
 
 Une nouvelle cible est placee immediatement en attente de controle. Une modification ou une reactivation force egalement son prochain passage sans lancer de requete depuis la page web.
 
+Le bouton pause desactive une cible sans supprimer sa configuration ni son historique. Elle sort alors des controles planifies, des metriques Prometheus et des alertes actives. Sa reactivation programme un nouveau controle des le prochain passage du collecteur.
+
 ## Collecte
 
 Le script dedie est :

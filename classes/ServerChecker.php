@@ -26,7 +26,7 @@ class ServerChecker
 
     public function run(): void
     {
-        $stmt = $this->pdo->query("SELECT id, hostname, os, status, ssh_user, ssh_password, ssh_port, ssh_enabled, ssh_status FROM servers");
+        $stmt = $this->pdo->query("SELECT id, hostname, os, status, ssh_user, ssh_password, ssh_port, ssh_enabled, ssh_status FROM servers WHERE enabled = 1");
         $servers = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $now = date('Y-m-d H:i:s');
 
@@ -37,12 +37,12 @@ class ServerChecker
 
     public function runForServerId(int $serverId): void
     {
-        $stmt = $this->pdo->prepare("SELECT id, hostname, os, status, ssh_user, ssh_password, ssh_port, ssh_enabled, ssh_status FROM servers WHERE id = :id");
+        $stmt = $this->pdo->prepare("SELECT id, hostname, os, status, ssh_user, ssh_password, ssh_port, ssh_enabled, ssh_status FROM servers WHERE id = :id AND enabled = 1");
         $stmt->execute([':id' => $serverId]);
         $server = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!$server) {
-            throw new \RuntimeException('Cible introuvable.');
+            throw new \RuntimeException('Cible introuvable ou desactivee.');
         }
 
         $this->checkServer($server, date('Y-m-d H:i:s'));

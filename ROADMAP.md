@@ -18,6 +18,7 @@ Socle valide :
 - guide d'installation, guide de mise a jour et assistant CLI disponibles ;
 - authentification locale avec utilisateurs, droits modules et politique de mots de passe ;
 - inventaire configurable des cibles ;
+- suspension et reactivation des serveurs et URLs sans perte de configuration ni d historique ;
 - profil materiel des cibles : physique, machine virtuelle, conteneur, appliance ou inconnu ;
 - supervision ping enrichie / SSH / latence / disque avec refresh cible ;
 - patch management Linux, Proxmox, `apt` et `dnf` ;
@@ -77,7 +78,7 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 ### Alerting et Notifications
 
 - Parametrage avance des regles : severite, seuils, delais.
-- Desactivation par hote, module ou item precis.
+- Desactivation par module ou item precis ; la suspension globale par hote est disponible.
 - Overrides d'alerting par cible :
   - activer ou desactiver une regle pour une cible precise ;
   - definir un seuil specifique par cible quand la regle le supporte ;

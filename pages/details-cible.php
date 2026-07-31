@@ -261,22 +261,36 @@ $pingLoss = $server['ping_loss_percent'] ?? null;
 $pingPacketsSent = $server['ping_packets_sent'] ?? null;
 $pingPacketsReceived = $server['ping_packets_received'] ?? null;
 $diskUsage = msmDetailMetricValue($metrics, 'disk');
-$canRefreshSupervision = $authManager->userCan('supervision');
-$canRefreshPatch = $authManager->userCan('patch_management') && !empty($server['patch_management_enabled']);
+$targetEnabled = !empty($server['enabled']);
+$canRefreshSupervision = $targetEnabled && $authManager->userCan('supervision');
+$canRefreshPatch = $targetEnabled && $authManager->userCan('patch_management') && !empty($server['patch_management_enabled']);
 $canRefreshOsLifecycle = $authManager->userCan('patch_management')
+    && $targetEnabled
     && !empty($server['ssh_enabled'])
     && in_array($type, ['linux', 'proxmox'], true);
-$canRefreshSecurity = $authManager->userCan('securite') && !empty($server['security_enabled']) && !empty($server['ssh_enabled']);
+$canRefreshSecurity = $targetEnabled && $authManager->userCan('securite') && !empty($server['security_enabled']) && !empty($server['ssh_enabled']);
 $showHardwareHealthCard = msmHardwareProfileSupportsSensors($hardwareProfile);
 $canRefreshHardware = $authManager->userCan('supervision')
+    && $targetEnabled
     && $showHardwareHealthCard
     && !empty($server['ssh_enabled']);
 $canRefreshHomeAssistant = $authManager->userCan('supervision')
+    && $targetEnabled
     && $type === 'home_assistant'
     && !empty($server['ssh_enabled']);
 ?>
 
 <div class="p-6">
+    <?php if (!$targetEnabled): ?>
+        <div class="mb-6 flex items-start gap-3 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900">
+            <i data-lucide="pause-circle" class="mt-0.5 h-5 w-5 shrink-0"></i>
+            <div>
+                <div class="font-semibold">Cible desactivee</div>
+                <div class="text-sm">Aucun collecteur, alerte ou metrique Prometheus ne sera produit tant que cette cible ne sera pas reactivee.</div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <div class="mb-6 flex items-center justify-between gap-4">
         <div>
             <a href="<?= $baseUrl ?>pages/serveurs.php"
@@ -492,6 +506,12 @@ $canRefreshHomeAssistant = $authManager->userCan('supervision')
                 <div>
                     <dt class="text-slate-500">Methode de collecte</dt>
                     <dd class="font-semibold text-slate-900"><?= htmlspecialchars($collectionMethods[$collectionMethod] ?? $collectionMethod) ?></dd>
+                </div>
+                <div>
+                    <dt class="text-slate-500">Exploitation</dt>
+                    <dd class="font-semibold <?= $targetEnabled ? 'text-green-700' : 'text-amber-700' ?>">
+                        <?= $targetEnabled ? 'Active' : 'Suspendue' ?>
+                    </dd>
                 </div>
                 <div>
                     <dt class="text-slate-500">Analyse securite</dt>

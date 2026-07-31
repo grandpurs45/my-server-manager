@@ -44,7 +44,7 @@ try {
     $dbNow = (string) $pdo->query('SELECT NOW()')->fetchColumn();
     $dbGlobalTimezone = (string) $pdo->query('SELECT @@global.time_zone')->fetchColumn();
     $dbSessionTimezone = (string) $pdo->query('SELECT @@session.time_zone')->fetchColumn();
-    $lastCheckRaw = $pdo->query('SELECT MAX(last_check) FROM servers')->fetchColumn();
+    $lastCheckRaw = $pdo->query('SELECT MAX(last_check) FROM servers WHERE enabled = 1')->fetchColumn();
     $lastCheck = $lastCheckRaw ? (string) $lastCheckRaw : 'Jamais';
     $dbOk = true;
 } catch (Throwable $e) {

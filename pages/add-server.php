@@ -26,6 +26,7 @@ $sshPasswordEncrypted = $sshPasswordPlain ? encrypt($sshPasswordPlain) : '';
 $sshEnabled = isset($_POST['ssh_enabled']) ? 1 : 0;
 $securityEnabled = isset($_POST['security_enabled']) ? 1 : 0;
 $patchManagementEnabled = isset($_POST['patch_management_enabled']) ? 1 : 0;
+$enabled = isset($_POST['enabled']) ? 1 : 0;
 
 $sshStatus = 'fail';
 $os = 'OS inconnu';
@@ -79,12 +80,12 @@ try {
         INSERT INTO servers (
             name, hostname, target_type, hardware_profile, environment, criticality, tags, collection_method,
             ssh_port, ssh_user, ssh_password, os, ssh_status, ssh_enabled, security_enabled,
-            patch_management_enabled, status
+            patch_management_enabled, enabled, status
         )
         VALUES (
             :name, :hostname, :target_type, :hardware_profile, :environment, :criticality, :tags, :collection_method,
             :ssh_port, :ssh_user, :ssh_password, :os, :ssh_status, :ssh_enabled, :security_enabled,
-            :patch_management_enabled, :status
+            :patch_management_enabled, :enabled, :status
         )
     ");
 
@@ -105,6 +106,7 @@ try {
         ':ssh_enabled' => $sshEnabled,
         ':security_enabled' => $securityEnabled,
         ':patch_management_enabled' => $patchManagementEnabled,
+        ':enabled' => $enabled,
         ':status' => $status,
     ]);
 

@@ -4,7 +4,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 
 ## Fonctionnalites
 
-- Gestion des serveurs : ajout, modification, suppression.
+- Gestion des serveurs : ajout, modification, suspension/reactivation et suppression.
 - Supervision : statut ping, perte de paquets, latences min/moyenne/max, etat SSH, disque, modules actifs, refresh cible, fraicheur du dernier check et historique minimal des changements.
 - SSH : etat de connexion, detection OS, collecte disque.
 - Patch Management : collecte planifiee des mises a jour Linux/Proxmox via SSH, `apt` et `dnf`.
@@ -13,6 +13,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Sante materielle : temperatures Linux/Proxmox, etat SMART, usure et erreurs media des disques physiques.
 - Home Assistant : collecte SSH dediee, versions disponibles et etat d'update quand la CLI `ha` est exposee.
 - Supervision URLs : disponibilite HTTP/HTTPS, codes attendus, performances, certificats TLS, contenu attendu et transitions d alertes stabilisees.
+- Suspension des cibles : un serveur ou une URL desactive reste dans l inventaire avec son historique, mais sort des collecteurs, des alertes actives et des metriques operationnelles.
 - Alerting : regles globales, alertes actives, mur d'alertes et vue backoffice.
 - Notifications : canaux Discord et webhook JSON, filtres de severite, ouvertures/resolutions, retries et historique.
 - Collecteurs / Checks : controle des scripts planifies, logs, intervalles internes et lignes cron attendues.
@@ -389,7 +390,7 @@ une severite minimale. Les URLs sont chiffrees, les envois sont historises et le
 echecs sont retentes sans dupliquer une notification deja livree. Voir
 [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md).
 
-Les silences, les fenetres de maintenance et les desactivations par hote ou par item
+Les silences, les fenetres de maintenance et les desactivations par module ou par item
 restent prevus pour la roadmap v1.x.
 
 ## Authentification locale

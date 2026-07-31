@@ -19,7 +19,8 @@ class HomeAssistantManager
         $stmt = $this->pdo->query("
             SELECT *
             FROM servers
-            WHERE target_type = 'home_assistant'
+            WHERE enabled = 1
+              AND target_type = 'home_assistant'
             ORDER BY name ASC
         ");
 
@@ -34,13 +35,14 @@ class HomeAssistantManager
             SELECT *
             FROM servers
             WHERE id = :id
+              AND enabled = 1
               AND target_type = 'home_assistant'
         ");
         $stmt->execute([':id' => $serverId]);
         $server = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$server) {
-            throw new \RuntimeException('Cible Home Assistant introuvable.');
+            throw new \RuntimeException('Cible Home Assistant introuvable ou desactivee.');
         }
 
         return $this->checkServer($server);

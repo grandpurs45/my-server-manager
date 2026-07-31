@@ -21,7 +21,8 @@ class SecurityManager
         $stmt = $this->pdo->query("
             SELECT *
             FROM servers
-            WHERE security_enabled = 1
+            WHERE enabled = 1
+              AND security_enabled = 1
               AND ssh_enabled = 1
             ORDER BY name ASC
         ");
@@ -37,6 +38,7 @@ class SecurityManager
             SELECT *
             FROM servers
             WHERE id = :id
+              AND enabled = 1
               AND security_enabled = 1
               AND ssh_enabled = 1
         ");
@@ -44,7 +46,7 @@ class SecurityManager
         $server = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$server) {
-            throw new \RuntimeException('Cible introuvable, analyse securite desactivee ou SSH desactive.');
+            throw new \RuntimeException('Cible introuvable, desactivee, analyse securite desactivee ou SSH desactive.');
         }
 
         return $this->checkServer($server);

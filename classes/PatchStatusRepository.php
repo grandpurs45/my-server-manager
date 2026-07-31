@@ -50,7 +50,8 @@ class PatchStatusRepository
                     ORDER BY olc2.checked_at DESC, olc2.id DESC
                     LIMIT 1
                 )
-            WHERE s.patch_management_enabled = 1
+            WHERE s.enabled = 1
+              AND s.patch_management_enabled = 1
             ORDER BY s.name ASC
         ");
 
@@ -60,7 +61,7 @@ class PatchStatusRepository
     public function countDisabledTargets(): int
     {
         return (int) $this->pdo
-            ->query("SELECT COUNT(*) FROM servers WHERE patch_management_enabled = 0")
+            ->query("SELECT COUNT(*) FROM servers WHERE enabled = 1 AND patch_management_enabled = 0")
             ->fetchColumn();
     }
 

@@ -19,7 +19,8 @@ class HardwareHealthManager
         $stmt = $this->pdo->query("
             SELECT *
             FROM servers
-            WHERE hardware_profile IN ('physical', 'appliance')
+            WHERE enabled = 1
+              AND hardware_profile IN ('physical', 'appliance')
             ORDER BY name ASC
         ");
 
@@ -34,13 +35,14 @@ class HardwareHealthManager
             SELECT *
             FROM servers
             WHERE id = :id
+              AND enabled = 1
               AND hardware_profile IN ('physical', 'appliance')
         ");
         $stmt->execute([':id' => $serverId]);
         $server = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$server) {
-            throw new \RuntimeException('Cible introuvable ou profil materiel non eligible.');
+            throw new \RuntimeException('Cible introuvable, desactivee ou profil materiel non eligible.');
         }
 
         return $this->checkServer($server);

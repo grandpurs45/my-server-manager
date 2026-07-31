@@ -325,6 +325,7 @@ class OsLifecycleRepository
         $stmt = $this->pdo->query("
             SELECT olc.server_id, olc.os_family, olc.os_version, olc.os_codename
             FROM os_lifecycle_checks olc
+            INNER JOIN servers s ON s.id = olc.server_id AND s.enabled = 1
             INNER JOIN (
                 SELECT server_id, MAX(id) AS latest_id
                 FROM os_lifecycle_checks

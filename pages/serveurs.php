@@ -9,6 +9,7 @@ require_once __DIR__ . '/../includes/os_logos.php';
 
 use MSM\SSHUtils;
 use MSM\SettingsManager;
+use MSM\AlertRepository;
 
 $settingsManager = new SettingsManager($pdo);
 $targetTypes = msmInventoryOptions($settingsManager, 'target_types');
@@ -58,6 +59,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_enabled_id'])) {
+    msmRequireValidCsrf('serveurs.php');
+
+    $id = (int) $_POST['toggle_enabled_id'];
+    $enabled = ($_POST['enabled'] ?? '0') === '1';
+    $stmt = $pdo->prepare('UPDATE servers SET enabled = :enabled WHERE id = :id');
+    $stmt->execute([':enabled' => $enabled ? 1 : 0, ':id' => $id]);
+
+    $resolved = 0;
+    if (!$enabled && $stmt->rowCount() > 0) {
+        $resolved = (new AlertRepository($pdo))->resolveActiveAlertsForServer(
+            $id,
+            'Alerte resolue automatiquement car la cible a ete desactivee.'
+        );
+    }
+
+    $_SESSION['success'] = $enabled
+        ? 'Cible reactivee. Les prochains checks planifies la prendront en compte.'
+        : 'Cible desactivee. Les checks sont suspendus et ' . $resolved . ' alerte(s) active(s) ont ete resolue(s).';
+    header('Location: serveurs.php');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'edit') {
     msmRequireValidCsrf('serveurs.php');
 
@@ -76,6 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
     $sshEnabled = isset($_POST['ssh_enabled']) ? 1 : 0;
     $securityEnabled = isset($_POST['security_enabled']) ? 1 : 0;
     $patchManagementEnabled = isset($_POST['patch_management_enabled']) ? 1 : 0;
+    $enabled = isset($_POST['enabled']) ? 1 : 0;
 
     $targetType = msmInventoryNormalizeSelected($targetType, $targetTypes, array_key_first($targetTypes) ?: 'other');
     $hardwareProfile = msmInventoryNormalizeSelected($hardwareProfile, $hardwareProfiles, 'unknown');
@@ -87,14 +112,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
         $_SESSION['error'] = 'Les champs nom, hote et utilisateur SSH sont obligatoires si SSH est active.';
     } else {
         try {
+            $stmt = $pdo->prepare("SELECT os, ssh_password, enabled FROM servers WHERE id = :id");
+            $stmt->execute([':id' => $id]);
+            $existing = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $wasEnabled = !empty($existing['enabled']);
+
             if ($sshEnabled) {
                 if ($sshPasswordInput !== '') {
                     $sshPassword = encrypt($sshPasswordInput);
                     $os = SSHUtils::detectOS($hostname, $sshPort, $sshUser, $sshPasswordInput);
                 } else {
-                    $stmt = $pdo->prepare("SELECT ssh_password FROM servers WHERE id = :id");
-                    $stmt->execute([':id' => $id]);
-                    $existing = $stmt->fetch(PDO::FETCH_ASSOC);
                     $sshPassword = $existing['ssh_password'] ?? '';
                     $os = SSHUtils::detectOS($hostname, $sshPort, $sshUser, decrypt($sshPassword));
                 }
@@ -108,9 +135,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
                     $_SESSION['success'] = 'Serveur modifie avec succes.';
                 }
             } else {
-                $stmt = $pdo->prepare("SELECT os, ssh_password FROM servers WHERE id = :id");
-                $stmt->execute([':id' => $id]);
-                $existing = $stmt->fetch(PDO::FETCH_ASSOC);
                 $os = $existing['os'] ?? 'OS inconnu';
                 $sshPassword = $existing['ssh_password'] ?? '';
                 $sshStatus = 'fail';
@@ -134,7 +158,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
                     ssh_status = :ssh_status,
                     ssh_enabled = :ssh_enabled,
                     security_enabled = :security_enabled,
-                    patch_management_enabled = :patch_management_enabled
+                    patch_management_enabled = :patch_management_enabled,
+                    enabled = :enabled
                 WHERE id = :id
             ");
             $stmt->execute([
@@ -154,8 +179,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_mode'] ?? '') === 'ed
                 ':ssh_enabled' => $sshEnabled,
                 ':security_enabled' => $securityEnabled,
                 ':patch_management_enabled' => $patchManagementEnabled,
+                ':enabled' => $enabled,
                 ':id' => $id,
             ]);
+
+            if ($wasEnabled && !$enabled) {
+                $resolved = (new AlertRepository($pdo))->resolveActiveAlertsForServer(
+                    $id,
+                    'Alerte resolue automatiquement car la cible a ete desactivee.'
+                );
+                $_SESSION['success'] = 'Cible modifiee et desactivee. ' . $resolved . ' alerte(s) active(s) resolue(s).';
+            }
         } catch (PDOException $e) {
             $_SESSION['error'] = 'Erreur lors de la modification : ' . $e->getMessage();
         }
@@ -189,13 +223,14 @@ $filters = [
         ''
     ),
     'status' => in_array(($_GET['status'] ?? ''), ['up', 'down', 'unknown'], true) ? $_GET['status'] : '',
+    'enabled' => in_array(($_GET['enabled'] ?? ''), ['1', '0'], true) ? $_GET['enabled'] : '',
     'tag' => trim($_GET['tag'] ?? ''),
 ];
 
 $where = [];
 $queryParams = [];
 
-foreach (['target_type', 'hardware_profile', 'environment', 'criticality', 'status'] as $field) {
+foreach (['target_type', 'hardware_profile', 'environment', 'criticality', 'status', 'enabled'] as $field) {
     if ($filters[$field] !== '') {
         $where[] = "$field = :$field";
         $queryParams[":$field"] = $filters[$field];
@@ -246,7 +281,7 @@ include __DIR__ . '/../includes/server-modal.php';
     <?php endif; ?>
 
     <form method="get" class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-3">
             <div>
                 <label for="filter-target-type" class="block text-sm font-medium text-slate-700 mb-1">Type</label>
                 <select id="filter-target-type" name="target_type" class="w-full border rounded px-3 py-2">
@@ -310,6 +345,14 @@ include __DIR__ . '/../includes/server-modal.php';
                 <input id="filter-tag" type="text" name="tag" value="<?= htmlspecialchars($filters['tag']) ?>"
                        class="w-full border rounded px-3 py-2" placeholder="docker">
             </div>
+            <div>
+                <label for="filter-enabled" class="block text-sm font-medium text-slate-700 mb-1">Exploitation</label>
+                <select id="filter-enabled" name="enabled" class="w-full border rounded px-3 py-2">
+                    <option value="">Toutes</option>
+                    <option value="1" <?= $filters['enabled'] === '1' ? 'selected' : '' ?>>Actives</option>
+                    <option value="0" <?= $filters['enabled'] === '0' ? 'selected' : '' ?>>Desactivees</option>
+                </select>
+            </div>
         </div>
 
         <div class="mt-4 flex items-center justify-between gap-3">
@@ -349,8 +392,13 @@ include __DIR__ . '/../includes/server-modal.php';
         <tbody>
             <?php if (!empty($servers)): ?>
                 <?php foreach ($servers as $server): ?>
-                    <tr class="border-t">
-                        <td class="p-3"><?= htmlspecialchars($server['name'] ?? '') ?></td>
+                    <tr class="border-t <?= empty($server['enabled']) ? 'bg-slate-50 opacity-75' : '' ?>">
+                        <td class="p-3">
+                            <div class="font-semibold"><?= htmlspecialchars($server['name'] ?? '') ?></div>
+                            <?php if (empty($server['enabled'])): ?>
+                                <span class="mt-1 inline-flex rounded bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-700">Desactivee</span>
+                            <?php endif; ?>
+                        </td>
                         <td class="p-3"><?= htmlspecialchars($server['hostname'] ?? '') ?></td>
                         <td class="p-3">
                             <span class="inline-flex px-2 py-1 rounded bg-slate-100 text-slate-700 text-xs font-semibold">
@@ -456,6 +504,15 @@ include __DIR__ . '/../includes/server-modal.php';
                             <a href="serveurs.php?edit=<?= (int) $server['id'] ?>" class="text-blue-600 hover:underline flex items-center gap-1 mb-2">
                                 <i data-lucide="pencil" class="w-4 h-4"></i> Modifier
                             </a>
+                            <form method="POST" action="serveurs.php" class="mb-2" <?= empty($server['enabled']) ? '' : 'onsubmit="return confirm(\'Desactiver cette cible et suspendre ses checks et alertes ?\');"' ?>>
+                                <?= msmCsrfField() ?>
+                                <input type="hidden" name="toggle_enabled_id" value="<?= (int) $server['id'] ?>">
+                                <input type="hidden" name="enabled" value="<?= empty($server['enabled']) ? '1' : '0' ?>">
+                                <button type="submit" class="<?= empty($server['enabled']) ? 'text-green-700' : 'text-amber-700' ?> hover:underline flex items-center gap-1">
+                                    <i data-lucide="<?= empty($server['enabled']) ? 'play' : 'pause' ?>" class="w-4 h-4"></i>
+                                    <?= empty($server['enabled']) ? 'Reactiver' : 'Desactiver' ?>
+                                </button>
+                            </form>
                             <form method="POST" action="serveurs.php" onsubmit="return confirm('Confirmer la suppression ?');">
                                 <?= msmCsrfField() ?>
                                 <input type="hidden" name="delete_id" value="<?= (int) $server['id'] ?>">

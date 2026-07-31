@@ -11,6 +11,7 @@ if ($supervisionInterval < 1) {
 $stmt = $pdo->query("
     SELECT servers.*, TIMESTAMPDIFF(SECOND, last_check, NOW()) AS last_check_age_seconds
     FROM servers
+    WHERE enabled = 1
     ORDER BY name ASC
 ");
 $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -19,7 +19,8 @@ class OsLifecycleManager
         $stmt = $this->pdo->query("
             SELECT *
             FROM servers
-            WHERE ssh_enabled = 1
+            WHERE enabled = 1
+              AND ssh_enabled = 1
               AND target_type IN ('linux', 'proxmox')
             ORDER BY name ASC
         ");
@@ -35,6 +36,7 @@ class OsLifecycleManager
             SELECT *
             FROM servers
             WHERE id = :id
+              AND enabled = 1
               AND ssh_enabled = 1
               AND target_type IN ('linux', 'proxmox')
         ");
@@ -42,7 +44,7 @@ class OsLifecycleManager
         $server = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$server) {
-            throw new \RuntimeException('Cible introuvable, SSH desactive ou type non supporte.');
+            throw new \RuntimeException('Cible introuvable, desactivee, SSH desactive ou type non supporte.');
         }
 
         return $this->checkServer($server);

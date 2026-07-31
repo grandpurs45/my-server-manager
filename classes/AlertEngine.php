@@ -53,6 +53,7 @@ class AlertEngine
                    latency, ping_loss_percent, ping_packets_sent, ping_packets_received,
                    TIMESTAMPDIFF(MINUTE, last_check, NOW()) AS last_check_age_minutes
             FROM servers
+            WHERE enabled = 1
             ORDER BY name ASC
         ");
 
@@ -172,7 +173,8 @@ class AlertEngine
                     ORDER BY pc2.checked_at DESC, pc2.id DESC
                     LIMIT 1
                 )
-            WHERE s.patch_management_enabled = 1
+            WHERE s.enabled = 1
+              AND s.patch_management_enabled = 1
             ORDER BY s.name ASC
         ");
 
@@ -231,6 +233,7 @@ class AlertEngine
                     ORDER BY olc2.checked_at DESC, olc2.id DESC
                     LIMIT 1
                 )
+            WHERE s.enabled = 1
             ORDER BY s.name ASC
         ");
 
@@ -308,7 +311,8 @@ class AlertEngine
                     ORDER BY sc2.checked_at DESC, sc2.id DESC
                     LIMIT 1
                 )
-            WHERE s.security_enabled = 1
+            WHERE s.enabled = 1
+              AND s.security_enabled = 1
             ORDER BY s.name ASC
         ");
 
@@ -410,7 +414,8 @@ class AlertEngine
                     ORDER BY hc2.checked_at DESC, hc2.id DESC
                     LIMIT 1
                 )
-            WHERE s.hardware_profile IN ('physical', 'appliance')
+            WHERE s.enabled = 1
+              AND s.hardware_profile IN ('physical', 'appliance')
             ORDER BY s.name ASC
         ");
 
@@ -493,7 +498,8 @@ class AlertEngine
                 )
             INNER JOIN hardware_smart_disks d
                 ON d.hardware_check_id = hc.id
-            WHERE s.hardware_profile = 'physical'
+            WHERE s.enabled = 1
+              AND s.hardware_profile = 'physical'
             ORDER BY s.name ASC, d.device_name ASC
         ");
 
@@ -575,7 +581,8 @@ class AlertEngine
         $eligibleTargets = (int) $this->pdo->query("
             SELECT COUNT(*)
             FROM servers
-            WHERE hardware_profile IN ('physical', 'appliance')
+            WHERE enabled = 1
+              AND hardware_profile IN ('physical', 'appliance')
         ")->fetchColumn();
         if ($eligibleTargets === 0) {
             return [];
@@ -679,7 +686,8 @@ class AlertEngine
                     ORDER BY hac2.checked_at DESC, hac2.id DESC
                     LIMIT 1
                 )
-            WHERE s.target_type = 'home_assistant'
+            WHERE s.enabled = 1
+              AND s.target_type = 'home_assistant'
             ORDER BY s.name ASC
         ");
 
