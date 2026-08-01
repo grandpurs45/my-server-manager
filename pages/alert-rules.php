@@ -20,6 +20,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $thresholdValue = $thresholdRaw === '' ? null : max(1, (int) $thresholdRaw);
+    $percentageRules = [
+        'disk_usage_warning',
+        'disk_usage_critical',
+        'hardware_smart_wear_warning',
+        'hardware_smart_wear_critical',
+    ];
+    if ($thresholdValue !== null && in_array($ruleKey, $percentageRules, true)) {
+        $thresholdValue = min(100, $thresholdValue);
+    }
 
     if ($ruleKey !== '') {
         $resolvedAlerts = $repository->updateRule($ruleKey, $enabled, $severity, $thresholdValue);
@@ -117,6 +126,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     <input type="number"
                                            name="threshold_value"
                                            min="1"
+                                           <?= in_array(($rule['rule_key'] ?? ''), ['disk_usage_warning', 'disk_usage_critical', 'hardware_smart_wear_warning', 'hardware_smart_wear_critical'], true) ? 'max="100"' : '' ?>
                                            value="<?= htmlspecialchars((string) ($rule['threshold_value'] ?? '')) ?>"
                                            class="w-28 rounded border border-gray-300 px-3 py-2 text-sm"
                                            placeholder="-">
@@ -131,6 +141,8 @@ require_once __DIR__ . '/../includes/header.php';
                                     <div class="mt-1 text-xs text-slate-500">degres Celsius</div>
                                 <?php elseif (in_array(($rule['rule_key'] ?? ''), ['hardware_smart_wear_warning', 'hardware_smart_wear_critical'], true)): ?>
                                     <div class="mt-1 text-xs text-slate-500">pourcentage utilise</div>
+                                <?php elseif (in_array(($rule['rule_key'] ?? ''), ['disk_usage_warning', 'disk_usage_critical'], true)): ?>
+                                    <div class="mt-1 text-xs text-slate-500">remplissage de la partition racine (%)</div>
                                 <?php elseif (($rule['rule_key'] ?? '') === 'hardware_smart_media_errors'): ?>
                                     <div class="mt-1 text-xs text-slate-500">nombre d erreurs</div>
                                 <?php elseif (($rule['rule_key'] ?? '') === 'url_latency_high'): ?>

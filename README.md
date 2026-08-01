@@ -77,6 +77,7 @@ php scripts/update.php --apply
 Sans `--target`, l assistant propose automatiquement la derniere release stable du depot distant. `--target=vX.Y.Z` reste disponible pour figer une version precise.
 
 Le connecteur Home Assistant est documente dans [docs/HOME_ASSISTANT.md](docs/HOME_ASSISTANT.md).
+Les cibles en `.local` necessitent la resolution mDNS sur le serveur MSM ; la configuration Avahi est detaillee dans le guide d installation.
 
 Verifier les prerequis depuis la racine du projet :
 
@@ -347,6 +348,13 @@ Les disques SMART des equipements physiques disposent aussi de regles configurab
 - `hardware_smart_media_errors` : au moins une erreur media par defaut ;
 - `hardware_smart_wear_warning` : 80 % d'usure par defaut ;
 - `hardware_smart_wear_critical` : 95 % d'usure par defaut.
+
+Le remplissage de la partition racine, distinct de l usure SMART du disque, dispose de deux regles de supervision configurables :
+
+- `disk_usage_warning` : 85 % d espace utilise par defaut ;
+- `disk_usage_critical` : 95 % d espace utilise par defaut.
+
+Ces alertes reposent sur la derniere mesure `disk` collectee par `scripts/check-servers.php`. Elles sont suspendues lorsque le serveur est down et reprennent leur evaluation apres son retour.
 
 Pour un disque au-dessus du seuil d'usure critique, seule l'alerte d'usure critique est active.
 

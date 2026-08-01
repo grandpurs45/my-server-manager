@@ -10,6 +10,8 @@ class AlertEngine
         'ssh_failed',
         'ping_packet_loss',
         'ping_latency_high',
+        'disk_usage_warning',
+        'disk_usage_critical',
         'stale_supervision_check',
         'security_check_error',
         'home_assistant_check_error',
@@ -38,6 +40,7 @@ class AlertEngine
         $candidates = array_merge(
             $candidates,
             $this->evaluateSupervision($rules),
+            $this->evaluateDiskUsage($rules),
             $this->evaluatePatchManagement($rules),
             $this->evaluateOsLifecycle($rules),
             $this->evaluateSecurity($rules),
@@ -157,6 +160,72 @@ class AlertEngine
                         'stale_supervision_check:' . $serverId
                     );
                 }
+            }
+        }
+
+        return $candidates;
+    }
+
+    private function evaluateDiskUsage(array $rules): array
+    {
+        if (!$this->tableExists('server_metrics')) {
+            return [];
+        }
+
+        $warningRule = $rules['disk_usage_warning'] ?? null;
+        $criticalRule = $rules['disk_usage_critical'] ?? null;
+        if ($warningRule === null && $criticalRule === null) {
+            return [];
+        }
+
+        $warningThreshold = max(1, min(100, (int) ($warningRule['threshold_value'] ?? 85)));
+        $criticalThreshold = max(1, min(100, (int) ($criticalRule['threshold_value'] ?? 95)));
+        $candidates = [];
+        $stmt = $this->pdo->query("
+            SELECT s.id, s.name, sm.value AS disk_usage
+            FROM servers s
+            INNER JOIN server_metrics sm
+                ON sm.id = (
+                    SELECT sm2.id
+                    FROM server_metrics sm2
+                    WHERE sm2.server_id = s.id
+                      AND sm2.type = 'disk'
+                    ORDER BY sm2.measured_at DESC, sm2.id DESC
+                    LIMIT 1
+                )
+            WHERE s.enabled = 1
+            ORDER BY s.name ASC
+        ");
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $server) {
+            $serverId = (int) $server['id'];
+            $name = $server['name'] ?? 'Serveur inconnu';
+            $usage = (float) $server['disk_usage'];
+            $formattedUsage = number_format($usage, 1, ',', '');
+
+            if ($criticalRule !== null && $usage >= $criticalThreshold) {
+                $candidates[] = $this->candidate(
+                    'disk_usage_critical',
+                    $serverId,
+                    $criticalRule['severity'] ?? 'critical',
+                    'Espace disque critique sur ' . $name,
+                    'La partition racine utilise ' . $formattedUsage
+                        . ' %, pour un seuil critique de ' . $criticalThreshold . ' %.',
+                    'disk_usage_critical:' . $serverId
+                );
+                continue;
+            }
+
+            if ($warningRule !== null && $usage >= $warningThreshold) {
+                $candidates[] = $this->candidate(
+                    'disk_usage_warning',
+                    $serverId,
+                    $warningRule['severity'] ?? 'warning',
+                    'Espace disque eleve sur ' . $name,
+                    'La partition racine utilise ' . $formattedUsage
+                        . ' %, pour un seuil warning de ' . $warningThreshold . ' %.',
+                    'disk_usage_warning:' . $serverId
+                );
             }
         }
 

@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.13.4`.
+Version actuelle : `v1.13.5`.
 
 Socle valide :
 
@@ -116,6 +116,12 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 - Analyse de mots de passe faibles ou compromis.
 
 ## Realise
+
+### v1.13.5 - Alertes Espace Disque
+
+- Alertes warning et critical configurables sur le remplissage de la partition racine.
+- Suspension des alertes de capacite lorsque la cible est indisponible.
+- Documentation du prerequis mDNS pour les cibles en `.local` et Home Assistant.
 
 ### v1.13.4 - Dependances d Alertes et Mise a Jour
 

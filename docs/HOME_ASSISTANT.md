@@ -10,12 +10,25 @@ MSM peut collecter un premier etat Home Assistant via SSH pour les cibles dont l
 - Le profil materiel peut rester `Machine virtuelle` pour une instance Home Assistant en VM.
 - Si la CLI `ha` est disponible dans la session SSH, MSM collecte les informations Home Assistant detaillees.
 - Si la CLI `ha` n'est pas disponible, MSM conserve un fallback systeme Linux limite.
+- Si la cible utilise un nom en `.local`, le serveur MSM doit disposer de la resolution mDNS ou utiliser a la place une IP ou un nom DNS local classique.
 
 Pour une instance existante avec une liste de types personnalisee, ajouter dans `Parametres > Inventaire` :
 
 ```text
 home_assistant=Home Assistant
 ```
+
+### Resolution des noms `.local`
+
+Sur Debian / Ubuntu, installer le support mDNS si `homeassistant.local` ne peut pas etre resolu :
+
+```bash
+sudo apt-get install -y avahi-daemon libnss-mdns
+sudo systemctl enable --now avahi-daemon
+getent hosts homeassistant.local
+```
+
+mDNS fonctionne principalement sur le meme reseau local. Entre plusieurs VLANs, utiliser un relais mDNS, une adresse IP fixe ou un enregistrement DNS local.
 
 ## Donnees collectees
 

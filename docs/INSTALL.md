@@ -48,6 +48,7 @@ La consommation depend surtout du nombre de serveurs supervises, de la frequence
 - `ping` pour les checks de disponibilite.
 - `unzip` recommande pour Composer.
 - `ssh` recommande pour certains diagnostics et tests manuels.
+- Resolution mDNS optionnelle pour les cibles en `.local` : `avahi-daemon` et `libnss-mdns` sur Debian/Ubuntu. Une adresse IP ou un enregistrement DNS local classique ne necessite pas ces paquets.
 
 ## 0. Installer le bootstrap minimal
 
@@ -124,6 +125,16 @@ composer --version
 ```
 
 Ces commandes installent les dependances systeme. Les dependances PHP du projet sont ensuite installees a l'etape 4.
+
+Si des cibles comme Home Assistant utilisent un nom en `.local`, activer aussi la resolution mDNS sur le serveur MSM :
+
+```bash
+sudo apt-get install -y avahi-daemon libnss-mdns
+sudo systemctl enable --now avahi-daemon
+getent hosts homeassistant.local
+```
+
+Cette etape est inutile si MSM utilise directement l adresse IP de la cible ou un nom fourni par le DNS local.
 
 ## 3. Verifier automatiquement les prerequis
 
@@ -292,6 +303,27 @@ Verifier ensuite :
 ```bash
 composer --version
 ```
+
+#### `Temporary failure in name resolution` avec un nom en `.local`
+
+Les noms en `.local`, frequents avec Home Assistant, utilisent generalement mDNS et non le DNS classique. Une resolution Internet fonctionnelle ne garantit donc pas que `homeassistant.local` soit resolu par le serveur MSM.
+
+Sur Debian / Ubuntu :
+
+```bash
+sudo apt-get update
+sudo apt-get install -y avahi-daemon libnss-mdns
+sudo systemctl enable --now avahi-daemon
+```
+
+Verifier ensuite la resolution depuis le serveur MSM :
+
+```bash
+getent hosts homeassistant.local
+ping -4 homeassistant.local
+```
+
+Si la cible et MSM sont places dans des VLANs differents, mDNS ne traverse generalement pas le routeur sans relais mDNS. Utiliser alors une adresse IP fixe ou, de preference, creer un enregistrement dans le DNS local comme `homeassistant.lan`.
 
 #### `E: Dependances non satisfaites` ou `apt-get install` termine avec le code 100
 

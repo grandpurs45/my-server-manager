@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.5](https://github.com/grandpurs45/my-server-manager/compare/v1.13.4...v1.13.5) (2026-08-01)
+
+### Added
+
+* alertes configurables warning et critical sur le remplissage de la partition racine
+
+### Documentation
+
+* ajout du prerequis mDNS et du diagnostic des noms `.local` pour Home Assistant et les autres cibles du reseau local
+
 ## [1.13.4](https://github.com/grandpurs45/my-server-manager/compare/v1.13.3...v1.13.4) (2026-07-31)
 
 ### Added
