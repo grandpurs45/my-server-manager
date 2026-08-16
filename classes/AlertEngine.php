@@ -66,6 +66,7 @@ class AlertEngine
         $stmt = $this->pdo->query("
             SELECT id, name, hostname, status, ssh_enabled, ssh_status, last_check,
                    latency, ping_loss_percent, ping_packets_sent, ping_packets_received,
+                   ping_consecutive_failures,
                    TIMESTAMPDIFF(MINUTE, last_check, NOW()) AS last_check_age_minutes
             FROM servers
             WHERE enabled = 1
@@ -77,16 +78,31 @@ class AlertEngine
             $name = $server['name'] ?? 'Serveur inconnu';
             $hostname = $server['hostname'] ?? '';
 
-            if (isset($rules['server_down']) && ($server['status'] ?? '') !== 'up') {
+            $downRule = $rules['server_down'] ?? null;
+            $downThreshold = max(1, (int) ($downRule['threshold_value'] ?? 2));
+            $pingFailures = (int) ($server['ping_consecutive_failures'] ?? 0);
+            $downConfirmed = ($server['status'] ?? '') !== 'up'
+                && $pingFailures >= $downThreshold;
+
+            if ($pingFailures > 0) {
+                $this->unavailableServerIds[$serverId] = true;
+            }
+
+            if ($downRule !== null && $downConfirmed) {
                 $this->unavailableServerIds[$serverId] = true;
                 $candidates[] = $this->candidate(
                     'server_down',
                     $serverId,
-                    $rules['server_down']['severity'] ?? 'critical',
+                    $downRule['severity'] ?? 'critical',
                     $name . ' est down',
-                    'Le dernier statut supervision indique que la cible est injoignable.',
+                    'La cible est injoignable depuis ' . $pingFailures
+                        . ' controles consecutifs (seuil : ' . $downThreshold . ').',
                     'server_down:' . $serverId
                 );
+            }
+
+            if (($server['status'] ?? '') !== 'up' || $pingFailures > 0) {
+                continue;
             }
 
             if (($server['status'] ?? '') === 'up' && isset($rules['ping_packet_loss'])) {

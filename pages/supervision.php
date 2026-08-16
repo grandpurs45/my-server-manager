@@ -8,6 +8,9 @@ if ($supervisionInterval < 1) {
     $supervisionInterval = 10;
 }
 
+$downThresholdValue = $pdo->query("SELECT threshold_value FROM alert_rules WHERE rule_key = 'server_down' LIMIT 1")->fetchColumn();
+$downConfirmationThreshold = max(1, (int) ($downThresholdValue !== false && $downThresholdValue !== null ? $downThresholdValue : 2));
+
 $stmt = $pdo->query("
     SELECT servers.*, TIMESTAMPDIFF(SECOND, last_check, NOW()) AS last_check_age_seconds
     FROM servers
@@ -259,6 +262,12 @@ require_once __DIR__ . '/../includes/header.php';
 
                     <div class="mb-4 flex flex-wrap gap-2">
                         <?= msmSupervisionStatusBadge($server['status'] ?? null) ?>
+                        <?php if ((int) ($server['ping_consecutive_failures'] ?? 0) > 0 && ($server['status'] ?? '') === 'up'): ?>
+                            <span class="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">
+                                <i data-lucide="clock-alert" class="h-3.5 w-3.5"></i>
+                                Echec a confirmer <?= (int) $server['ping_consecutive_failures'] ?>/<?= $downConfirmationThreshold ?>
+                            </span>
+                        <?php endif; ?>
                         <?= msmSupervisionSshBadge($server) ?>
                         <span class="inline-flex rounded border px-2 py-1 text-xs font-semibold <?= htmlspecialchars($lastCheckStatus['badge']) ?>"
                               title="<?= htmlspecialchars(msmDisplayDate($server['last_check'] ?? null)) ?>">

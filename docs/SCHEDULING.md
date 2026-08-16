@@ -220,6 +220,8 @@ sudo systemctl enable --now msm-check-os-lifecycle.timer
 sudo systemctl enable --now msm-check-security.timer
 sudo systemctl enable --now msm-check-hardware-health.timer
 sudo systemctl enable --now msm-check-home-assistant.timer
+sudo systemctl enable --now msm-check-web.timer
+sudo systemctl enable --now msm-check-api-integrations.timer
 sudo systemctl enable --now msm-check-alerts.timer
 ```
 
@@ -233,6 +235,8 @@ journalctl -u msm-check-os-lifecycle.service -n 50
 journalctl -u msm-check-security.service -n 50
 journalctl -u msm-check-hardware-health.service -n 50
 journalctl -u msm-check-home-assistant.service -n 50
+journalctl -u msm-check-web.service -n 50
+journalctl -u msm-check-api-integrations.service -n 50
 journalctl -u msm-check-alerts.service -n 50
 ```
 
@@ -276,9 +280,15 @@ Sur RHEL/Rocky/AlmaLinux/Fedora, generer les fichiers avec `--systemd-user=apach
    php scripts/check-alerts.php --force
    ```
 
-7. Configurer cron ou systemd timer.
+7. Si des sources API sont configurees, lancer leur collecte :
 
-8. Verifier `/metrics.php`, le Mur d'alertes et la page Diagnostic.
+   ```bash
+   php scripts/check-api-integrations.php --force
+   ```
+
+8. Configurer cron ou systemd timer.
+
+9. Verifier `/metrics.php`, le Mur d'alertes et la page Diagnostic.
 
 ## Points d'attention
 

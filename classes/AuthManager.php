@@ -16,6 +16,7 @@ class AuthManager
         'diagnostic' => 'Diagnostic',
         'settings' => 'Parametres',
         'metrics' => 'Export Prometheus',
+        'integrations' => 'Integrations API',
     ];
 
     public function __construct(
@@ -368,6 +369,7 @@ class AuthManager
             'securite-serveurs.php', 'details-securite.php' => 'securite',
             'diagnostic.php' => 'diagnostic',
             'settings.php', 'users.php', 'collectors.php', 'os-lifecycle.php' => 'settings',
+            'api-integrations.php' => 'integrations',
             default => 'dashboard',
         };
     }

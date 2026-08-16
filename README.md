@@ -13,6 +13,7 @@ MSM est une application web de supervision et de gestion de serveurs Linux et Wi
 - Sante materielle : temperatures Linux/Proxmox, etat SMART, usure et erreurs media des disques physiques.
 - Home Assistant : collecte SSH dediee, versions disponibles et etat d'update quand la CLI `ha` est exposee.
 - Supervision URLs : disponibilite HTTP/HTTPS, codes attendus, performances, certificats TLS, contenu attendu et transitions d alertes stabilisees.
+- Integrations API : sources generiques, secrets chiffres, test de connexion, decouverte de ressources et premier connecteur Reolink.
 - Suspension des cibles : un serveur ou une URL desactive reste dans l inventaire avec son historique, mais sort des collecteurs, des alertes actives et des metriques operationnelles.
 - Alerting : regles globales, alertes actives, mur d'alertes et vue backoffice.
 - Notifications : canaux Discord et webhook JSON, filtres de severite, ouvertures/resolutions, retries et historique.
@@ -55,6 +56,8 @@ La v1 cible un usage homelab / petite infrastructure avec un support principal L
 Le detail du support et des limites est documente dans [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 La configuration et l'ordonnancement de la supervision HTTP sont documentes dans [docs/WEB_MONITORING.md](docs/WEB_MONITORING.md).
+
+Le moteur de decouverte API et le connecteur Reolink sont documentes dans [docs/API_INTEGRATIONS.md](docs/API_INTEGRATIONS.md).
 
 ## Installation
 
@@ -257,6 +260,14 @@ Lancer un check de supervision :
 php scripts/check-servers.php
 ```
 
+Collecter les integrations API arrivees a echeance :
+
+```bash
+php scripts/check-api-integrations.php --force
+```
+
+Ce collecteur gere aussi la redecouverte periodique des ressources. Une nouvelle camera est ajoutee sous sa source API, puis ses metriques doivent etre activees explicitement dans `Infrastructure > Integrations API`.
+
 Forcer un check de supervision sans attendre l'intervalle interne :
 
 ```bash
@@ -398,6 +409,8 @@ Difference entre acquitter et ignorer :
 Quand une regle d'alerte est desactivee, les alertes actives rattachees a cette regle sont automatiquement resolues et historisees.
 
 Le moteur applique une dependance entre `server_down` et les alertes techniques qui necessitent une cible joignable. Tant que le serveur est down, MSM n ouvre pas d alerte SSH, qualite ping, anciennete de supervision, erreur de collecte securite ou erreur/retard Home Assistant pour cette cible. Une alerte enfant deja active reste suspendue sans resolution artificielle jusqu au retour du serveur. Les alertes metier independantes, comme le cycle de vie OS ou les mises a jour disponibles, restent evaluees.
+
+La regle `Serveur down` utilise un nombre d echecs ping consecutifs avant de confirmer la panne. Le seuil vaut `2` par defaut et se configure dans `Regles d alertes`. Un echec isole est visible comme etat en attente sur la page Supervision, mais ne bascule pas un serveur sain en `DOWN` et ne genere aucune notification. Un ping reussi remet immediatement le compteur a zero.
 
 Les canaux Discord et webhook generique notifient les ouvertures et resolutions selon
 une severite minimale. Les URLs sont chiffrees, les envois sont historises et les

@@ -77,7 +77,7 @@ if (ob_get_level() > 0) {
             </section>
             <?php endif; ?>
 
-            <?php if ($authManager->userCan('serveurs') || $authManager->userCan('supervision')): ?>
+            <?php if ($authManager->userCan('serveurs') || $authManager->userCan('supervision') || $authManager->userCan('integrations')): ?>
             <section class="space-y-1">
                 <div class="px-3 text-[11px] font-bold uppercase text-blue-200">Infrastructure</div>
                 <?php if ($authManager->userCan('serveurs')): ?>
@@ -94,6 +94,12 @@ if (ob_get_level() > 0) {
                 <a href="<?= $baseUrl ?>pages/securite-web.php" class="<?= $navItemClass(['securite-web.php']) ?>">
                     <i data-lucide="globe-2" class="h-5 w-5 shrink-0"></i>
                     Supervision URLs
+                </a>
+                <?php endif; ?>
+                <?php if ($authManager->userCan('integrations')): ?>
+                <a href="<?= $baseUrl ?>pages/api-integrations.php" class="<?= $navItemClass(['api-integrations.php']) ?>">
+                    <i data-lucide="unplug" class="h-5 w-5 shrink-0"></i>
+                    Integrations API
                 </a>
                 <?php endif; ?>
             </section>

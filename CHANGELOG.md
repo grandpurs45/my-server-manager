@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.14.0](https://github.com/grandpurs45/my-server-manager/compare/v1.13.5...v1.14.0) (2026-08-16)
+
+### Added
+
+* moteur generique de sources API avec identifiants chiffres, test de connexion et activation explicite
+* connecteur Reolink CGI avec session par jeton et decouverte du hub, des cameras, batteries et stockages
+* ressources et metriques normalisees avec identifiants externes stables, valeur brute, valeur normalisee et frequences configurables
+* page `Integrations API` pour creer, tester, decouvrir et selectionner les donnees a collecter
+* collecteur planifie `scripts/check-api-integrations.php` integre au catalogue cron/systemd et a la page Collecteurs
+* tests de normalisation Reolink et de persistance du moteur API
+* redecouverte periodique configurable par source API avec rattachement automatique des nouvelles cameras a leur hote
+* nouvelles metriques laissees inactives jusqu'a validation explicite de l'utilisateur
+* date de derniere valeur et historique recent des metriques API dans la fiche de la source
+* confirmation configurable des serveurs down apres plusieurs echecs ping consecutifs afin d eviter les notifications transitoires
+* affichage des echecs ping en attente de confirmation dans la page Supervision
+
+### Documentation
+
+* ajout du guide `docs/API_INTEGRATIONS.md` avec procedure Reolink, securite, ordonnancement et limites connues
+
 ## [1.13.5](https://github.com/grandpurs45/my-server-manager/compare/v1.13.4...v1.13.5) (2026-08-01)
 
 ### Added

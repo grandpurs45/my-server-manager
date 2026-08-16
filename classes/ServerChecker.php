@@ -13,6 +13,7 @@ class ServerChecker
     private ServerCheckHistoryRepository $history;
     private int $pingPacketCount;
     private int $pingTimeoutSeconds;
+    private int $downFailureThreshold;
 
     public function __construct(\PDO $pdo, bool $withMetrics = true)
     {
@@ -22,11 +23,17 @@ class ServerChecker
         $settings = new SettingsManager($pdo);
         $this->pingPacketCount = max(1, min(10, (int) ($settings->get('supervision', 'ping_packet_count') ?? 4)));
         $this->pingTimeoutSeconds = max(1, min(10, (int) ($settings->get('supervision', 'ping_timeout_seconds') ?? 1)));
+        try {
+            $threshold = $this->pdo->query("SELECT threshold_value FROM alert_rules WHERE rule_key = 'server_down' LIMIT 1")->fetchColumn();
+        } catch (\Throwable) {
+            $threshold = false;
+        }
+        $this->downFailureThreshold = max(1, min(10, (int) ($threshold !== false && $threshold !== null ? $threshold : 2)));
     }
 
     public function run(): void
     {
-        $stmt = $this->pdo->query("SELECT id, hostname, os, status, ssh_user, ssh_password, ssh_port, ssh_enabled, ssh_status FROM servers WHERE enabled = 1");
+        $stmt = $this->pdo->query("SELECT id, hostname, os, status, ping_consecutive_failures, ssh_user, ssh_password, ssh_port, ssh_enabled, ssh_status FROM servers WHERE enabled = 1");
         $servers = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $now = date('Y-m-d H:i:s');
 
@@ -37,7 +44,7 @@ class ServerChecker
 
     public function runForServerId(int $serverId): void
     {
-        $stmt = $this->pdo->prepare("SELECT id, hostname, os, status, ssh_user, ssh_password, ssh_port, ssh_enabled, ssh_status FROM servers WHERE id = :id AND enabled = 1");
+        $stmt = $this->pdo->prepare("SELECT id, hostname, os, status, ping_consecutive_failures, ssh_user, ssh_password, ssh_port, ssh_enabled, ssh_status FROM servers WHERE id = :id AND enabled = 1");
         $stmt->execute([':id' => $serverId]);
         $server = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -138,9 +145,16 @@ class ServerChecker
     private function checkServer(array $server, string $now): void
     {
         $ping = $this->getPingStats($server['hostname']);
-        $status = $ping['status'];
+        $rawStatus = $ping['status'];
+        $pingState = (new PingStateResolver())->resolve(
+            (string) ($server['status'] ?? 'down'),
+            (int) ($server['ping_consecutive_failures'] ?? 0),
+            $rawStatus,
+            $this->downFailureThreshold
+        );
+        $status = $pingState['status'];
         $latency = $ping['latency'];
-        $availability = ($status === 'up') ? 1 : 0;
+        $availability = ($rawStatus === 'up') ? 1 : 0;
 
         $this->history->recordChange(
             (int) $server['id'],
@@ -159,6 +173,7 @@ class ServerChecker
                 ping_packets_sent = :ping_packets_sent,
                 ping_packets_received = :ping_packets_received,
                 ping_loss_percent = :ping_loss_percent,
+                ping_consecutive_failures = :ping_consecutive_failures,
                 latency_min_ms = :latency_min_ms,
                 latency_max_ms = :latency_max_ms
             WHERE id = :id
@@ -170,6 +185,7 @@ class ServerChecker
             ':ping_packets_sent' => $ping['packets_sent'],
             ':ping_packets_received' => $ping['packets_received'],
             ':ping_loss_percent' => $ping['packet_loss_percent'],
+            ':ping_consecutive_failures' => $pingState['consecutive_failures'],
             ':latency_min_ms' => $ping['latency_min'],
             ':latency_max_ms' => $ping['latency_max'],
             ':id' => $server['id'],
@@ -191,9 +207,11 @@ class ServerChecker
             }
         }
 
-        echo "[{$server['hostname']}] status=$status latency=" . ($latency ?? '-')
+        echo "[{$server['hostname']}] status=$status raw_status=$rawStatus latency=" . ($latency ?? '-')
             . ' loss=' . ($ping['packet_loss_percent'] ?? '-')
-            . '% packets=' . ($ping['packets_received'] ?? 0) . '/' . ($ping['packets_sent'] ?? 0) . "\n";
+            . '% packets=' . ($ping['packets_received'] ?? 0) . '/' . ($ping['packets_sent'] ?? 0)
+            . ' failures=' . $pingState['consecutive_failures'] . '/' . $this->downFailureThreshold
+            . (!empty($pingState['pending_failure']) ? ' confirmation=pending' : '') . "\n";
 
         if (isset($server['ssh_enabled']) && !$server['ssh_enabled']) {
             echo "[{$server['hostname']}] SSH desactive\n";

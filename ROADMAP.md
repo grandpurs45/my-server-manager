@@ -10,7 +10,7 @@ My Server Manager est un outil d'exploitation pour homelab et petite infrastruct
 
 ## Etat Actuel
 
-Version actuelle : `v1.13.5`.
+Version actuelle : `v1.14.0`.
 
 Socle valide :
 
@@ -29,6 +29,7 @@ Socle valide :
 - sante materielle Linux/Proxmox avec temperatures, SMART, dashboard, alertes et export Prometheus ;
 - connecteur Home Assistant SSH avec versions Core, Supervisor, OS, statut d'update et export Prometheus ;
 - supervision HTTP/HTTPS avec disponibilite, performances, TLS, contenu attendu, alertes et export Prometheus ;
+- moteur generique d'integrations API avec secrets chiffres, decouverte dynamique, selection de metriques et premier connecteur Reolink ;
 - logos OS extensibles avec upload manuel et recuperation automatique depuis Dashboard Icons ;
 - page Collecteurs / Checks pour controler scripts, logs, intervalles internes et lignes cron attendues ;
 - export Prometheus stable ;
@@ -62,6 +63,29 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
   - aucun secret affiche en clair.
 
 ## Backlog v1.x
+
+### Integrations API dynamiques
+
+Premier lot disponible :
+
+- sources API generiques et credentials chiffres ;
+- test de connexion avec erreurs DNS, TCP, timeout, TLS, HTTP et authentification ;
+- contrat objet de connecteur specialise ;
+- connecteur Reolink CGI pour Home Hub, cameras, batteries et stockages ;
+- ressources stables, metriques typees, valeurs brutes et normalisees ;
+- selection des metriques, frequence par metrique et collecte planifiee.
+- arborescence par hote API et redecouverte automatique configurable des nouvelles ressources.
+
+Prochaines iterations :
+
+- suggestions de supervision selon les metriques decouvertes ;
+- regles dynamiques : operateur, seuil, severite, temporisation et hysteresis ;
+- alertes de disparition, apparition et modification de ressources ;
+- comparaison des executions de decouverte et validation des changements ;
+- export Prometheus des metriques API activees ;
+- purge planifiee selon les retentions configurees ;
+- validation des semantiques Reolink encore incertaines sur Home Hub Pro reel ;
+- connecteurs API Proxmox, Synology, Home Assistant et autres equipements.
 
 ### Collecteurs
 
@@ -116,6 +140,16 @@ Objectif : rendre les collecteurs administrables et reduire encore le diagnostic
 - Analyse de mots de passe faibles ou compromis.
 
 ## Realise
+
+### v1.14.0 - Integrations API et Stabilisation Ping
+
+- Moteur generique de sources API avec secrets chiffres et activation explicite.
+- Premier connecteur Reolink CGI pour hubs, cameras, batteries et stockages.
+- Decouverte et redecouverte automatique des ressources rattachees a chaque hote API.
+- Selection, frequence, derniere valeur et historique recent des metriques decouvertes.
+- Collecteur API integre a cron, systemd et a la page Collecteurs.
+- Confirmation configurable des serveurs down apres plusieurs echecs ping consecutifs.
+- Suspension des alertes techniques pendant la confirmation d une indisponibilite.
 
 ### v1.13.5 - Alertes Espace Disque
 

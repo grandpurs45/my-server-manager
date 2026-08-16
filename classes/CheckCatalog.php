@@ -126,6 +126,21 @@ final class CheckCatalog
                 'script' => 'check-alerts.php',
                 'log' => 'check-alerts.log',
             ],
+            [
+                'name' => 'Integrations API',
+                'unit' => 'msm-check-api-integrations',
+                'description' => 'MSM generic API integrations collection',
+                'timer_description' => 'Run MSM API integrations collection every minute',
+                'settings_category' => 'api_integrations',
+                'interval_key' => 'check_interval_minutes',
+                'interval_unit' => 'minutes',
+                'cron' => '* * * * *',
+                'log_stale_after_minutes' => 5,
+                'on_boot' => '1min',
+                'on_active' => '1min',
+                'script' => 'check-api-integrations.php',
+                'log' => 'check-api-integrations.log',
+            ],
         ];
     }
 }

@@ -78,6 +78,20 @@ Docker est hors v1.
 
 La roadmap v1.x prevoit un inventaire Docker via l'hote, avec containers, images, statuts, ports exposes et metriques Prometheus utiles.
 
+### Reolink
+
+Support initial via l'API CGI locale :
+
+- test de connexion et authentification ;
+- identification du hub ;
+- decouverte des canaux camera ;
+- etat en ligne et veille ;
+- informations batterie disponibles selon le modele et le firmware ;
+- decouverte des stockages du hub ;
+- frequence de collecte configurable par metrique.
+
+Le Home Hub Pro est la cible de validation initiale. La disponibilite des commandes CGI varie selon les produits et firmwares Reolink. Les champs non supportes sont ignores sans rendre toute la source indisponible. Voir [API_INTEGRATIONS.md](API_INTEGRATIONS.md).
+
 ## Garanties v1
 
 - Les pages de consultation ne lancent pas de checks lourds.

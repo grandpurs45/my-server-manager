@@ -133,6 +133,8 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php endif; ?>
                                 <?php if (($rule['rule_key'] ?? '') === 'stale_supervision_check'): ?>
                                     <div class="mt-1 text-xs text-slate-500">minutes</div>
+                                <?php elseif (($rule['rule_key'] ?? '') === 'server_down'): ?>
+                                    <div class="mt-1 text-xs text-slate-500">echecs consecutifs avant alerte</div>
                                 <?php elseif (($rule['rule_key'] ?? '') === 'home_assistant_check_stale'): ?>
                                     <div class="mt-1 text-xs text-slate-500">minutes</div>
                                 <?php elseif (($rule['rule_key'] ?? '') === 'stale_hardware_health_check'): ?>
